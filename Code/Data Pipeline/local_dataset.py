@@ -1,7 +1,6 @@
 import pandas as pd
-import json
+
 from set_up_connections import *
-import pandas_gbq
 
 
 def get_data_from_bigquery(credentials_file):
@@ -19,4 +18,4 @@ def get_data_from_bigquery(credentials_file):
         df.to_csv(f'./Data/{key}.csv', index=False)
 
 
-get_data_from_bigquery('./credentials.json')
+# get_data_from_bigquery('./credentials.json')
