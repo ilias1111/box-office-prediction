@@ -1,9 +1,10 @@
 import pandas as pd
+import pandas_gbq
 
 from set_up_connections import *
 
 
-def get_data_from_bigquery(credentials_file):
+def get_data_from_bigquery():
 
     """
     Get data from BigQuery
@@ -18,4 +19,5 @@ def get_data_from_bigquery(credentials_file):
         df.to_csv(f'./Data/{key}.csv', index=False)
 
 
-# get_data_from_bigquery('./credentials.json')
+if __name__ == '__main__':
+    get_data_from_bigquery()

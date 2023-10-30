@@ -3,7 +3,10 @@ import numpy as np
 from math import sin, cos, pi
 import cpi
 
-certs = {"0": "G",
+
+def fix_certificates(df):
+
+    certs = {"0": "G",
          "6": "G",
          "G": "G",
          "R": "R",
@@ -19,9 +22,7 @@ certs = {"0": "G",
          "Not Rated": "U",
          "BPjM Restricted": "R"}
 
-
-def fix_certificates(df):
-    df['cert'] = df['cert'].replace(certs).fillna("U")
+    df['ageCert'] = df['ageCert'].replace(certs).fillna("U")
     return df
 
 
@@ -60,3 +61,4 @@ def classify_b(s):
         return 'Bankrupt'
     else:
         return "Success"
+

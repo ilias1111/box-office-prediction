@@ -1,0 +1,12 @@
+# requirements.txt
+pandas
+scikit-learn
+matplotlib
+keras
+tensorflow
+numpy
+pandas-gbq
+cpi==1.0.21
+mlflow
+pycaret[full]
+Werkzeug==2.2.2
