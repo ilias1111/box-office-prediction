@@ -1,1 +1,7 @@
-/Code/Data Pipeline/big_query_credentials.json
+/code/data_pipeline/big_query_credentials.json
+/thesis/*
+__pycache__/*
+*.pyc
+code/data_pipeline/__pycache__/*
+code/ml_explore/__pycache__/*
+
