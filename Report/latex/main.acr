@@ -1,0 +1,6 @@
+\glossarysection[\glossarytoctitle]{\glossarytitle}\glossarypreamble
+\begin{theglossary}\glossaryheader
+\glsgroupheading{Q}\relax \glsresetentrylist %
+\glossentry{qa}{\glossaryentrynumbers{\relax 
+		\setentrycounter[]{page}\glsnumberformat{xvii}}}%
+\end{theglossary}\glossarypostamble

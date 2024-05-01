@@ -1,0 +1,17 @@
+{
+  "movie": "SELECT * FROM movie-dataset-291206.movies.main",
+
+  "genre_mapping": "SELECT * FROM movie-dataset-291206.movies.genres",
+  "keyword_mapping": "SELECT keyword_id,movie_id FROM movie-dataset-291206.movies.keyword",
+  "cast_mapping": "SELECT * FROM `movie-dataset-291206.movies.cast`",
+  "collection_mapping" : "SELECT collection_id,movie_id FROM movie-dataset-291206.movies.collections",
+  "production_mapping" : "SELECT company_id,movie_id FROM movie-dataset-291206.movies.production_companies",
+
+  "keyword": "SELECT DISTINCT keyword_id, name AS keyword_name FROM movie-dataset-291206.movies.keyword",
+  "production": "SELECT company_id, company_name, parent_id FROM movie-dataset-291206.movies.production_companies_data",
+  "collection" : "SELECT DISTINCT collection_id, name AS collection_name FROM movie-dataset-291206.movies.collections",
+  "genre": "SELECT DISTINCT genre_id FROM movie-dataset-291206.movies.genres",
+
+  "movies_with_sequel": "SELECT DISTINCT movie_id FROM `movie-dataset-291206.movies.collections`"
+
+}

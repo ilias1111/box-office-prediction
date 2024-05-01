@@ -1,0 +1,167 @@
+-- Preprocessing of the Movie Database
+
+
+Movies :
+1) Created a new column is_sequel_my which is 1 if the movie is a sequel and 0 if it is not a sequel.
+2) Converted the release_date column to datetime format.
+3) Created a new column year, quarter, month from the release_date column.
+4) Adjusted the revenue and budget columns for inflation.
+5) Created a new column surplus which is 0.5 * revenue - budget. ( Based on the fact that the movie studio gets 50% of the revenue )
+6) Created a new column ratio which is revenue / budget.
+7) Created a new column roi which is surplus / budget.
+
+
+On all the string columns, we have removed special characters and replaced them with underscores, removed leading and trailing spaces and converted the strings to lower case.
+
+
+# Genre
+
+Number of genres:  20
+Genres:  ['adventure' 'action' 'documentary' nan 'drama' 'thriller' 'comedy'
+ 'family' 'history' 'romance' 'mystery' 'crime' 'fantasy' 'animation'
+ 'music' 'horror' 'science_fiction' 'tv_movie' 'war' 'western']
+Number of movies in each genre: 
+name
+drama              6031
+comedy             4284
+thriller           2801
+action             2462
+romance            2003
+crime              1570
+adventure          1503
+horror             1252
+family             1104
+science_fiction     923
+fantasy             913
+mystery             795
+history             550
+animation           547
+documentary         480
+war                 371
+music               353
+western             120
+tv_movie              9
+
+
+Number of genres per movie: 2.26
+
+
+
+# Keywords
+
+Number of keywords:  13266
+Average number of keywords per movie:  5.76872282171042
+
+
+	Number of Movies	Total Revenue
+keyword_name		
+woman_director	911	3.692774e+10
+based_on_novel_or_book	689	1.025128e+11
+murder	499	3.470874e+10
+duringcreditsstinger	386	1.062524e+11
+independent_film	374	2.952950e+09
+violence	364	4.153107e+10
+new_york_city	325	4.473633e+10
+based_on_a_true_story	309	2.867376e+10
+biography	309	1.860688e+10
+revenge	266	2.874346e+10
+
+
+
+
+# Production Companies
+
+Number of production companies:  11305
+Number of parent companies:  11289
+
+
+Number of production companies per movie: 2.59
+
+
+	Number of Movies	Total Revenue
+company_name		
+warner_bros_pictures	558	1.233317e+11
+universal_pictures	548	1.103745e+11
+columbia_pictures	426	8.020899e+10
+paramount	414	9.324288e+10
+20th_century_fox	360	9.771893e+10
+canal_	246	1.174787e+10
+new_line_cinema	245	3.978898e+10
+metro_goldwyn_mayer	206	2.424179e+10
+touchstone_pictures	176	2.652981e+10
+walt_disney_pictures	173	7.143699e+10
+
+
+
+	Number of Movies	Total Revenue
+parent_name		
+warner_bros_entertainment	619	1.292570e+11
+universal_pictures	550	1.103891e+11
+columbia_pictures	426	8.020899e+10
+sony_pictures	375	6.866819e+10
+20th_century_fox	362	9.776363e+10
+new_line_cinema	277	4.021105e+10
+canal_	246	1.174787e+10
+walt_disney_pictures	194	9.103916e+10
+touchstone_pictures	176	2.652981e+10
+miramax	156	1.261194e+10
+
+
+
+
+-- Exploratory Data Analysis of the Movie Database
+
+We import the movie dataset
+
+We have 12,418 movies in the dataset, with very few missing values or zero values in the columns we are interested in.
+
+| Column          | Null Percentage | Zero Percentage |
+|-----------------|-----------------|-----------------|
+| movie_id        | 0.0             | 0.000000        |
+| original_title  | 0.0             | 0.000000        |
+| runtime         | 0.0             | 0.000000        |
+| revenue_usd_adj | 0.0             | 0.000000        |
+| budget_usd_adj  | 0.0             | 0.120792        |
+| surplus         | 0.0             | 0.000000        |
+| ratio_adj       | 0.0             | 0.000000        |
+| roi             | 0.0             | 0.000000        |
+
+
+We can now continue only with the rows that have a budget value more than zero.
+
+We now have 12,403 movies in the dataset.
+
+
+|       | runtime | revenue_usd_adj  | budget_usd_adj | surplus          | ratio_adj    | roi        |
+| ----- | ------- | ---------------- | -------------- | ---------------- | ------------ | ---------- |
+| count | 12,403  | 12,403           | 12,403         | 12,403           | 12,403       | 12,403     |
+| mean  | 104.69  | 74,962,495.01    | 29,433,221.86  | 8,048,025.65     | 708.28       | 353.14     |
+| std   | 18.78   | 198,113,021.46   | 45,364,793.12  | 74,933,795.30    | 26,889.48    | 13,444.74  |
+| min   | 62      | 15.85            | 1.14           | -226,870,074.17  | 0            | -1         |
+| 25%   | 92      | 390,149.49       | 2,830,218.34   | -10,816,105.61   | 0.12         | -0.94      |
+| 50%   | 101     | 6,361,545.96     | 11,567,391.30  | -2,291,039.17    | 0.69         | -0.66      |
+| 75%   | 114     | 55,761,928.74    | 36,392,331.61  | 984,985.12       | 2.34         | 0.17       |
+| max   | 339     | 4,002,663,646.56 | 423,438,087.80 | 1,820,036,927.71 | 1,988,724.72 | 994,361.36 |
+
+We need to identify the outliers in the dataset. We will use the IQR method to identify the outliers.
+
+
+The outlier (?) movie of more than 10m box office less than 100k budget
+
+Could we do least(budget,1000) ? Lets examine if 1k makes sense
+Could we cut the low / high 2.5% of the data ? We trust the high end more than the low end, should we go 5% on the bottom 
+
+
+Would it makes sense to remove the small movies altogether ? Does our model even makes sense for small movies?
+
+
+We should fix data entry issues even if it needs to be done manually ( e.g https://en.wikipedia.org/wiki/Fetih_1453#cite_note-1 )
+
+
+Outlier Detection steps :
+1) Enrich
+2) Manual Review
+3) Remove outside X% of the data 
+
+Warning : Because we can remove data points that are out of scope of the project manually
+

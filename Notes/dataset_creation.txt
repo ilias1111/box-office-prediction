@@ -1,0 +1,36 @@
+We use this query from Wikidata to retrieve a list of movies
+
+SELECT DISTINCT ?film ?filmLabel ?imdb_id ?tmdb_id WHERE {
+  ?film wdt:P31 wd:Q11424;         # Instance of feature film
+         wdt:P2047 ?duration;      # With a duration property
+         wdt:P577 ?releaseDate;    # And a release date property
+  OPTIONAL { ?film wdt:P345 ?imdb_id. }   # IMDb ID
+  OPTIONAL { ?film wdt:P4947 ?tmdb_id. }  # TMDb ID
+  FILTER(?duration >= 75)           # Duration longer than 75 minutes
+  FILTER(YEAR(?releaseDate) > 1970 && YEAR(?releaseDate) < 2020) # Released after 1960 and before 2020
+  FILTER(BOUND(?imdb_id) || BOUND(?tmdb_id)) # Has either IMDb or TMDb ID
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+
+Total number of rows: 68263
+Number of entries with both TMDB and IMDB IDs: 66061 (96.77%)
+Number of entries with only IMDB ID: 2103 (3.08%)
+Number of entries with only TMDB ID: 99 (0.15%)
+
+filling tmdb_id with imdb_id resulted in + 53 entries
+
+
+
+
+https://www.themoviedb.org/bible/movie/59f3b16d9251414f20000001
+
+
+
+
+
+  // "collection_metrics": "SELECT base.movie_id, MAX(m2.revenue_world) as collection_max, AVG(m2.revenue_world) AS collection_avg, count(m2.revenue_world) as collection_count FROM `movie-dataset-291206.movies.collections` as base JOIN `movie-dataset-291206.movies.collections` as extra on base.collection_id = extra.collection_id JOIN `movie-dataset-291206.movies.main` as m1 on base.movie_id = m1.movie_id JOIN `movie-dataset-291206.movies.main` as m2 on extra.movie_id = m2.movie_id WHERE m2.release_date < m1.release_date GROUP BY base.movie_id",
+  // "keywords": "SELECT * FROM movie-dataset-291206.movies.keyword",
+  // "keywords_metrics": "SELECT base.movie_id, MAX(m2.revenue_world) as keyword_max, AVG(m2.revenue_world) AS keyword_avg, count(m2.revenue_world) as keyword_count FROM `movie-dataset-291206.movies.keyword` as base JOIN `movie-dataset-291206.movies.keyword` as extra on base.keyword_id = extra.keyword_id JOIN `movie-dataset-291206.movies.main` as m1 on base.movie_id = m1.movie_id JOIN `movie-dataset-291206.movies.main` as m2 on extra.movie_id = m2.movie_id WHERE m2.release_date < m1.release_date GROUP BY base.movie_id",
+  // "productions": "SELECT movie_id, pr.company_id, company_name FROM movie-dataset-291206.movies.production_companies as pr JOIN `movie-dataset-291206.movies.production_companies_data` as d on d.company_id = pr.company_id",
+  // "cast_keys": "SELECT person_id FROM `movie-dataset-291206.movies.cast` as cas WHERE cas.order < 4 GROUP BY person_id HAVING COUNT(movie_id) > 10",
+  // "cast_data": "SELECT person_id, movie_id FROM `movie-dataset-291206.movies.cast`"
