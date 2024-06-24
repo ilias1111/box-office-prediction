@@ -1,5 +1,4 @@
 import pandas as pd
-from pyparsing import col
 from torch import ge
 import support_functions as sf
 
@@ -35,12 +34,12 @@ if __name__ == "__main__":
 
 
     movie.to_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/processed_data/movie.csv', index=False)
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/movie.csv', index=False)
     keyword_processed.to_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/processed_data/keyword.csv', index=False)
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/keyword.csv', index=False)
     production_processed.to_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/processed_data/production.csv', index=False)
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/production.csv', index=False)
     collection_processed.to_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/processed_data/collection.csv', index=False)
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/collection.csv', index=False)
     genre_processed.to_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/processed_data/genre.csv', index=False)
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/genre.csv', index=False)

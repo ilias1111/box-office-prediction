@@ -4,4 +4,8 @@ __pycache__/*
 *.pyc
 code/data_pipeline/__pycache__/*
 code/ml_explore/__pycache__/*
-
+/bop/*
+/models/*
+/metadata/*
+/data/ml_ready_data/*
+/logs/*

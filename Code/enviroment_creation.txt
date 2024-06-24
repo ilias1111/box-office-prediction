@@ -5,7 +5,6 @@ pip install pycaret
 pip install cpi
 pip install mlflow
 pip install pandas_gbq
-pip install mlflow
 conda update --all
 conda env export > environment.yml
 

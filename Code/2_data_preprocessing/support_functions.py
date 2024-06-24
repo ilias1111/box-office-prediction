@@ -54,30 +54,30 @@ def adjust_cpi(amount: float, date: int) -> float:
 def init_data_loading():
 
     movie = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/movie.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/movie.csv')
     genre_mapping = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/genre_mapping.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/genre_mapping.csv')
     keyword_mapping = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/keyword_mapping.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/keyword_mapping.csv')
     cast_mapping = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/cast_mapping.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/cast_mapping.csv')
     collection_mapping = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/collection_mapping.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/collection_mapping.csv')
     production_mapping = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/production_mapping.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/production_mapping.csv')
 
     keyword = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/keyword.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/keyword.csv')
     production = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/production.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/production.csv')
     collection = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/collection.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/collection.csv')
 
     movies_with_sequel = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/retrieved_data/movies_with_sequel.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/movies_with_sequel.csv')
     
     movie_release_dates = pd.read_csv(
-        '/Users/iliasxenogiannis/Documents/GitHub/box-office-prediction/data/processed_data/movie_release_dates.csv')
+        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/movie_release_dates.csv')
 
     return movie, genre_mapping, keyword_mapping, cast_mapping, collection_mapping, production_mapping, \
         keyword, production, collection, movies_with_sequel, movie_release_dates
