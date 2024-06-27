@@ -4,8 +4,6 @@ import logging
 import numpy as np
 import pandas as pd
 import joblib
-import scipy
-# Import xgboost and lightgbm
 from sklearn.utils import class_weight
 from xgboost import XGBClassifier, XGBRegressor
 from lightgbm import LGBMClassifier, LGBMRegressor
@@ -300,7 +298,7 @@ class ModelTrainer:
 
 if __name__ == "__main__":
 
-    GRID_TYPE = 'non_grid'
+    GRID_TYPE = 'grid_search'
     ID_COLUMN_NAME = "movie_id"
 
     DATA_FILES_LIST = os.listdir('./data/ml_ready_data')

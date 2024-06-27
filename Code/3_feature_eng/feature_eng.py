@@ -40,7 +40,7 @@ def remove_outliers(movie,remove_outliers):
 
     # Create the new categorical column
     movie['release_category'] = np.select(conditions, categories, default='Other')
-    movie['is_within_scope'] = np.where((movie['budget_usd_adj'] > 10000) & (movie['revenue_usd_adj']>10000) , 1, 0).astype(bool)
+    movie['is_within_scope'] = np.where((movie['budget_usd_adj'] > 10_000) & (movie['revenue_usd_adj']> 10_000) , 1, 0).astype(bool)
 
     if remove_outliers:
         try:
@@ -134,7 +134,7 @@ def add_simple_features(movie_df):
 
 
 
-def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, collection_df):
+def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, collection_df, movie_crew):
 
     past_production_companies_perfrormance_q = '''
     SELECT
@@ -151,6 +151,38 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     GROUP BY init_movie_df.movie_id
     '''
 
+    past_director_perfrormance_q = '''
+    SELECT
+        init_movie_df.movie_id,
+        COUNT(post_movie_df.movie_id) as director_no_movies,
+        AVG(post_movie_df.revenue_usd_adj) as director_avg_revenue,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as director_25th_percentile_revenue,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as director_75th_percentile_revenue
+    FROM movie_df AS init_movie_df
+    LEFT JOIN movie_crew AS init_movie_crew ON init_movie_df.movie_id = init_movie_crew.movie_id
+    LEFT JOIN movie_crew AS post_movie_crew ON init_movie_crew.crew_id = post_movie_crew.crew_id
+    LEFT JOIN movie_df AS post_movie_df ON post_movie_crew.movie_id = post_movie_df.movie_id
+    WHERE post_movie_df.release_date < init_movie_df.release_date
+        AND post_movie_crew.job = 'Director' AND init_movie_crew.job = 'Director'
+    GROUP BY init_movie_df.movie_id
+    '''
+
+    past_writer_perfrormance_q = '''
+    SELECT
+        init_movie_df.movie_id,
+        COUNT(post_movie_df.movie_id) as writer_no_movies,
+        AVG(post_movie_df.revenue_usd_adj) as writer_avg_revenue,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_25th_percentile_revenue,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_75th_percentile_revenue
+    FROM movie_df AS init_movie_df
+    LEFT JOIN movie_crew AS init_movie_crew ON init_movie_df.movie_id = init_movie_crew.movie_id
+    LEFT JOIN movie_crew AS post_movie_crew ON init_movie_crew.crew_id = post_movie_crew.crew_id
+    LEFT JOIN movie_df AS post_movie_df ON post_movie_crew.movie_id = post_movie_df.movie_id
+    WHERE post_movie_df.release_date < init_movie_df.release_date
+        AND post_movie_crew.job = 'Writer' AND init_movie_crew.job = 'Writer'
+    GROUP BY init_movie_df.movie_id
+    '''
+
     past_keywords_perfrormance_q = '''
     SELECT
         init_movie_df.movie_id,
@@ -162,7 +194,7 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     LEFT JOIN keyword_df AS init_keyword ON init_movie_df.movie_id = init_keyword.movie_id
     LEFT JOIN keyword_df AS post_keyword ON init_keyword.keyword_id = post_keyword.keyword_id
     LEFT JOIN movie_df AS post_movie_df ON post_keyword.movie_id = post_movie_df.movie_id
-    WHERE post_movie_df.release_date::date < init_movie_df.release_date::date
+    WHERE post_movie_df.release_date < init_movie_df.release_date
     GROUP BY init_movie_df.movie_id
     '''
 
@@ -201,11 +233,15 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     past_keywords_perfrormance = duckdb.sql(past_keywords_perfrormance_q).to_df()
     past_genres_perfrormance = duckdb.sql(past_genres_perfrormance_q).to_df()
     past_collection_perfrormance = duckdb.sql(past_collection_perfrormance_q).to_df()
+    past_director_perfrormance = duckdb.sql(past_director_perfrormance_q).to_df()
+    past_writer_perfrormance = duckdb.sql(past_writer_perfrormance_q).to_df()
 
     movie_df = movie_df.merge(past_production_companies_perfrormance, on='movie_id', how='left')
     movie_df = movie_df.merge(past_keywords_perfrormance, on='movie_id', how='left')
     movie_df = movie_df.merge(past_genres_perfrormance, on='movie_id', how='left')
     movie_df = movie_df.merge(past_collection_perfrormance, on='movie_id', how='left')
+    movie_df = movie_df.merge(past_director_perfrormance, on='movie_id', how='left')
+    movie_df = movie_df.merge(past_writer_perfrormance, on='movie_id', how='left')
 
     genre_one_hot = pivot_one_hot(genre_df, 'name', 'genre')
     production_one_hot = pivot_one_hot(production_df, 'parent_name', 'prod_company')
@@ -219,10 +255,10 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     
     return movie_df
 
-def add_features(feature_flag, movie_df, production_df, keyword_df, genre_df, collection_df):
+def add_features(feature_flag, movie_df, production_df, keyword_df, genre_df, collection_df, movie_crew):
 
     if feature_flag == 'complex':
-        movie_df = add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, collection_df)
+        movie_df = add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, collection_df, movie_crew)
         movie_df = add_simple_features(movie_df)
     elif feature_flag == 'simple':
         movie_df = add_simple_features(movie_df)

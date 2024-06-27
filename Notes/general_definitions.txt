@@ -1,0 +1,3 @@
+* surplus
+    We assume based on the bibliography that the studio gets 50% of the box office thus the surplus of a movie is 0.5 * Revenue - Cost
+* 

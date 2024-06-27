@@ -14,7 +14,7 @@ def load_files_into_dfs():
     Load multiple CSV files into pandas DataFrames.
     Returns a tuple of DataFrames.
     """
-    filenames = ['movie', 'keyword', 'production', 'collection', 'genre']
+    filenames = ['movie', 'keyword', 'production', 'collection', 'genre', 'movie_crew']
     return tuple(pd.read_csv(get_file_path(name)) for name in filenames)
 
 def generate_file_name(production_size, task_type, remove_outliers, product_flag):
@@ -47,7 +47,7 @@ def save_data(movie_df, task_type, remove_outliers, feature_flag):
 
 def construct_dataset(feature_flag, task_type, to_remove_outliers=False):
 
-    movie, keyword, production, collection, genre = load_files_into_dfs()
+    movie, keyword, production, collection, genre, movie_crew = load_files_into_dfs()
 
     # Filter necessary columns in movie DataFrame
     
@@ -55,7 +55,7 @@ def construct_dataset(feature_flag, task_type, to_remove_outliers=False):
 
     movie = feature_eng.remove_columns(movie)
 
-    movie = feature_eng.add_features(feature_flag, movie, production, keyword, genre, collection)
+    movie = feature_eng.add_features(feature_flag, movie, production, keyword, genre, collection, movie_crew)
     
     movie = feature_eng.add_target_variable(movie, task_type)
 
@@ -74,5 +74,3 @@ if __name__ == "__main__":
             for feature_flag in FEATURE_FLAG:
 
                 construct_dataset(feature_flag, task, outlier_status)
-
-

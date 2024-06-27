@@ -1,0 +1,38 @@
+We want to start enriching the initial dataset and to apply all the learning we got in the preprocessing step.
+
+Initially, the script sets up a structured approach to manage data paths and load multiple related datasets that we have prepared in the previous steps.
+This sets the foundation for a comprehensive analysis by ensuring that all relevant aspects of movie data are considered in the feature engineering.
+
+We approache it through two main strategies: no additions, simple and complex feature additions, the reason behind this is we want to showcase how the feature engineering improves our models.
+
+Simple Features: 
+
+    * Time Cyclical Nature
+        Encoding the release month into sine and cosine values to capture the cyclical nature of time within a year. This approach acknowledges the temporal patterns in movie releases and their potential impact on movie success.
+    * 
+
+Complex Features: 
+    * Complex KPIs based on previous performance of movies sharing elements with a movie (directors, etc)
+        This involves deeper analysis using SQL-like queries to extract performance metrics based on historical data. For instance, the average and percentile revenues of movies associated with the same production companies, directors, writers, genres, keywords, and collections are calculated. This not only leverages the relational nature of the data but also introduces a temporal dimension, considering the performance before the release of the current movie.
+    * Adding feature via One-Hot Encoding
+        A pivot-based approach is utilized to transform categorical variables like genres and production companies into a one-hot encoded format. This method ensures that only categories with significant presence (more than ten occurrences) are included, which helps in reducing the dimensionality and focusing on influential factors.
+
+Data Cleaning and Outlier Management
+The approach to handling outliers is methodical,
+Outliers are removed based on a combination of budget and revenue constraints and the category of release, which could impact the generalizability of the predictive model.
+
+
+Target Variable Construction
+The scripts adapt the dataset for different types of machine learning tasks:
+
+    * Binary Classification: Movies are classified as either 'Bankrupt' or 'Success' based on the sign of their surplus.
+    * Multi-class Classification: Movies are categorized into more granular classes like 'Bankrupt', 'Flop', 'Small Success', and 'Huge Success', based on predefined revenue thresholds.
+    * Regression : We try to identify the revenue that the movie achieved in the box office globally. 
+
+This differentiation in task types reflects an intent to explore how different levels of outcome granularity impact model performance and interpretability.
+
+Experiment Setup
+
+At the end 
+
+The scripts hint at a loop structure that iterates over combinations of feature complexities, outlier management strategies, and task types. This setup indicates a factorial design of experiments to systematically evaluate the influence of these factors on predictive accuracy. The experiments would allow you to assess which configurations yield the best balance between accuracy and model complexity, potentially guiding best practices for predictive modeling in the entertainment industry.
