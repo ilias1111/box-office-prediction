@@ -83,39 +83,10 @@ def init_data_loading():
         keyword, production, collection, movies_with_sequel, movie_release_dates
 
 
-def split_and_save_dataframe(df: pd.DataFrame, budget_categories: Dict[str, Tuple[int, Optional[int]]], filename_prefix: str) -> None:
-    """
-    Splits the dataframe into multiple categories based on the given budget thresholds
-    and saves each split and the entire dataframe to CSV files.
-
-    Parameters:
-    df (pd.DataFrame): The dataframe to split.
-    budget_categories (Dict[str, Tuple[int, Optional[int]]]): Dictionary with labels as keys and budget thresholds as values.
-    filename_prefix (str): The prefix for the filenames of the CSV files.
-    """
-    try:
-        for label, (low, high) in budget_categories.items():
-            condition = (df.budget_usd_adj > low) & (
-                df.budget_usd_adj <= high) if high is not None else (df.budget_usd_adj > low)
-            split_df = df.loc[condition]
-            split_filename = f'code/data_pipeline/data/{filename_prefix}_{label}.csv'
-            split_df.to_csv(split_filename, index=False)
-            logging.info(
-                f'Saved {split_filename} with {len(split_df)} records.')
-
-        # Save the entire dataframe
-        df.to_csv(
-            f'code/data_pipeline/data/{filename_prefix}_full.csv', index=False)
-        logging.info(
-            f'Saved the entire dataframe to {filename_prefix}_full.csv with {len(df)} records.')
-    except Exception as e:
-        logging.error(f'An error occurred: {e}', exc_info=True)
-
-
 def movie_table_processing(df, movies_with_sequel_values):
 
     df['is_sequel_my'] = df['movie_id'].apply(
-        lambda x: 1 if x in movies_with_sequel_values else 0).astype(np.uint8)
+        lambda x: True if x in movies_with_sequel_values else False)
     df['release_date'] = pd.to_datetime(df['release_date'])
     # df['release_date'] = df['release_date'].tz_localize(None).astype('datetime64[ns]')
 
