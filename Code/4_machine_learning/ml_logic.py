@@ -26,6 +26,13 @@ from sklearn.metrics import (
     mean_squared_error, root_mean_squared_error, mean_squared_log_error, root_mean_squared_log_error,
     mean_absolute_error, mean_absolute_percentage_error, r2_score
 )
+from scikeras.wrappers import KerasClassifier, KerasRegressor
+from neural_networks import build_clf, build_regressor
+
+# suppress warnings UndefinedMetricWarning
+import warnings
+from sklearn.exceptions import UndefinedMetricWarning
+warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 # pd.set_option('display.max_columns', None)
 # pd.set_option('display.max_info_columns', 99999)
@@ -48,25 +55,30 @@ class ModelTrainer:
     def init_models(self, task_type):
         if task_type in ['binary_classification', 'multi_class_classification']:
             base_models = {
-                "logistic_regression": LogisticRegression(random_state=42, n_jobs=-1, multi_class='multinomial', max_iter=1000),
-                "random_forest_classifier": RandomForestClassifier(random_state=42, n_jobs=-1),
-                #"support_vector_machine_classifier": SVC(probability=True, random_state=42, decision_function_shape='ovo'),
-                "decision_tree_classifier": DecisionTreeClassifier(random_state=42),
-                "xgboost_classifier": XGBClassifier(random_state=42, n_jobs=-1),
-                "lightgbm_classifier": LGBMClassifier(random_state=42, n_jobs=-1),
-                "mlp_classifier": MLPClassifier(random_state=42, max_iter=1000)
+                # "logistic_regression": LogisticRegression(random_state=42, n_jobs=-1, multi_class='multinomial', max_iter=1000),
+                # "random_forest_classifier": RandomForestClassifier(random_state=42, n_jobs=-1),
+                # #"support_vector_machine_classifier": SVC(probability=True, random_state=42, decision_function_shape='ovo'),
+                # "decision_tree_classifier": DecisionTreeClassifier(random_state=42),
+                # "xgboost_classifier": XGBClassifier(random_state=42, n_jobs=-1),
+                # "lightgbm_classifier": LGBMClassifier(random_state=42, n_jobs=-1),
+                # "mlp_classifier": MLPClassifier(random_state=42, max_iter=1000)
+                "nn_class" : KerasClassifier(model=build_clf,  model__unit = 3, model__dropout=0.2, verbose=False, random_state=42, )
             }
+             
             if task_type == 'multi_class_classification':
-                base_models["xgboost_classifier"].set_params(objective='multi:softprob', num_class='auto')
+                base_models["nn_class"].set_params(model__target_type_='multiclass')
+                pass
+            #     base_models["xgboost_classifier"].set_params(objective='multi:softprob', num_class='auto')
             return base_models
         elif task_type == 'regression':
             return {
-                "linear_regression": LinearRegression(n_jobs=-1),
-                "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
-                "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
-                "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
-                "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1),
-                "mlp_regressor": MLPRegressor(random_state=42, max_iter=1000)
+                # "linear_regression": LinearRegression(n_jobs=-1),
+                # "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
+                # "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
+                # "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
+                # "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1),
+                # "mlp_regressor": MLPRegressor(random_state=42, max_iter=1000)
+                'nn_regression' : KerasRegressor(model=build_regressor, model__unit = 3, model__dropout=0.2, verbose=False, random_state=42)
             }
         else:
             raise ValueError("Invalid task type specified. Choose 'binary_classification', 'multi_class_classification', or 'regression'.")
@@ -156,8 +168,12 @@ class ModelTrainer:
 
         
 
-        if (self.task_type != "regression") and (model_name != 'mlp_classifier'):
+        if (self.task_type != "regression") and (model_name not in ('mlp_classifier','nn_class')):
             param_grid['model__class_weight'] = [class_weight_dict]
+
+        # if model_name in ['nn_class'] and self.task_type == 'multi_class_classification':
+        #     y_train = to_categorical(y_train) 
+        #     y_test = to_categorical(y_test) 
 
         scaler_mapping = {
             "StandardScaler": StandardScaler(),
@@ -168,10 +184,9 @@ class ModelTrainer:
         param_grid = { **param_grid,
             'preprocessor__num__scaler': [scaler_mapping[scaler] for scaler in param_grid.get('preprocessor__num__scaler',["StandardScaler"])]
         }
-        
         if self.grid_type != 'non_grid':
             number_of_combinations = len(list(ParameterGrid(param_grid)))
-            model_with_parameters = GridSearchCV(model, param_grid, cv=5, scoring=self.select_scoring(), n_jobs=-1, verbose=0, pre_dispatch='4*n_jobs')
+            model_with_parameters = GridSearchCV(model, param_grid, cv=5, scoring=self.select_scoring(), n_jobs=-1, verbose=0, pre_dispatch='4*n_jobs', error_score='raise')
             model_with_parameters.fit(X_train, y_train)
             model_with_parameters = model_with_parameters.best_estimator_
 
@@ -225,8 +240,9 @@ class ModelTrainer:
         if is_classifier(model):
             if self.task_type == 'multi_class_classification':
                 pred_proba = model.predict_proba(X_test)
+
                 metrics = {
-                    "ROC AUC Score": roc_auc_score(y_test, pred_proba, average='weighted', multi_class='ovr'),
+                    # "ROC AUC Score": roc_auc_score(y_test, pred_proba, average='weighted', multi_class='ovr'),
                     "Accuracy": accuracy_score(y_test, pred),
                     "Precision": precision_score(y_test, pred, zero_division=0, average='weighted'),
                     "Recall": recall_score(y_test, pred, zero_division=0, average='weighted'),
@@ -266,8 +282,11 @@ class ModelTrainer:
         metadata_filename = f"{filename}.json"
         os.makedirs("models", exist_ok=True)
         os.makedirs("metadata", exist_ok=True)
-        joblib.dump(model, os.path.join("models", model_filename))
+        if model_type not in ['nn_class', 'nn_regression']:
+            joblib.dump(model, os.path.join("models", model_filename))
         feature_importance.to_dict(orient='records')
+        model_params = model.named_steps["model"].get_params()
+        model_params.pop('model')
         metadata = {
             "run_id" : self.run_id,
             "timestamp": timestamp,
@@ -282,7 +301,7 @@ class ModelTrainer:
             "metrics": metrics,
             "conf_matrix": conf_matrix.to_dict(orient='records') if conf_matrix is not None else None,
             "class_report": class_report,
-            "model_parameters": model.named_steps["model"].get_params(),
+            "model_parameters": model_params,
             "scaler": type(model.named_steps["preprocessor"].named_transformers_['num'].named_steps['scaler']).__name__,
             "variance_threshold": model.named_steps["preprocessor"].named_transformers_['binary'].named_steps['variance_threshold'].threshold,
             "feature_importance": feature_importance.to_dict(orient='records')
@@ -310,9 +329,12 @@ if __name__ == "__main__":
 
     #create a hash for each run
     RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
-
+    cases = len([(i,j,k) for i,j,k in zip(DATA_FILES_LIST, TASK_TYPE_LIST, TARGET_COLUMN_NAME_LIST)])
+    counter = 0
     for data_file, task_type, target_column_name in zip(DATA_FILES_LIST, TASK_TYPE_LIST, TARGET_COLUMN_NAME_LIST):
+        print(f"Running model {counter} from {cases}")
+        counter += 1
         trainer = ModelTrainer(RUN_ID, f'./data/ml_ready_data/{data_file}', target_column_name, ID_COLUMN_NAME, task_type=task_type, grid_type=GRID_TYPE, positive_class='Success')
         results = trainer.run()
-        # print(f"Results for {data_file}")
-        # print(results)
+        print(f"Results for {data_file}")
+        print(results)

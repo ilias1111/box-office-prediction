@@ -293,5 +293,59 @@
             "preprocessor__num__scaler": ["StandardScaler"],
             "preprocessor__binary__variance_threshold__threshold": [0]
         }
+    },
+
+    "nn_class" : {
+        "deep_grid_search": {
+            "model__model__unit" :[4,8, 16],
+            "model__model__dropout" :[0.2, 0.5],
+            "model__epochs" :[25, 100],
+            "model__optimizer": ["adam"],
+            "preprocessor__num__scaler": ["StandardScaler", "RobustScaler"],
+            "preprocessor__binary__variance_threshold__threshold": [0]
+        },
+        "grid_search": {
+            "model__model__unit" :[8, 16],
+            "model__model__dropout" :[0.2, 0.5],
+            "model__epochs" :[25, 100],
+            "model__optimizer": ["adam"],
+            "preprocessor__num__scaler": ["StandardScaler", "RobustScaler"],
+            "preprocessor__binary__variance_threshold__threshold": [0]
+        },
+        "non_grid": {
+            "model__model__unit" :[8],
+            "model__model__dropout" :[0.2],
+            "model__epochs" :[100],
+            "model__optimizer": ["adam"],
+            "preprocessor__num__scaler": ["StandardScaler"],
+            "preprocessor__binary__variance_threshold__threshold": [0]
+        }
+    },
+    "nn_regression" : {
+        "deep_grid_search": {
+            "model__model__unit" :[4,8, 16],
+            "model__model__dropout" :[0.2, 0.5],
+            "model__epochs" :[25, 100],
+            "model__optimizer": ["adam"],
+            "preprocessor__num__scaler": ["StandardScaler", "RobustScaler"],
+            "preprocessor__binary__variance_threshold__threshold": [0]
+        },
+        "grid_search": {
+            "model__model__unit" :[8, 16],
+            "model__model__dropout" :[0.2, 0.5],
+            "model__epochs" :[25, 100],
+            "model__optimizer": ["adam"],
+            "preprocessor__num__scaler": ["StandardScaler", "RobustScaler"],
+            "preprocessor__binary__variance_threshold__threshold": [0]
+        },
+        "non_grid": {
+            "model__model__unit" :[8],
+            "model__model__dropout" :[0.2],
+            "model__epochs" :[100],
+            "model__optimizer": ["adam"],
+            "preprocessor__num__scaler": ["StandardScaler"],
+            "preprocessor__binary__variance_threshold__threshold": [0]
+        }
     }
 }
+
