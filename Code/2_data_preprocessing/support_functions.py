@@ -5,6 +5,7 @@ import re
 from unidecode import unidecode
 import cpi
 import numpy as np
+import uroman as ur
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -28,6 +29,13 @@ CERTIFICATE_MAPPINGS = {
     "BPjM Restricted": "R"
 }
 
+
+def filter_rows(df: pd.DataFrame) -> pd.DataFrame:
+
+    # Make sure release_date is not null and revenue and budget are not 0
+    filtered_df = df[df['release_date'].notnull() & (df['revenue'] > 0) & (df['budget'] > 0)]
+
+    return filtered_df
 
 # Functions
 def fix_certificates(df: pd.DataFrame) -> pd.DataFrame:
@@ -53,69 +61,56 @@ def adjust_cpi(amount: float, date: int) -> float:
 
 def init_data_loading():
 
-    movie = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/movie.csv')
-    genre_mapping = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/genre_mapping.csv')
-    keyword_mapping = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/keyword_mapping.csv')
-    cast_mapping = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/cast_mapping.csv')
-    collection_mapping = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/collection_mapping.csv')
-    production_mapping = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/production_mapping.csv')
+    DATA_DIR_TMDB = '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/tmdb'
+    DATA_DIR_MANUAL = '/Users/iliasx/Documents/GitHub/box-office-prediction/data/manual_data'
+    DATA_DIR_WIKIPEDIA = '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/wikipedia'
+    movie = pd.read_csv(f'{DATA_DIR_TMDB}/movies.csv')
+    genre_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/genres.csv')
+    keyword_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/keywords.csv')
+    cast_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/cast.csv')
+    crew_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/crew.csv')
+    collection_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/collections.csv')
+    production_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/production_companies.csv')
 
-    keyword = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/keyword.csv')
-    production = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/production.csv')
-    collection = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/collection.csv')
+    keyword = pd.read_csv(f'{DATA_DIR_TMDB}/keyword_export.csv')
+    production = pd.read_csv(f'{DATA_DIR_TMDB}/production_company_export.csv')
+    collection = pd.read_csv(f'{DATA_DIR_TMDB}/collection_export.csv')
+    movie_release_dates = pd.read_csv(f'{DATA_DIR_TMDB}/release_dates.csv')
 
-    movies_with_sequel = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/movies_with_sequel.csv')
-    
-    movie_release_dates = pd.read_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/movie_release_dates.csv')
-
-    return movie, genre_mapping, keyword_mapping, cast_mapping, collection_mapping, production_mapping, \
-        keyword, production, collection, movies_with_sequel, movie_release_dates
+    movie_financial_data_usd = pd.read_csv(f'{DATA_DIR_WIKIPEDIA}/movie_financial_data_usd.csv')
+    manual_adjustments = pd.read_csv(f'{DATA_DIR_MANUAL}/manual_adjustments.csv')
+    mojo_scrapping = pd.read_csv(f'{DATA_DIR_MANUAL}/parsed_mojo.csv')
 
 
-def split_and_save_dataframe(df: pd.DataFrame, budget_categories: Dict[str, Tuple[int, Optional[int]]], filename_prefix: str) -> None:
-    """
-    Splits the dataframe into multiple categories based on the given budget thresholds
-    and saves each split and the entire dataframe to CSV files.
 
-    Parameters:
-    df (pd.DataFrame): The dataframe to split.
-    budget_categories (Dict[str, Tuple[int, Optional[int]]]): Dictionary with labels as keys and budget thresholds as values.
-    filename_prefix (str): The prefix for the filenames of the CSV files.
-    """
-    try:
-        for label, (low, high) in budget_categories.items():
-            condition = (df.budget_usd_adj > low) & (
-                df.budget_usd_adj <= high) if high is not None else (df.budget_usd_adj > low)
-            split_df = df.loc[condition]
-            split_filename = f'code/data_pipeline/data/{filename_prefix}_{label}.csv'
-            split_df.to_csv(split_filename, index=False)
-            logging.info(
-                f'Saved {split_filename} with {len(split_df)} records.')
+    return movie, genre_mapping, keyword_mapping, cast_mapping, crew_mapping, collection_mapping, production_mapping, \
+        keyword, production, collection, movie_release_dates, movie_financial_data_usd, mojo_scrapping, manual_adjustments
 
-        # Save the entire dataframe
-        df.to_csv(
-            f'code/data_pipeline/data/{filename_prefix}_full.csv', index=False)
-        logging.info(
-            f'Saved the entire dataframe to {filename_prefix}_full.csv with {len(df)} records.')
-    except Exception as e:
-        logging.error(f'An error occurred: {e}', exc_info=True)
+def create_financial_data_usd(movie: pd.DataFrame, wikipedia_movie_financial_data_usd: pd.DataFrame, mojo_scrapping: pd.DataFrame, manual_adjustments: pd.DataFrame) -> pd.DataFrame:
+
+    movie['revenue'] = movie['revenue'].replace(0, np.nan)
+    movie['budget'] = movie['budget'].replace(0, np.nan)
+    movie['revenue_original'] = movie['revenue']
+    movie['budget_original'] = movie['budget']
+
+    manual_adjustments = manual_adjustments[["movie_id", "revenue_fix","budget_fix"]].replace(0, np.nan)
+    movie = movie.merge(manual_adjustments, on='movie_id', how='left')
+
+    wikipedia_movie_financial_data_usd = wikipedia_movie_financial_data_usd[['movie_id', 'budget_avg_usd', 'box_office_avg_usd', 'url']].rename(columns={'budget_avg_usd': 'budget_wiki', 'box_office_avg_usd': 'revenue_wiki','url' : 'url_wiki'}).replace(0, np.nan)
+    movie = movie.merge(wikipedia_movie_financial_data_usd, on='movie_id', how='left')
 
 
-def movie_table_processing(df, movies_with_sequel_values):
+    mojo_scrapping = mojo_scrapping.reset_index().rename(columns={'Unnamed: 0': 'imdb_id', 'worldwide':'revenue_mojo'})[['imdb_id', 'revenue_mojo', 'error']].replace(0, np.nan)
+    movie = movie.merge(mojo_scrapping, on='imdb_id', how='left')
 
-    df['is_sequel_my'] = df['movie_id'].apply(
-        lambda x: 1 if x in movies_with_sequel_values else 0).astype(np.uint8)
+    movie['revenue'] = movie['revenue_fix'].fillna(movie['revenue_mojo']).fillna(movie['revenue']).fillna(movie['revenue_wiki']).fillna(0)
+    movie['budget'] = movie['budget_fix'].fillna(movie['budget']).fillna(movie['budget_wiki']).fillna(0)
+                                                         
+    return movie
+
+
+def movie_table_processing(df):
+
     df['release_date'] = pd.to_datetime(df['release_date'])
     # df['release_date'] = df['release_date'].tz_localize(None).astype('datetime64[ns]')
 
@@ -124,9 +119,9 @@ def movie_table_processing(df, movies_with_sequel_values):
     df['year'] = df['release_date'].dt.year
 
     df['revenue_usd_adj'] = df.apply(
-        lambda x: adjust_cpi(x['revenue_world'], x['year']), axis=1)
+        lambda x: adjust_cpi(x['revenue'], x['year']), axis=1)
     df['budget_usd_adj'] = df.apply(lambda x: adjust_cpi(
-        x['budget_usd_adj'], x['year']), axis=1)
+        x['budget'], x['year']), axis=1)
     df['surplus'] = 0.5 * df['revenue_usd_adj'] - df['budget_usd_adj']
     df['ratio_adj'] = df['revenue_usd_adj'] / df['budget_usd_adj']
     df['roi'] = df['surplus'] / df['budget_usd_adj']
@@ -187,11 +182,16 @@ def calculate_release_info_with_checks(df):
     # Get the earliest physical/digital release date for each movie
     min_physical_digital_dates = physical_digital_releases.groupby('movie_id')['release_date'].min()
 
+    #Get the certificates for the us release of a movie
+    us_certificates = theatrical_releases[theatrical_releases['country_code'] == 'US']
+    us_certificates = us_certificates.groupby('movie_id')['certification'].first()
+
     # Prepare the final DataFrame
     final_df = pd.DataFrame(index=df['movie_id'].unique())
     final_df = final_df.join(theatrical_release_dates[countries], how='left')
     final_df = final_df.join(min_physical_digital_dates.rename('digital_physical_date'), how='left')
     final_df = final_df.join(min_theatrical_release_dates.rename('min_theatrical_release_date'), how='left')
+    final_df = final_df.join(us_certificates.rename('ageCert'), how='left')
 
     # Add flags for release in each country and overall release
     for country in countries:
@@ -202,10 +202,31 @@ def calculate_release_info_with_checks(df):
     final_df['days_from_us_release'] = ((final_df['digital_physical_date'] - final_df['US']).dt.days).fillna(9999)
 
     # Selecting the required columns
-    final_df = final_df[['is_released_US', 'is_released_CN', 'is_released_FR', 'is_released_GB', 'is_released_JP', 'is_released', 'digital_physical_date', 'days_from_us_release']]
+    final_df = final_df[['is_released_US', 'is_released_CN', 'is_released_FR', 'is_released_GB', 'is_released_JP', 'is_released', 'digital_physical_date', 'days_from_us_release', 'ageCert']]
     final_df.reset_index(inplace=True)
     final_df.rename(columns={'index': 'movie_id'}, inplace=True)
 
+    final_df['is_first_released_in_cinemas'] = np.where(final_df['days_from_us_release'] > 0, 1, 0).astype(bool)
+    final_df['is_first_released_in_cinemas_safe'] = np.where(final_df['days_from_us_release'] > 60, 1, 0).astype(bool)
+    final_df['is_released'] = final_df['is_released'].astype(bool)
+
+    conditions = [
+        (final_df['is_released']) & (~final_df['is_first_released_in_cinemas']),
+        (final_df['is_released']) & (final_df['is_first_released_in_cinemas_safe']),
+        (final_df['is_released']) & (final_df['is_first_released_in_cinemas']) & (~final_df['is_first_released_in_cinemas_safe']),
+        ~final_df['is_released']
+    ]
+
+    # Define the corresponding categories for each condition
+    categories = [
+        'Streaming release',
+        'Far streaming release',
+        'Close streaming release',
+        'Not released in major markets'
+    ]
+
+    # Create the new categorical column
+    final_df['release_category'] = np.select(conditions, categories, default='Other')
 
     return final_df
 
@@ -226,10 +247,15 @@ def convert_to_machine_friendly(df, column_name):
     Returns:
     pandas.DataFrame: The DataFrame with the converted column.
     """
-
+    uroman = ur.Uroman()
+    
     # Check if the column exists in the DataFrame
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in DataFrame")
+
+    # Romanize non-Latin characters
+    df[column_name] = df[column_name].astype(str)
+    df[column_name] = df[column_name].apply(lambda x: uroman.romanize_string(x))
 
     # Transliterate to ASCII
     df[column_name] = df[column_name].apply(lambda x: unidecode(x))

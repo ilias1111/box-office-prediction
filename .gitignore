@@ -8,4 +8,21 @@ code/ml_explore/__pycache__/*
 /models/*
 /metadata/*
 /data/ml_ready_data/*
+/data/retrieved_data/tmdb/*
 /logs/*
+
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# OS generated files
+.DS_Store
+.DS_Store?

@@ -1,0 +1,37 @@
+We use this query from Wikidata to retrieve a list of movies
+
+SELECT DISTINCT ?film ?filmLabel ?imdb_id ?tmdb_id ?mojo_id ?wikipedia_url WHERE {
+  ?film wdt:P31 wd:Q11424;         # Instance of feature film
+         wdt:P2047 ?duration;      # With a duration property
+         wdt:P577 ?releaseDate.    # And a release date property
+  OPTIONAL { ?film wdt:P345 ?imdb_id. }   # IMDb ID
+  OPTIONAL { ?film wdt:P4947 ?tmdb_id. }  # TMDb ID
+  OPTIONAL { ?film wdt:P1237 ?mojo_id. }  # Box Office Mojo ID
+  OPTIONAL {
+    ?wikipedia_url schema:about ?film;
+                   schema:isPartOf <https://en.wikipedia.org/>;
+                   schema:inLanguage "en".
+  }
+  FILTER(?duration >= 75)           # Duration longer than 75 minutes
+  FILTER(YEAR(?releaseDate) > 1970 && YEAR(?releaseDate) < 2020) # Released after 1970 and before 2020
+  FILTER(BOUND(?imdb_id) || BOUND(?tmdb_id)) # Ensure at least one ID or Wikipedia URL is available
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+
+Total number of rows: 69613
+Number of entries with both TMDB and IMDB IDs: 67443 (96.88%)
+Number of entries with only IMDB ID: 2051 (2.95%)
+Number of entries with only TMDB ID: 119 (0.17%)
+
+filling tmdb_id with imdb_id resulted in + 71 entries
+Successfully stored 71 matches in Code/retrieved_data/tmdb_imdb_match.csv
+
+
+
+https://www.themoviedb.org/bible/movie/59f3b16d9251414f20000001
+
+
+http://files.tmdb.org/p/exports/keyword_ids_07_13_2024.json.gz
+http://files.tmdb.org/p/exports/collection_ids_07_13_2024.json.gz
+http://files.tmdb.org/p/exports/production_company_ids_07_13_2024.json.gz
+http://files.tmdb.org/p/exports/person_ids_07_13_2024.json.gz

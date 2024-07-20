@@ -1,0 +1,4 @@
+google-cloud-storage==2.5.0
+google-cloud-firestore==2.7.2
+google-cloud-pubsub==2.13.6
+functions-framework==3.0.0

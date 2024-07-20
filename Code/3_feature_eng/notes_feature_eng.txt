@@ -33,6 +33,4 @@ This differentiation in task types reflects an intent to explore how different l
 
 Experiment Setup
 
-At the end 
-
 The scripts hint at a loop structure that iterates over combinations of feature complexities, outlier management strategies, and task types. This setup indicates a factorial design of experiments to systematically evaluate the influence of these factors on predictive accuracy. The experiments would allow you to assess which configurations yield the best balance between accuracy and model complexity, potentially guiding best practices for predictive modeling in the entertainment industry.
