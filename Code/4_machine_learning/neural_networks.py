@@ -1,30 +1,27 @@
-# import the libraries 
+from typing import Dict
 import keras
+from keras import layers
 
-def build_clf(meta, unit, dropout=0.2):
+
+def build_neural_network_model(
+    meta: Dict[str, int],
+    units: int,
+    num_layers: int,
+    dropout: float = 0.2,
+    layers_activation: str = "relu",
+    output_activation: str = "linear",
+    loss: str = 'mean_absolute_percentage_error',
+):
     n_features_in_ = meta["n_features_in_"]
 
-    ann = keras.models.Sequential([
-        keras.layers.Input(shape=(n_features_in_,)),
-        keras.layers.Dense(units=unit, activation='relu'),
-        keras.layers.Dropout(dropout),
-        keras.layers.Dense(units=unit, activation='relu'),
-        keras.layers.Dropout(dropout),
-        keras.layers.Dense(units=1, activation='sigmoid')
-    ])
-    ann.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    return ann
+    model = keras.models.Sequential()
+    model.add(layers.Input(shape=(n_features_in_,)))
 
-def build_regressor(meta, unit, dropout=0.2):
-    n_features_in_ = meta["n_features_in_"]
+    for _ in range(num_layers):
+        model.add(layers.Dense(units, activation=layers_activation))
+        model.add(layers.Dropout(dropout))
 
-    ann = keras.models.Sequential([
-        keras.layers.Input(shape=(n_features_in_,)),
-        keras.layers.Dense(units=unit, activation='relu'),
-        keras.layers.Dropout(dropout),
-        keras.layers.Dense(units=unit, activation='relu'),
-        keras.layers.Dropout(dropout),
-        keras.layers.Dense(units=1, activation='linear')
-    ])
-    ann.compile(optimizer='adam', loss='mean_absolute_percentage_error', metrics=['mean_absolute_percentage_error'])
-    return ann
+    model.add(layers.BatchNormalization())
+    model.add(layers.Dense(1, activation=output_activation))
+    model.compile(optimizer="adam", loss=loss, metrics=[loss])
+    return model

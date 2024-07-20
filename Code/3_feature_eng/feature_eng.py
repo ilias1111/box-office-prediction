@@ -22,32 +22,15 @@ def remove_outliers(movie,remove_outliers):
     """
     Remove outliers from a DataFrame based on the Z-score of the 'ratio_adj' column.
     """
-    movie['is_first_released_in_cinemas'] = np.where(movie['days_from_us_release'] > 0, 1, 0).astype(bool)
-    movie['is_first_released_in_cinemas_safe'] = np.where(movie['days_from_us_release'] > 60, 1, 0).astype(bool)
-    movie['is_released'] = movie['is_released'].astype(bool)
+    roi_2_5 = movie['ratio_adj'].quantile(0.025)
+    roi_97_5 = movie['ratio_adj'].quantile(0.975)
+    movie['is_within_scope'] = np.where((movie['budget_usd_adj'] > 25_000) & (movie['revenue_usd_adj']> 25_000), 1, 0).astype(bool)
 
-    conditions = [
-    (movie['is_released']) & (~movie['is_first_released_in_cinemas']),
-    (movie['is_released']) & (movie['is_first_released_in_cinemas_safe']),
-    (movie['is_released']) & (movie['is_first_released_in_cinemas']) & (~movie['is_first_released_in_cinemas_safe']),
-    ~movie['is_released']
-    ]
-
-    # Define the corresponding categories for each condition
-    categories = [
-    'Streaming release',
-    'Far streaming release',
-    'Close streaming release',
-    'Not released in major markets'
-    ]
-
-    # Create the new categorical column
-    movie['release_category'] = np.select(conditions, categories, default='Other')
-    movie['is_within_scope'] = np.where((movie['budget_usd_adj'] > 10_000) & (movie['revenue_usd_adj']> 10_000) , 1, 0).astype(bool)
 
     if remove_outliers:
         try:
             movie_clean = movie[(movie['is_within_scope']) & (movie['release_category'] == 'Far streaming release')]
+            movie_clean = movie_clean[(movie_clean['ratio_adj'] > roi_2_5) & (movie_clean['ratio_adj'] < roi_97_5)]
             logging.info(f"{len(movie)- len(movie_clean)} outliers removed successfully.")
             return movie_clean
         except Exception as e:
@@ -119,7 +102,7 @@ def remove_columns(df):
     """
 
     necessary_columns = [
-        'movie_id', 'original_language', 'release_date','runtime', 'ageCert', 'is_sequel_my', 'quarter', 'month', 'year',
+        'movie_id', 'original_language', 'release_date','runtime', 'ageCert', 'quarter', 'month', 'year',
         'is_released_US', 'is_released_CN', 'is_released_FR', 'is_released_GB', 'is_released_JP',
         'budget_usd_adj', 'revenue_usd_adj', 'surplus', 'ratio_adj', 'roi'
     ]
@@ -229,7 +212,7 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
         PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as production_company_75th_percentile_revenue
     FROM movie_df AS init_movie_df
     LEFT JOIN production_df AS init_prod ON init_movie_df.movie_id = init_prod.movie_id
-    LEFT JOIN production_df AS post_prod ON init_prod.parent_id = post_prod.parent_id
+    LEFT JOIN production_df AS post_prod ON init_prod.company_id = post_prod.company_id
     LEFT JOIN movie_df AS post_movie_df ON post_prod.movie_id = post_movie_df.movie_id
     WHERE post_movie_df.release_date < init_movie_df.release_date
     GROUP BY init_movie_df.movie_id
@@ -341,8 +324,8 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     movie_df = movie_df.merge(past_writer_perfrormance, on='movie_id', how='left')
     movie_df = movie_df.merge(movies_released_within_15_days, on='movie_id', how='left')
 
-    genre_one_hot = pivot_one_hot(genre_df, 'name', 'genre')
-    production_one_hot = pivot_one_hot(production_df, 'parent_name', 'prod_company')
+    genre_one_hot = pivot_one_hot(genre_df, 'genre_name', 'genre')
+    production_one_hot = pivot_one_hot(production_df, 'company_name', 'prod_company')
     keyword_one_hot = pivot_one_hot(keyword_df, 'keyword_name', 'keyword', 60)
     collection_one_hot = pivot_one_hot(collection_df, 'collection_name', 'collection', 5)
 
