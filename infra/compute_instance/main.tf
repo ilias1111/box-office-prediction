@@ -1,4 +1,12 @@
 # Configure the Google Cloud provider
+terraform {
+  required_providers {
+    google = {
+      source = "hashicorp/google"
+    }
+  }
+}
+
 provider "google" {
   project = var.project_id
   region  = var.region
@@ -42,6 +50,11 @@ variable "ssh_private_key" {
   sensitive   = true
 }
 
+variable "ssh_public_key" {
+  description = "SSH public key for VM access"
+  type        = string
+}
+
 # Define local values
 locals {
   machine_types = {
@@ -54,10 +67,21 @@ locals {
   }
 }
 
+# Enable required APIs
+resource "google_project_service" "services" {
+  for_each = toset([
+    "secretmanager.googleapis.com",
+    "compute.googleapis.com"
+  ])
+  service = each.key
+  disable_on_destroy = false
+}
+
 # Create a VPC network
 resource "google_compute_network" "vpc_network" {
   name                    = var.network_name
   auto_create_subnetworks = true
+  depends_on              = [google_project_service.services]
 }
 
 # Create a firewall rule to allow SSH
@@ -93,6 +117,8 @@ resource "google_secret_manager_secret" "ssh_key" {
   replication {
     auto {}
   }
+
+  depends_on = [google_project_service.services]
 }
 
 # Store the SSH key in the secret
@@ -117,7 +143,7 @@ resource "google_compute_instance" "spot_vm_instance" {
 
   boot_disk {
     initialize_params {
-      image = "deeplearning-platform-release/m123"
+      image = "projects/ml-images/global/images/c0-deeplearning-common-cpu-v20240708-debian-11"
       size  = local.disk_sizes[var.environment]
       type  = "pd-ssd"
     }
@@ -131,63 +157,101 @@ resource "google_compute_instance" "spot_vm_instance" {
   }
 
   metadata = {
-    install-nvidia-driver = "True"
-    ssh-keys = "ubuntu:${var.ssh_private_key}"
+    ssh-keys = "jupyter:${var.ssh_public_key}"
   }
+
 
   metadata_startup_script = <<-EOF
               #!/bin/bash
-              sudo apt-get update
-              sudo apt-get install -y git
-
+              
               # Set up SSH for Git
-              mkdir -p ~/.ssh
-              gcloud secrets versions access latest --secret=ssh-key-secret > ~/.ssh/id_rsa
-              chmod 600 ~/.ssh/id_rsa
-              ssh-keyscan github.com >> ~/.ssh/known_hosts  # Adjust if not using GitHub
+              mkdir -p /home/jupyter/.ssh
+              gcloud secrets versions access latest --secret=ssh-key-secret > /home/jupyter/.ssh/id_rsa
+              chmod 600 /home/jupyter/.ssh/id_rsa
+              ssh-keyscan github.com >> /home/jupyter/.ssh/known_hosts
 
               # Clone your private repository
-              git clone ${var.repo_url} /home/ubuntu/your-project
-              cd /home/ubuntu/your-project
+              git clone ${var.repo_url} /home/jupyter/your-project
+              cd /home/jupyter/your-project
 
-              # Function to check if a package is installed
-              is_package_installed() {
-                python -c "import $1" 2>/dev/null
-                return $?
-              }
+              # Install any additional requirements
+              if [ -f requirements.txt ]; then
+                pip install -r requirements.txt
+              fi
 
-              # Read requirements.txt and install only missing packages
-              while read requirement; do
-                package_name=$(echo $requirement | sed 's/[<>=].*//')
-                if ! is_package_installed $package_name; then
-                  pip install $requirement
-                else
-                  echo "Package $package_name is already installed, skipping."
-                fi
-              done < requirements.txt
+              # Set up Jupyter notebook to run on startup (if not already configured)
+              if ! grep -q "jupyter notebook" /etc/systemd/system/jupyter.service; then
+                echo "[Unit]
+                Description=Jupyter Notebook
 
-              # Set up Jupyter notebook to run on startup
-              echo "cd /home/ubuntu/your-project && jupyter notebook --ip=0.0.0.0 --no-browser --allow-root" | sudo tee -a /etc/rc.local
+                [Service]
+                Type=simple
+                PIDFile=/run/jupyter.pid
+                ExecStart=/opt/deeplearning/bin/jupyter notebook --ip=0.0.0.0 --no-browser --allow-root --notebook-dir=/home/jupyter
+                User=jupyter
+                Group=jupyter
+                WorkingDirectory=/home/jupyter
+                Restart=always
+                RestartSec=10
+
+                [Install]
+                WantedBy=multi-user.target" | sudo tee /etc/systemd/system/jupyter.service
+
+                sudo systemctl enable jupyter.service
+                sudo systemctl start jupyter.service
+              fi
 
               # Create a swap file for additional memory management
-              sudo fallocate -l 4G /swapfile
-              sudo chmod 600 /swapfile
-              sudo mkswap /swapfile
-              sudo swapon /swapfile
-              echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+              if [ ! -f /swapfile ]; then
+                sudo fallocate -l 4G /swapfile
+                sudo chmod 600 /swapfile
+                sudo mkswap /swapfile
+                sudo swapon /swapfile
+                echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+              fi
 
               # Set some optimized kernel parameters for ML workloads
               echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
               echo 'vm.vfs_cache_pressure=50' | sudo tee -a /etc/sysctl.conf
               sudo sysctl -p
+
+              # Add function to run ML jobs with nohup
+              echo '
+              run_ml_job() {
+                  if [ $# -eq 0 ]; then
+                      echo "Usage: run_ml_job <script.py> [args...]"
+                      return 1
+                  fi
+
+                  script_name=$$(basename "$$1")
+                  log_file="$${script_name%.*}_$$(date +%Y%m%d_%H%M%S).log"
+                  nohup python "$$@" > "$$log_file" 2>&1 &
+                  echo "Started ML job: $$1"
+                  echo "Log file: $$log_file"
+                  echo "PID: $$!"
+              }
+              ' | sudo tee -a /etc/profile.d/ml_utils.sh
+
+              # Make the function available to all users
+              sudo chmod +x /etc/profile.d/ml_utils.sh
               EOF
 
+  
   service_account {
     scopes = ["cloud-platform"]
   }
 
   # Allow stopping for update
   allow_stopping_for_update = true
+
+  depends_on = [google_project_service.services, google_secret_manager_secret.ssh_key]
+}
+
+# Grant the VM's service account access to Secret Manager
+resource "google_project_iam_member" "secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_compute_instance.spot_vm_instance.service_account[0].email}"
 }
 
 # Create a Cloud Storage bucket for data and model storage
@@ -195,6 +259,8 @@ resource "google_storage_bucket" "ml_bucket" {
   name          = "${var.project_id}-ml-bucket-${var.environment}"
   location      = var.region
   force_destroy = true
+
+  depends_on = [google_project_service.services]
 }
 
 # Output the instance IP and bucket name
