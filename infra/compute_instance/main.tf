@@ -91,7 +91,7 @@ resource "google_secret_manager_secret" "ssh_key" {
   secret_id = "ssh-key-secret"
 
   replication {
-    automatic = true
+    auto {}
   }
 }
 
@@ -99,14 +99,6 @@ resource "google_secret_manager_secret" "ssh_key" {
 resource "google_secret_manager_secret_version" "ssh_key_version" {
   secret = google_secret_manager_secret.ssh_key.id
   secret_data = var.ssh_private_key
-}
-
-# Create a persistent disk
-resource "google_compute_disk" "persistent_disk" {
-  name = "ml-persistent-disk-${var.environment}"
-  type = "pd-ssd"
-  size = local.disk_sizes[var.environment]
-  zone = var.zone
 }
 
 # Create a spot VM instance with Deep Learning VM
@@ -124,11 +116,11 @@ resource "google_compute_instance" "spot_vm_instance" {
   }
 
   boot_disk {
-    source = google_compute_disk.persistent_disk.self_link
-  }
-
-  initialize_params {
-    image = "deeplearning-platform-release/m123"
+    initialize_params {
+      image = "deeplearning-platform-release/m123"
+      size  = local.disk_sizes[var.environment]
+      type  = "pd-ssd"
+    }
   }
 
   network_interface {
