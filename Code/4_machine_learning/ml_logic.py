@@ -218,7 +218,7 @@ class MOTR:
             'preprocessor__numerical__scaler': [scaler_mapping[scaler] for scaler in param_grid.get('preprocessor__numerical__scaler',["StandardScaler"])]
         }
         if self.grid_type == 'random_search':
-            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=5, n_iter=30, scoring=self.select_scoring(), random_state=42, task_type = self.task_type)
+            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=2, n_iter=4, scoring=self.select_scoring(), random_state=42, task_type = self.task_type)
         elif self.grid_type != 'non_grid':
             number_of_combinations = len(list(ParameterGrid(param_grid)))
             model_with_parameters = GridSearchCV(model, param_grid, cv=5, scoring=self.select_scoring(), n_jobs=-1, verbose=0, pre_dispatch='4*n_jobs', error_score='raise')
@@ -450,12 +450,12 @@ if __name__ == "__main__":
     ID_COLUMN_NAME = "movie_id"
 
     DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
-    DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "regression"]
-    # DATA_FILES_LIST = [
-    #                    "full__regression__no_outliers__complex.csv",
-    #                    "small_productions__regression__no_outliers__complex.csv"
-    #                 #    "full__regression__no_outliers__complex.csv"
-    #                    ]
+    # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "regression"]
+    DATA_FILES_LIST = [
+                       "full__regression__no_outliers__complex.csv",
+                       "small_productions__regression__no_outliers__complex.csv"
+                    #    "full__regression__no_outliers__complex.csv"
+                       ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
         "revenue_usd_adj" if i == "regression" else i for i in TASK_TYPE_LIST
