@@ -142,70 +142,13 @@ resource "google_compute_instance" "spot_vm_instance" {
               #!/bin/bash
               
               # Clone your public repository
-              git clone ${var.repo_url} /home/jupyter/your-project
-              cd /home/jupyter/your-project
+              git clone ${var.repo_url} 
 
               # Install any additional requirements
               if [ -f requirements.txt ]; then
                 pip install -r requirements.txt
               fi
 
-              # Set up Jupyter notebook to run on startup (if not already configured)
-              if ! grep -q "jupyter notebook" /etc/systemd/system/jupyter.service; then
-                echo "[Unit]
-                Description=Jupyter Notebook
-
-                [Service]
-                Type=simple
-                PIDFile=/run/jupyter.pid
-                ExecStart=/opt/deeplearning/bin/jupyter notebook --ip=0.0.0.0 --no-browser --allow-root --notebook-dir=/home/jupyter
-                User=jupyter
-                Group=jupyter
-                WorkingDirectory=/home/jupyter
-                Restart=always
-                RestartSec=10
-                Environment=TMDB_API_TOKEN=${var.tmdb_api_token}
-
-                [Install]
-                WantedBy=multi-user.target" | sudo tee /etc/systemd/system/jupyter.service
-
-                sudo systemctl enable jupyter.service
-                sudo systemctl start jupyter.service
-              fi
-
-              # Create a swap file for additional memory management
-              if [ ! -f /swapfile ]; then
-                sudo fallocate -l 4G /swapfile
-                sudo chmod 600 /swapfile
-                sudo mkswap /swapfile
-                sudo swapon /swapfile
-                echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-              fi
-
-              # Set some optimized kernel parameters for ML workloads
-              echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
-              echo 'vm.vfs_cache_pressure=50' | sudo tee -a /etc/sysctl.conf
-              sudo sysctl -p
-
-              # Add function to run ML jobs with nohup
-              echo '
-              run_ml_job() {
-                  if [ $# -eq 0 ]; then
-                      echo "Usage: run_ml_job <script.py> [args...]"
-                      return 1
-                  fi
-
-                  script_name=$$(basename "$$1")
-                  log_file="$${script_name%.*}_$$(date +%Y%m%d_%H%M%S).log"
-                  nohup python "$$@" > "$$log_file" 2>&1 &
-                  echo "Started ML job: $$1"
-                  echo "Log file: $$log_file"
-                  echo "PID: $$!"
-              }
-              ' | sudo tee -a /etc/profile.d/ml_utils.sh
-
-              # Make the function available to all users
-              sudo chmod +x /etc/profile.d/ml_utils.sh
               EOF
 
   service_account {

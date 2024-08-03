@@ -1,6 +1,6 @@
 import pandas as pd
 import support_functions as sf
-
+import os
 
 if __name__ == "__main__":
 
@@ -34,7 +34,10 @@ if __name__ == "__main__":
     movie = sf.movie_table_processing(movie)
 
 
+    # Check if directory exists, if not create it
 
+    
+    os.makedirs('./data/processed_data', exist_ok=True)
 
 
     movie.to_csv(
