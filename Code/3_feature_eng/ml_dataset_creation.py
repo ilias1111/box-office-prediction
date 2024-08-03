@@ -1,5 +1,6 @@
 import pandas as pd
 import feature_eng
+import os
 
 # Constants for paths
 DATA_PATH = './data/processed_data'
@@ -51,6 +52,8 @@ def save_data(movie_df, task_type, remove_outliers, feature_flag):
         'large_productions': (50_000_001, 999_999_999), # Large budget
         'full' : (0, 999_999_999)          # Full range
     }
+
+    os.makedirs(ML_READY_DATA_PATH, exist_ok=True)
 
     for production_size, (lower_bound, upper_bound) in budget_categories.items():
         subset = movie_df[movie_df.budget_usd_adj.between(lower_bound, upper_bound)]
