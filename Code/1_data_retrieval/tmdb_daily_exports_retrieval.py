@@ -39,6 +39,11 @@ def daily_export_to_csv(key, new_path):
     print(f"File size: {r.headers['Content-Length']} bytes")
     print(f'Status code: {r.status_code}')
 
+    # If not exist, create the file
+    if not os.path.exists(new_path):
+        os.makedirs(new_path)
+    
+    # Save the file
     with open(f'{new_path}/{key}.json.gz', 'wb') as f:
         shutil.copyfileobj(r.raw, f)
     
