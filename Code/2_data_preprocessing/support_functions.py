@@ -6,6 +6,7 @@ from unidecode import unidecode
 import cpi
 import numpy as np
 import uroman as ur
+import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -61,9 +62,9 @@ def adjust_cpi(amount: float, date: int) -> float:
 
 def init_data_loading():
 
-    DATA_DIR_TMDB = '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/tmdb'
-    DATA_DIR_MANUAL = '/Users/iliasx/Documents/GitHub/box-office-prediction/data/manual_data'
-    DATA_DIR_WIKIPEDIA = '/Users/iliasx/Documents/GitHub/box-office-prediction/data/retrieved_data/wikipedia'
+    DATA_DIR_TMDB = './data/retrieved_data/tmdb'
+    DATA_DIR_MANUAL = './data/manual_data'
+    DATA_DIR_WIKIPEDIA = './data/retrieved_data/wikipedia'
     movie = pd.read_csv(f'{DATA_DIR_TMDB}/movies.csv')
     genre_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/genres.csv')
     keyword_mapping = pd.read_csv(f'{DATA_DIR_TMDB}/keywords.csv')
@@ -77,6 +78,10 @@ def init_data_loading():
     collection = pd.read_csv(f'{DATA_DIR_TMDB}/collection_export.csv')
     movie_release_dates = pd.read_csv(f'{DATA_DIR_TMDB}/release_dates.csv')
 
+    production_countries = pd.read_csv(f'{DATA_DIR_TMDB}/production_countries.csv')
+    spoken_languages = pd.read_csv(f'{DATA_DIR_TMDB}/spoken_languages.csv')
+
+
     movie_financial_data_usd = pd.read_csv(f'{DATA_DIR_WIKIPEDIA}/movie_financial_data_usd.csv')
     manual_adjustments = pd.read_csv(f'{DATA_DIR_MANUAL}/manual_adjustments.csv')
     mojo_scrapping = pd.read_csv(f'{DATA_DIR_MANUAL}/parsed_mojo.csv')
@@ -84,6 +89,7 @@ def init_data_loading():
 
 
     return movie, genre_mapping, keyword_mapping, cast_mapping, crew_mapping, collection_mapping, production_mapping, \
+        spoken_languages, production_countries, \
         keyword, production, collection, movie_release_dates, movie_financial_data_usd, mojo_scrapping, manual_adjustments
 
 def create_financial_data_usd(movie: pd.DataFrame, wikipedia_movie_financial_data_usd: pd.DataFrame, mojo_scrapping: pd.DataFrame, manual_adjustments: pd.DataFrame) -> pd.DataFrame:
@@ -172,12 +178,21 @@ def calculate_release_info_with_checks(df):
 
     # Filter for theatrical releases and physical/digital releases
     countries = ['US', 'CN', 'FR', 'GB', 'JP']
-    theatrical_releases = df[df['type'].isin([2, 3]) & df['country_code'].isin(countries)]
+    theatrical_releases = df[df['type'].isin([3]) & df['country_code'].isin(countries)]
+    theatrical_releases_limited = df[df['type'].isin([4])]
+    theatrical_releases_wide = df[df['type'].isin([3])]
     physical_digital_releases = df[df['type'].isin([4, 5]) & df['country_code'].isin(countries)]
 
     # Get the earliest theatrical release date for each movie in each country
     theatrical_release_dates = theatrical_releases.groupby(['movie_id', 'country_code'])['release_date'].min().unstack()
     min_theatrical_release_dates = theatrical_releases.groupby('movie_id')['release_date'].min()
+
+    no_theatrical_releases_wide = theatrical_releases_wide.groupby('movie_id')['release_date'].count()
+    no_theatrical_releases_limited = theatrical_releases_wide.groupby('movie_id')['release_date'].count()
+    # Get the number of theatrical releases within 15 days of the first release min_theatrical_release_dates
+    theatrical_releases_wide['first_release_date'] = theatrical_releases_wide.merge(min_theatrical_release_dates.rename('first_release_date'), on='movie_id')['first_release_date']
+    theatrical_releases_wide['days_from_first_release'] = (theatrical_releases_wide['release_date'] - theatrical_releases_wide['first_release_date']).dt.days
+    no_theatrical_releases_wide_15 = theatrical_releases_wide[theatrical_releases_wide['days_from_first_release'] <= 15].groupby('movie_id')['release_date'].count()
 
     # Get the earliest physical/digital release date for each movie
     min_physical_digital_dates = physical_digital_releases.groupby('movie_id')['release_date'].min()
@@ -191,6 +206,9 @@ def calculate_release_info_with_checks(df):
     final_df = final_df.join(theatrical_release_dates[countries], how='left')
     final_df = final_df.join(min_physical_digital_dates.rename('digital_physical_date'), how='left')
     final_df = final_df.join(min_theatrical_release_dates.rename('min_theatrical_release_date'), how='left')
+    final_df = final_df.join(no_theatrical_releases_wide.rename('no_theatrical_releases_wide'), how='left')
+    # final_df = final_df.join(no_theatrical_releases_limited.rename('no_theatrical_releases_limited'), how='left')
+    final_df = final_df.join(no_theatrical_releases_wide_15.rename('no_theatrical_releases_wide_15'), how='left')
     final_df = final_df.join(us_certificates.rename('ageCert'), how='left')
 
     # Add flags for release in each country and overall release
@@ -199,7 +217,8 @@ def calculate_release_info_with_checks(df):
     final_df['is_released'] = final_df[countries].notna().any(axis=1)
 
     # Calculate days from US release to digital/physical release
-    final_df['days_from_us_release'] = ((final_df['digital_physical_date'] - final_df['US']).dt.days).fillna(9999)
+    final_df['digital_physical_date'] = pd.to_datetime(final_df['digital_physical_date'].fillna(pd.Timestamp('2050-01-01', tz='UTC')), utc=True)
+    final_df['days_from_us_release'] = ((final_df['digital_physical_date'] - final_df['US']).dt.days).fillna(-1)
 
     # Selecting the required columns
     final_df = final_df[['is_released_US', 'is_released_CN', 'is_released_FR', 'is_released_GB', 'is_released_JP', 'is_released', 'digital_physical_date', 'days_from_us_release', 'ageCert']]

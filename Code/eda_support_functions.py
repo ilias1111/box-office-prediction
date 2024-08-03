@@ -34,7 +34,7 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
 ):
     experiment_df = experiment_df[experiment_df["problem_type"] == problem_type]
 
-    feature_engineering_order = ["none", "simple", "complex"]
+    feature_engineering_order = ["none", "complex"]
     has_outliers_removed_order = [
         False,
         True,
@@ -48,6 +48,7 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
         .agg({metric: metric_agg})
         .reset_index()
     )
+
 
     # Iterate over each dataset and create a plot
     for dataset_name, data in grouped_data.groupby("dataset_name"):
@@ -69,6 +70,7 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
             },
             color_discrete_sequence=px.colors.qualitative.Prism,
             barmode="group",
+            log_y=True
         )
 
         fig.update_traces(texttemplate="%{text:.2s}", textposition="inside")
@@ -82,35 +84,41 @@ def load_metadata(type: str, metadata_path: str) -> pd.DataFrame:
     json_files = glob(os.path.join(metadata_path, "*.json"))
 
     results = []
+    experiment_info = {}
 
     for file in json_files:
-        with open(file, "r") as f:
-            data = json.load(f)
+        try:
+            with open(file, "r") as f:
+                data = json.load(f)
 
-            if type == "metrics":
-                parametric_data = data.get("metrics", {})
-            elif type == "parameters":
-                parametric_data = data.get("model_parameters", {})
-            else:
-                parametric_data = {}
+                if type == "metrics":
+                    parametric_data = data.get("metrics", {})
+                elif type == "parameters":
+                    parametric_data = data.get("model_parameters", {})
+                elif type == "feature_importance":
+                    parametric_data = data.get("feature_importance", {})
+                    #list of dictionaries to one dictionary
+                    
 
-            experiment_info = {
-                "run_id": data.get("run_id", None),
-                "timestamp": datetime.strptime(data.get("timestamp", None), "%Y%m%d_%H%M%S"),
-                "model_type": data.get("model_type", None),
-                "problem_type": data.get("problem_type", None),
-                "dataset_name": data.get("dataset_name", None),
-                "grid_type": data.get("grid_type", None),
-                "has_outliers_removed": data.get("has_outliers_removed", None),
-                "feature_engineering": data.get("feature_engineering", None),
-                "scaler": data.get("scaler", None),
-                "variance_threshold": data.get("variance_threshold", None),
-                "duration": data.get("duration", None),
-                "number_of_combinations": data.get("number_of_combinations", None),
-                **parametric_data,
-            }
-            results.append(experiment_info)
-
+                experiment_info = {
+                    **experiment_info,
+                    "run_id": data.get("run_id", None),
+                    "timestamp": datetime.strptime(data.get("timestamp", None), "%Y%m%d_%H%M%S"),
+                    "model_type": data.get("model_type", None),
+                    "problem_type": data.get("problem_type", None),
+                    "dataset_name": data.get("dataset_name", None),
+                    "grid_type": data.get("grid_type", None),
+                    "has_outliers_removed": data.get("has_outliers_removed", None),
+                    "feature_engineering": data.get("feature_engineering", None),
+                    "scaler": data.get("scaler", None),
+                    "variance_threshold": data.get("variance_threshold", None),
+                    "duration": data.get("duration", None),
+                    "number_of_combinations": data.get("number_of_combinations", None),
+                    **parametric_data,
+                }
+                results.append(experiment_info)
+        except Exception as e:
+            print(f"Error loading file {file}: {e}")
     results_df = pd.DataFrame(results)
 
     return results_df

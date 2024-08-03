@@ -1,4 +1,5 @@
 /code/data_pipeline/big_query_credentials.json
+
 /thesis/*
 __pycache__/*
 *.pyc
@@ -9,6 +10,7 @@ code/ml_explore/__pycache__/*
 /metadata/*
 /data/ml_ready_data/*
 /data/retrieved_data/tmdb/*
+/data/processed_data/*
 /logs/*
 
 # Terraform files

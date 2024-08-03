@@ -12,8 +12,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configuration
 TOKEN = os.getenv("TMDB_API_TOKEN")
-RATE_LIMIT = 50
-BATCH_SIZE = 100
+RATE_LIMIT = 60
+BATCH_SIZE = 120
 BASE_URL = "https://api.themoviedb.org/3"
 
 # File paths

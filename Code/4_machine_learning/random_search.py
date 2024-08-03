@@ -1,6 +1,9 @@
 from scipy.stats import randint, uniform, loguniform
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler, RobustScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler, RobustScaler, PowerTransformer
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LogisticRegression
 
 # Define general parameter distributions
 PARAM_DISTRIBUTIONS = {
@@ -13,10 +16,14 @@ PARAM_DISTRIBUTIONS = {
     "min_samples_leaf": randint(1, 20),
     "variance_threshold" : uniform(0, 0.2),
     "max_iter": randint(100, 1000),
+    "max_samples": uniform(0.1, 1),
+    "max_features": uniform(0.1, 1),
+    "bootstrap": [True, False],
+    "estimator" : [DecisionTreeRegressor(random_state=42) , RandomForestRegressor(random_state=42), LogisticRegression(random_state=42)],
     "units": randint(4, 2048),
     "dropout": uniform(0.01, 0.8),
     "num_layers": randint(2, 8),
-    "epochs": [50, 100],
+    "epochs": [50, 100, 200],
     "optimizer": ["adam"],
     "layers_activation": ["relu", "tanh", "sigmoid"],
     "output_activation": ["linear", "relu"],
@@ -150,6 +157,16 @@ MODEL_PARAM_DISTRIBUTIONS = {
 
     "dummy_regressor": {
         "model__strategy": PARAM_DISTRIBUTIONS["regressor__strategy"],
+        "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS["variance_threshold"],
+        "preprocessor__numerical__scaler" : PARAM_DISTRIBUTIONS["scaler"]
+    },
+
+    "bagging_regressor" : {
+        "model__estimator": PARAM_DISTRIBUTIONS["estimator"],
+        "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators"],
+        "model__max_samples": PARAM_DISTRIBUTIONS["max_samples"],
+        "model__max_features": PARAM_DISTRIBUTIONS["max_features"],
+        "model__bootstrap": PARAM_DISTRIBUTIONS["bootstrap"],
         "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS["variance_threshold"],
         "preprocessor__numerical__scaler" : PARAM_DISTRIBUTIONS["scaler"]
     }
