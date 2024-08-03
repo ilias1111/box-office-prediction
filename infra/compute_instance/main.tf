@@ -40,19 +40,14 @@ variable "network_name" {
 }
 
 variable "repo_url" {
-  description = "URL of the private Git repository"
+  description = "URL of the public Git repository"
   type        = string
 }
 
-variable "ssh_private_key" {
-  description = "SSH private key for Git repository access"
+variable "tmdb_api_token" {
+  description = "API token for TMDB"
   type        = string
   sensitive   = true
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key for VM access"
-  type        = string
 }
 
 # Define local values
@@ -70,7 +65,6 @@ locals {
 # Enable required APIs
 resource "google_project_service" "services" {
   for_each = toset([
-    "secretmanager.googleapis.com",
     "compute.googleapis.com"
   ])
   service = each.key
@@ -110,23 +104,6 @@ resource "google_compute_firewall" "allow-jupyter" {
   source_ranges = ["0.0.0.0/0"]
 }
 
-# Create a Secret Manager secret for the SSH key
-resource "google_secret_manager_secret" "ssh_key" {
-  secret_id = "ssh-key-secret"
-
-  replication {
-    auto {}
-  }
-
-  depends_on = [google_project_service.services]
-}
-
-# Store the SSH key in the secret
-resource "google_secret_manager_secret_version" "ssh_key_version" {
-  secret = google_secret_manager_secret.ssh_key.id
-  secret_data = var.ssh_private_key
-}
-
 # Create a spot VM instance with Deep Learning VM
 resource "google_compute_instance" "spot_vm_instance" {
   name         = "ml-spot-vm-instance-${var.environment}"
@@ -157,20 +134,14 @@ resource "google_compute_instance" "spot_vm_instance" {
   }
 
   metadata = {
-    ssh-keys = "jupyter:${var.ssh_public_key}"
+    enable-oslogin = "TRUE"  # Enable OS Login for SSH access
+    TMDB_API_TOKEN = var.tmdb_api_token
   }
-
 
   metadata_startup_script = <<-EOF
               #!/bin/bash
               
-              # Set up SSH for Git
-              mkdir -p /home/jupyter/.ssh
-              gcloud secrets versions access latest --secret=ssh-key-secret > /home/jupyter/.ssh/id_rsa
-              chmod 600 /home/jupyter/.ssh/id_rsa
-              ssh-keyscan github.com >> /home/jupyter/.ssh/known_hosts
-
-              # Clone your private repository
+              # Clone your public repository
               git clone ${var.repo_url} /home/jupyter/your-project
               cd /home/jupyter/your-project
 
@@ -193,6 +164,7 @@ resource "google_compute_instance" "spot_vm_instance" {
                 WorkingDirectory=/home/jupyter
                 Restart=always
                 RestartSec=10
+                Environment=TMDB_API_TOKEN=${var.tmdb_api_token}
 
                 [Install]
                 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/jupyter.service
@@ -236,7 +208,6 @@ resource "google_compute_instance" "spot_vm_instance" {
               sudo chmod +x /etc/profile.d/ml_utils.sh
               EOF
 
-  
   service_account {
     scopes = ["cloud-platform"]
   }
@@ -244,14 +215,7 @@ resource "google_compute_instance" "spot_vm_instance" {
   # Allow stopping for update
   allow_stopping_for_update = true
 
-  depends_on = [google_project_service.services, google_secret_manager_secret.ssh_key]
-}
-
-# Grant the VM's service account access to Secret Manager
-resource "google_project_iam_member" "secret_accessor" {
-  project = var.project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_compute_instance.spot_vm_instance.service_account[0].email}"
+  depends_on = [google_project_service.services]
 }
 
 # Create a Cloud Storage bucket for data and model storage
