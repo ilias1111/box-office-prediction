@@ -113,7 +113,7 @@ def process_movie_details(data: Dict[str, Any], writers: Dict[str, csv.writer]) 
 async def main():
     tmdb_imdb_match = pd.read_csv('data/retrieved_data/tmdb_imdb_match.csv')['tmdb_id'].tolist()
     wikidata_export = pd.read_csv('data/manual_data/wikidata_export.csv')
-    tmdb_ids = wikidata_export[wikidata_export['tmdb_id'].notnull()]['tmdb_id'].tolist()
+    tmdb_ids = wikidata_export[wikidata_export['tmdb_id'].notnull()]['tmdb_id'].astype(int).tolist()
 
     tmdb_ids_to_retrieve = list(set(tmdb_ids).union(set(tmdb_imdb_match)))
 
