@@ -451,7 +451,7 @@ if __name__ == "__main__":
     ID_COLUMN_NAME = "movie_id"
 
     DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
-    # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
+    DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "regression"]
     # DATA_FILES_LIST = [
     #                    "full__regression__no_outliers__complex.csv",
     #                    "small_productions__regression__no_outliers__complex.csv"
