@@ -99,6 +99,7 @@ class MOTR:
 
     def setup_logging(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        os.makedirs("logs", exist_ok=True)
         log_filename = f"logs/model_performance_{timestamp}_.log"
         logging.basicConfig(filename=log_filename, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
