@@ -39,7 +39,6 @@ from sklearn.metrics import (
     mean_absolute_error, mean_absolute_percentage_error, r2_score
 )
 from scikeras.wrappers import KerasClassifier, KerasRegressor
-from neural_networks import build_neural_network_model
 
 # suppress warnings UndefinedMetricWarning
 import warnings
