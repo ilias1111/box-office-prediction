@@ -7,6 +7,7 @@ if __name__ == "__main__":
 
     # Load your dataframe here
     movie, genre_mapping, keyword_mapping, cast_mapping, crew_mapping, collection_mapping, production_mapping, \
+        spoken_languages, production_countries, \
         keyword, production, collection, movie_release_dates, movie_financial_data_usd, \
             mojo_scrapping, manual_adjustments = sf.init_data_loading()
 
@@ -38,18 +39,22 @@ if __name__ == "__main__":
 
 
     movie.to_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/movie.csv', index=False)
+        './data/processed_data/movie.csv', index=False)
     keyword_processed.to_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/keyword.csv', index=False)
+        './data/processed_data/keyword.csv', index=False)
     production_processed.to_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/production.csv', index=False)
+        './data/processed_data/production.csv', index=False)
     collection_processed.to_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/collection.csv', index=False)
+        './data/processed_data/collection.csv', index=False)
     genre_processed.to_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/genre.csv', index=False)
+        './data/processed_data/genre.csv', index=False)
     
     cast_mapping.to_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/movie_cast.csv', index=False)
+        './data/processed_data/movie_cast.csv', index=False)
     crew_mapping.to_csv(
-        '/Users/iliasx/Documents/GitHub/box-office-prediction/data/processed_data/movie_crew.csv', index=False)
+        './data/processed_data/movie_crew.csv', index=False)
 
+    spoken_languages.to_csv(
+        './data/processed_data/spoken_languages.csv', index=False)
+    production_countries.to_csv(
+        './data/processed_data/production_countries.csv', index=False)

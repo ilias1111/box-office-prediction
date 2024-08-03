@@ -418,6 +418,21 @@
       "preprocessor__numerical__scaler": ["StandardScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     }
+  },
+
+  "bagging_regressor": {
+    "deep_grid_search": {
+      "preprocessor__numerical__scaler": ["StandardScaler"],
+      "preprocessor__binary__variance_threshold__threshold": [0]
+    },
+    "grid_search": {
+      "preprocessor__numerical__scaler": ["StandardScaler", "RobustScaler"],
+      "preprocessor__binary__variance_threshold__threshold": [0]
+    },
+    "non_grid": {
+      "preprocessor__numerical__scaler": ["StandardScaler"],
+      "preprocessor__binary__variance_threshold__threshold": [0]
+    }
   }
 }
 

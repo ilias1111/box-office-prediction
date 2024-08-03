@@ -19,23 +19,21 @@ CLASSIFICATION_THRESHOLDS = {
 }
 
 def remove_outliers(movie,remove_outliers):
-    """
-    Remove outliers from a DataFrame based on the Z-score of the 'ratio_adj' column.
-    """
-    roi_2_5 = movie['ratio_adj'].quantile(0.025)
-    roi_97_5 = movie['ratio_adj'].quantile(0.975)
+
+    roi_5 = movie['ratio_adj'].quantile(0.05)
+    roi_95 = movie['ratio_adj'].quantile(0.95)
     movie['is_within_scope'] = np.where((movie['budget_usd_adj'] > 25_000) & (movie['revenue_usd_adj']> 25_000), 1, 0).astype(bool)
 
 
     if remove_outliers:
         try:
             movie_clean = movie[(movie['is_within_scope']) & (movie['release_category'] == 'Far streaming release')]
-            movie_clean = movie_clean[(movie_clean['ratio_adj'] > roi_2_5) & (movie_clean['ratio_adj'] < roi_97_5)]
+            movie_clean = movie_clean[(movie_clean['ratio_adj'] > roi_5) & (movie_clean['ratio_adj'] < roi_95)]
             logging.info(f"{len(movie)- len(movie_clean)} outliers removed successfully.")
             return movie_clean
         except Exception as e:
             logging.error(f"Error removing outliers: {e}", exc_info=True)
-            return movie  # Return the original DataFrame in case of error
+            return movie
     else:
         return movie
 
@@ -201,15 +199,15 @@ def add_complex_socioeconomic_features(movie_df, world_bank, oecd):
 
 
 
-def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, collection_df, movie_crew):
+def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, collection_df, movie_crew, movie_cast, spoken_languages, production_countries):
 
     past_production_companies_perfrormance_q = '''
     SELECT
         init_movie_df.movie_id,
         COUNT(post_movie_df.movie_id) as production_company_no_movies,
-        AVG(post_movie_df.revenue_usd_adj) as production_company_avg_revenue,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as production_company_25th_percentile_revenue,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as production_company_75th_percentile_revenue
+        AVG(post_movie_df.revenue_usd_adj) as production_company_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as production_company_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as production_company_75th_percentile_revenue_usd
     FROM movie_df AS init_movie_df
     LEFT JOIN production_df AS init_prod ON init_movie_df.movie_id = init_prod.movie_id
     LEFT JOIN production_df AS post_prod ON init_prod.company_id = post_prod.company_id
@@ -222,9 +220,9 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     SELECT
         init_movie_df.movie_id,
         COUNT(post_movie_df.movie_id) as director_no_movies,
-        AVG(post_movie_df.revenue_usd_adj) as director_avg_revenue,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as director_25th_percentile_revenue,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as director_75th_percentile_revenue
+        AVG(post_movie_df.revenue_usd_adj) as director_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as director_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as director_75th_percentile_revenue_usd
     FROM movie_df AS init_movie_df
     LEFT JOIN movie_crew AS init_movie_crew ON init_movie_df.movie_id = init_movie_crew.movie_id
     LEFT JOIN movie_crew AS post_movie_crew ON init_movie_crew.crew_id = post_movie_crew.crew_id
@@ -238,9 +236,9 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     SELECT
         init_movie_df.movie_id,
         COUNT(post_movie_df.movie_id) as writer_no_movies,
-        AVG(post_movie_df.revenue_usd_adj) as writer_avg_revenue,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_25th_percentile_revenue,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_75th_percentile_revenue
+        AVG(post_movie_df.revenue_usd_adj) as writer_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_75th_percentile_revenue_usd
     FROM movie_df AS init_movie_df
     LEFT JOIN movie_crew AS init_movie_crew ON init_movie_df.movie_id = init_movie_crew.movie_id
     LEFT JOIN movie_crew AS post_movie_crew ON init_movie_crew.crew_id = post_movie_crew.crew_id
@@ -250,13 +248,44 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     GROUP BY init_movie_df.movie_id
     '''
 
+    past_ex_prod_perfrormance_q = '''
+    SELECT
+        init_movie_df.movie_id,
+        COUNT(post_movie_df.movie_id) as writer_no_movies,
+        AVG(post_movie_df.revenue_usd_adj) as writer_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_75th_percentile_revenue_usd
+    FROM movie_df AS init_movie_df
+    LEFT JOIN movie_crew AS init_movie_crew ON init_movie_df.movie_id = init_movie_crew.movie_id
+    LEFT JOIN movie_crew AS post_movie_crew ON init_movie_crew.crew_id = post_movie_crew.crew_id
+    LEFT JOIN movie_df AS post_movie_df ON post_movie_crew.movie_id = post_movie_df.movie_id
+    WHERE post_movie_df.release_date < init_movie_df.release_date
+        AND post_movie_crew.job = 'Executive Producer' AND init_movie_crew.job = 'Executive Producer'
+    GROUP BY init_movie_df.movie_id
+    '''
+    past_composer_perfrormance_q = '''
+    SELECT
+        init_movie_df.movie_id,
+        COUNT(post_movie_df.movie_id) as writer_no_movies,
+        AVG(post_movie_df.revenue_usd_adj) as writer_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as writer_75th_percentile_revenue_usd
+    FROM movie_df AS init_movie_df
+    LEFT JOIN movie_crew AS init_movie_crew ON init_movie_df.movie_id = init_movie_crew.movie_id
+    LEFT JOIN movie_crew AS post_movie_crew ON init_movie_crew.crew_id = post_movie_crew.crew_id
+    LEFT JOIN movie_df AS post_movie_df ON post_movie_crew.movie_id = post_movie_df.movie_id
+    WHERE post_movie_df.release_date < init_movie_df.release_date
+        AND post_movie_crew.job ilike '%Composer%' AND init_movie_crew.job ilike '%Composer%'
+    GROUP BY init_movie_df.movie_id
+    '''
+
     past_keywords_perfrormance_q = '''
     SELECT
         init_movie_df.movie_id,
         COUNT(post_movie_df.movie_id) as keyword_no_movies,
-        AVG(post_movie_df.revenue_usd_adj) as keyword_avg_revenue,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as keyword_25th_percentile_revenue,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as keyword_75th_percentile_revenue
+        AVG(post_movie_df.revenue_usd_adj) as keyword_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as keyword_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as keyword_75th_percentile_revenue_usd
     FROM movie_df AS init_movie_df
     LEFT JOIN keyword_df AS init_keyword ON init_movie_df.movie_id = init_keyword.movie_id
     LEFT JOIN keyword_df AS post_keyword ON init_keyword.keyword_id = post_keyword.keyword_id
@@ -270,9 +299,9 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     SELECT
         init_movie_df.movie_id,
         COUNT(post_movie_df.movie_id) as genre_no_movies,
-        AVG(post_movie_df.revenue_usd_adj) as genre_avg_revenue,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as genre_25th_percentile_revenue,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as genre_75th_percentile_revenue
+        AVG(post_movie_df.revenue_usd_adj) as genre_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as genre_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as genre_75th_percentile_revenue_usd
     FROM movie_df AS init_movie_df
     LEFT JOIN genre_df AS init_genre ON init_movie_df.movie_id = init_genre.movie_id
     LEFT JOIN genre_df AS post_genre ON init_genre.genre_id = post_genre.genre_id
@@ -285,9 +314,9 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     SELECT
         init_movie_df.movie_id,
         COUNT(post_movie_df.movie_id) as collection_no_movies,
-        AVG(post_movie_df.revenue_usd_adj) as collection_avg_revenue,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as collection_25th_percentile_revenue,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as collection_75th_percentile_revenue
+        AVG(post_movie_df.revenue_usd_adj) as collection_avg_revenue_usd,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as collection_25th_percentile_revenue_usd,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as collection_75th_percentile_revenue_usd,
     FROM movie_df AS init_movie_df
     LEFT JOIN collection_df AS init_collection ON init_movie_df.movie_id = init_collection.movie_id
     LEFT JOIN collection_df AS post_collection ON init_collection.collection_id = post_collection.collection_id
@@ -295,6 +324,7 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     WHERE post_movie_df.release_date < init_movie_df.release_date
     GROUP BY init_movie_df.movie_id
     '''
+
 
     movies_released_within_15_days_q = '''
         SELECT
@@ -308,12 +338,60 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
         GROUP BY init_movie_df.movie_id;
     '''
 
+    # past_actor_perfrormance_q = '''
+
+    # WITH temp AS (
+    #     SELECT
+    #         init_movie_df.movie_id,
+    #         init_movie_cast.actor_id,
+    #         init_movie_cast.order,
+    #         sum(post_movie_df.revenue_usd_adj * ( 1/(post_movie_cast.order+1) ) / sum( 1/(post_movie_cast.order+1) ) as revenue_weighted_avg
+    #     FROM movie_df AS init_movie_df
+    #     LEFT JOIN movie_cast AS init_movie_cast ON init_movie_df.movie_id = init_movie_cast.movie_id
+    #     LEFT JOIN movie_cast AS post_movie_cast ON init_movie_cast.actor_id = post_movie_cast.actor_id
+    #     LEFT JOIN movie_df AS post_movie_df ON post_movie_cast.movie_id = post_movie_df.movie_id
+    #     WHERE post_movie_df.release_date < init_movie_df.release_date
+    #         AND init_movie_cast.order < 6
+    #         AND post_movie_cast.order < 6
+    #     GROUP BY init_movie_df.movie_id
+    
+    # )
+
+    # SELECT
+    #     movie_id,
+    #     COUNT(revenue_weighted_avg) as actor_no_movies,
+    #     AVG(revenue_weighted_avg) as actor_avg_revenue_usd,
+    #     PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY revenue_weighted_avg) as actor_25th_percentile_revenue_usd,
+    #     PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY revenue_weighted_avg) as actor_75th_percentile_revenue_usd
+    # FROM temp
+    # GROUP BY movie_id
+    # '''
+    past_actor_perfrormance_q = '''
+        SELECT
+            init_movie_df.movie_id,
+            COUNT(post_movie_df.movie_id) as actor_no_movies,
+            AVG(post_movie_df.revenue_usd_adj) as actor_avg_revenue_usd,
+            PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as actor_25th_percentile_revenue_usd,
+            PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY post_movie_df.revenue_usd_adj) as actor_75th_percentile_revenue_usd
+        FROM movie_df AS init_movie_df
+        LEFT JOIN movie_cast AS init_movie_cast ON init_movie_df.movie_id = init_movie_cast.movie_id
+        LEFT JOIN movie_cast AS post_movie_cast ON init_movie_cast.actor_id = post_movie_cast.actor_id
+        LEFT JOIN movie_df AS post_movie_df ON post_movie_cast.movie_id = post_movie_df.movie_id
+        WHERE post_movie_df.release_date < init_movie_df.release_date
+            AND init_movie_cast.order < 10
+            AND post_movie_cast.order < 10
+        GROUP BY init_movie_df.movie_id
+    '''
+
     past_production_companies_perfrormance = duckdb.sql(past_production_companies_perfrormance_q).to_df()
     past_keywords_perfrormance = duckdb.sql(past_keywords_perfrormance_q).to_df()
     past_genres_perfrormance = duckdb.sql(past_genres_perfrormance_q).to_df()
     past_collection_perfrormance = duckdb.sql(past_collection_perfrormance_q).to_df()
     past_director_perfrormance = duckdb.sql(past_director_perfrormance_q).to_df()
     past_writer_perfrormance = duckdb.sql(past_writer_perfrormance_q).to_df()
+    past_actor_perfrormance = duckdb.sql(past_actor_perfrormance_q).to_df()
+    past_ex_prod_perfrormance = duckdb.sql(past_ex_prod_perfrormance_q).to_df()
+    past_composer_perfrormance = duckdb.sql(past_composer_perfrormance_q).to_df()
     movies_released_within_15_days = duckdb.sql(movies_released_within_15_days_q).to_df()
 
     movie_df = movie_df.merge(past_production_companies_perfrormance, on='movie_id', how='left')
@@ -322,33 +400,42 @@ def add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, coll
     movie_df = movie_df.merge(past_collection_perfrormance, on='movie_id', how='left')
     movie_df = movie_df.merge(past_director_perfrormance, on='movie_id', how='left')
     movie_df = movie_df.merge(past_writer_perfrormance, on='movie_id', how='left')
+    movie_df = movie_df.merge(past_ex_prod_perfrormance, on='movie_id', how='left')
+    movie_df = movie_df.merge(past_composer_perfrormance, on='movie_id', how='left')
+
+
+    movie_df = movie_df.merge(past_actor_perfrormance, on='movie_id', how='left')
     movie_df = movie_df.merge(movies_released_within_15_days, on='movie_id', how='left')
 
     genre_one_hot = pivot_one_hot(genre_df, 'genre_name', 'genre')
     production_one_hot = pivot_one_hot(production_df, 'company_name', 'prod_company')
     keyword_one_hot = pivot_one_hot(keyword_df, 'keyword_name', 'keyword', 60)
     collection_one_hot = pivot_one_hot(collection_df, 'collection_name', 'collection', 5)
+    spoken_languages_one_hot = pivot_one_hot(spoken_languages, 'language', 'spoken_language', 30)
+    production_countries_one_hot = pivot_one_hot(production_countries, 'country_code', 'prod_country', 30)
 
     movie_df = movie_df.merge(genre_one_hot, on='movie_id', how='left')
     movie_df = movie_df.merge(production_one_hot, on='movie_id', how='left')
     movie_df = movie_df.merge(keyword_one_hot, on='movie_id', how='left')
     movie_df = movie_df.merge(collection_one_hot, on='movie_id', how='left')
+    movie_df = movie_df.merge(spoken_languages_one_hot, on='movie_id', how='left')
+    movie_df = movie_df.merge(production_countries_one_hot, on='movie_id', how='left')
     
     return movie_df
 
-def add_features(feature_flag, movie_df, production_df, keyword_df, genre_df, collection_df, movie_crew, world_bank, oecd):
+def add_features(feature_flag, movie, production, keyword, genre, collection, movie_crew, movie_cast, spoken_languages, production_countries, world_bank, oecd):
 
     if feature_flag == 'complex':
-        movie_df = add_complex_kpi_features(movie_df, production_df, keyword_df, genre_df, collection_df, movie_crew)
-        movie_df = add_simple_features(movie_df)
-        movie_df = add_complex_socioeconomic_features(movie_df, world_bank, oecd)
-        movie_df = add_holiday_features(movie_df)
+        movie = add_complex_kpi_features(movie, production, keyword, genre, collection, movie_crew, movie_cast, spoken_languages, production_countries)
+        movie = add_simple_features(movie)
+        movie = add_complex_socioeconomic_features(movie, world_bank, oecd)
+        movie = add_holiday_features(movie)
     elif feature_flag == 'simple':
-        movie_df = add_simple_features(movie_df)
+        movie = add_simple_features(movie)
     elif feature_flag == 'none':
         pass
 
-    return movie_df
+    return movie
 
 def add_target_variable(movie_df, task_type):
 

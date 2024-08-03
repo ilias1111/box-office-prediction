@@ -15,7 +15,7 @@ def load_files_into_dfs():
     Load multiple CSV files into pandas DataFrames.
     Returns a tuple of DataFrames.
     """
-    filenames = ['movie', 'keyword', 'production', 'collection', 'genre', 'movie_crew', 'movie_cast']
+    filenames = ['movie', 'keyword', 'production', 'collection', 'genre', 'movie_crew', 'movie_cast', 'spoken_languages', 'production_countries']
     return tuple(pd.read_csv(get_file_path(name)) for name in filenames)
 
 def load_socioeconomic_data():
@@ -46,9 +46,9 @@ def save_data(movie_df, task_type, remove_outliers, feature_flag):
     # }
 
     budget_categories = {
-        'small_productions': (0, 3_000_000),          # Small budget
-        'medium_productions': (3_000_000, 40_000_000), # Medium budget
-        'large_productions': (40_000_000, 999_999_999), # Large budget
+        'small_productions': (0, 5_000_000),          # Small budget
+        'medium_productions': (5_000_001, 50_000_000), # Medium budget
+        'large_productions': (50_000_001, 999_999_999), # Large budget
         'full' : (0, 999_999_999)          # Full range
     }
 
@@ -62,7 +62,7 @@ def save_data(movie_df, task_type, remove_outliers, feature_flag):
 
 def construct_dataset(feature_flag, task_type, to_remove_outliers=False):
 
-    movie, keyword, production, collection, genre, movie_crew, movie_cast = load_files_into_dfs()
+    movie, keyword, production, collection, genre, movie_crew, movie_cast, spoken_languages, production_countries  = load_files_into_dfs()
 
     world_bank, oecd = load_socioeconomic_data()
 
@@ -72,7 +72,7 @@ def construct_dataset(feature_flag, task_type, to_remove_outliers=False):
 
     movie = feature_eng.remove_columns(movie)
 
-    movie = feature_eng.add_features(feature_flag, movie, production, keyword, genre, collection, movie_crew, world_bank, oecd)
+    movie = feature_eng.add_features(feature_flag, movie, production, keyword, genre, collection, movie_crew, movie_cast, spoken_languages, production_countries, world_bank, oecd)
     
     movie = feature_eng.add_target_variable(movie, task_type)
 
