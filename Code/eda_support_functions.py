@@ -6,6 +6,7 @@ import os
 import json
 from glob import glob
 from datetime import datetime
+import plotly.graph_objects as go
 
 # def shap_calculation(model, X_test):
 
@@ -49,9 +50,20 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
         .reset_index()
     )
 
+    ratio = grouped_data.groupby("dataset_name").size().max() / grouped_data.groupby("dataset_name").size().min()
+
+
 
     # Iterate over each dataset and create a plot
     for dataset_name, data in grouped_data.groupby("dataset_name"):
+
+        ratio = data[metric].max() / data[metric].min()
+
+        if ratio > 15:
+            scale_log = True
+        else:
+            scale_log = False
+    
         fig = px.bar(
             data,
             x="feature_engineering",
@@ -70,13 +82,92 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
             },
             color_discrete_sequence=px.colors.qualitative.Prism,
             barmode="group",
-            log_y=True
+            log_y=scale_log
         )
 
         fig.update_traces(texttemplate="%{text:.2s}", textposition="inside")
         fig.update_layout(showlegend=True, legend_title_text="Outliers Removed")
 
         fig.show()
+
+
+def plot_one_metric_of_different_models_per_dataset_with_plotly(
+    experiment_df,
+    problem_type="binary_classification",
+    metric="F1 Score",
+    metric_agg="max",
+):
+    experiment_df = experiment_df[experiment_df["problem_type"] == problem_type]
+
+    # Define the order we want
+    feature_engineering_order = ["none", "complex"]
+    has_outliers_removed_order = [False, True]  # False first for "with outliers"
+
+    # Create a list of all combinations in the desired order
+    group_order = [f"{fe}_{str(out)}" for fe in feature_engineering_order for out in has_outliers_removed_order]
+
+    # Group the data
+    grouped_data = (
+        experiment_df.groupby(
+            ["dataset_name", "feature_engineering", "has_outliers_removed", "model_type"]
+        )
+        .agg({metric: metric_agg})
+        .reset_index()
+    )
+
+    # Create the group column
+    grouped_data['group'] = grouped_data['feature_engineering'] + '_' + grouped_data['has_outliers_removed'].astype(str)
+
+    # Get unique datasets and models
+    datasets = grouped_data['dataset_name'].unique()
+    models = grouped_data['model_type'].unique()
+
+    # Create a separate chart for each dataset
+    for dataset in datasets:
+        dataset_data = grouped_data[grouped_data['dataset_name'] == dataset]
+        
+        fig = go.Figure()
+        
+        for model in models:
+            model_data = dataset_data[dataset_data['model_type'] == model]
+            model_data = model_data.set_index('group').reindex(group_order).reset_index()
+            
+            fig.add_trace(
+                go.Bar(
+                    name=model,
+                    x=model_data['group'],
+                    y=model_data[metric],
+                    text=model_data[metric].round(2),
+                    textposition='auto',
+                    marker_color=px.colors.qualitative.Plotly[models.tolist().index(model)]
+                )
+            )
+
+        # Update layout
+        fig.update_layout(
+            title_text=f"{metric} Comparison for {dataset}",
+            xaxis_title="Feature Engineering and Outlier Removal",
+            yaxis_title=f"{metric} Value",
+            barmode='group'
+        )
+
+        # Update x-axis labels
+        new_labels = {
+            "none_False": "FE: none<br>With Outliers",
+            "none_True": "FE: none<br>No Outliers",
+            "complex_False": "FE: complex<br>With Outliers",
+            "complex_True": "FE: complex<br>No Outliers"
+        }
+        fig.update_xaxes(ticktext=list(new_labels.values()), tickvals=list(new_labels.keys()))
+
+        # Check if log scale is needed
+        ratio = dataset_data[metric].max() / dataset_data[metric].min()
+        if ratio > 15:
+            fig.update_layout(yaxis_type="log")
+
+        fig.show()
+
+    return None  # Since we're showing each figure individually
 
 
 def load_metadata(type: str, metadata_path: str) -> pd.DataFrame:
