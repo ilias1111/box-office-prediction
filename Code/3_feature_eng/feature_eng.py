@@ -23,12 +23,11 @@ def remove_outliers(movie,remove_outliers):
     roi_5 = movie['ratio_adj'].quantile(0.05)
     roi_95 = movie['ratio_adj'].quantile(0.95)
     movie['is_within_scope'] = np.where((movie['budget_usd_adj'] > 25_000) & (movie['revenue_usd_adj']> 25_000), 1, 0).astype(bool)
-
+    movie['is_outlier'] = ~(movie['is_within_scope']) | (movie['ratio_adj'] < roi_5) | (movie['ratio_adj'] > roi_95) | (movie['release_category'] != 'Far streaming release')
 
     if remove_outliers:
         try:
-            movie_clean = movie[(movie['is_within_scope']) & (movie['release_category'] == 'Far streaming release')]
-            movie_clean = movie_clean[(movie_clean['ratio_adj'] > roi_5) & (movie_clean['ratio_adj'] < roi_95)]
+            movie_clean = movie[~movie['is_outlier']]
             logging.info(f"{len(movie)- len(movie_clean)} outliers removed successfully.")
             return movie_clean
         except Exception as e:
@@ -102,7 +101,7 @@ def remove_columns(df):
     necessary_columns = [
         'movie_id', 'original_language', 'release_date','runtime', 'ageCert', 'quarter', 'month', 'year',
         'is_released_US', 'is_released_CN', 'is_released_FR', 'is_released_GB', 'is_released_JP',
-        'budget_usd_adj', 'revenue_usd_adj', 'surplus', 'ratio_adj', 'roi'
+        'budget_usd_adj', 'revenue_usd_adj', 'surplus', 'ratio_adj', 'roi', 'is_outlier'
     ]
     return df[necessary_columns]
 

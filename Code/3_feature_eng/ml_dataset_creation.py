@@ -39,17 +39,10 @@ def save_data(movie_df, task_type, remove_outliers, feature_flag):
     Save subsets of data based on budget categories to separate CSV files.
     """
 
-    # budget_categories = {
-    #     'small_productions': (0, 3_000_000),          # Small budget
-    #     'medium_productions': (3_000_000, 40_000_000), # Medium budget
-    #     'large_productions': (40_000_000, 999_999_999), # Large budget
-    #     'full' : (0, 999_999_999)          # Full range
-    # }
-
     budget_categories = {
-        'small_productions': (0, 5_000_000),          # Small budget
-        'medium_productions': (5_000_001, 50_000_000), # Medium budget
-        'large_productions': (50_000_001, 999_999_999), # Large budget
+        'small_productions': (0, 15_000_000),          # Small budget
+        'medium_productions': (15_000_001, 35_000_000), # Medium budget
+        'large_productions': (35_000_001, 999_999_999), # Large budget
         'full' : (0, 999_999_999)          # Full range
     }
 
@@ -87,9 +80,7 @@ if __name__ == "__main__":
 
     TASK_TYPE = ['binary_classification', 'multi_class_classification', 'regression']
     REMOVE_OUTLIERS = [True, False]
-    FEATURE_FLAG = ['complex'
-                    ,'none'
-                    ]
+    FEATURE_FLAG = ['complex','none']
 
     for task in TASK_TYPE:
         for outlier_status in REMOVE_OUTLIERS:

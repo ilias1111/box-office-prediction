@@ -9,7 +9,7 @@ from sklearn.linear_model import LogisticRegression
 PARAM_DISTRIBUTIONS = {
     "C": loguniform(1e-4, 1e2),
     "max_depth": randint(2, 32),
-    "n_estimators": randint(100, 2000),
+    "n_estimators": randint(50, 2000),
     "learning_rate": uniform(0.001, 0.2),
     "num_leaves": randint(16, 256),
     "min_samples_split": randint(2, 32),
@@ -107,6 +107,7 @@ MODEL_PARAM_DISTRIBUTIONS = {
         "model__num_leaves" :  PARAM_DISTRIBUTIONS["num_leaves"],
          "model__max_depth" : PARAM_DISTRIBUTIONS["max_depth"],
           "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate"],
+          "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators"],
         "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS["variance_threshold"],
         "preprocessor__numerical__scaler" : PARAM_DISTRIBUTIONS["scaler"]
     },
@@ -115,6 +116,7 @@ MODEL_PARAM_DISTRIBUTIONS = {
         "model__num_leaves" :  PARAM_DISTRIBUTIONS["num_leaves"],
          "model__max_depth" : PARAM_DISTRIBUTIONS["max_depth"],
           "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate"],
+          "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators"],
         "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS["variance_threshold"],
         "preprocessor__numerical__scaler" : PARAM_DISTRIBUTIONS["scaler"]
     },

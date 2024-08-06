@@ -20,14 +20,6 @@ FILE_LINKS = {
     'production_company_export': [f'http://files.tmdb.org/p/exports/production_company_ids_{today}.json.gz',"company"]
 }
 
-# def enrich_company_data(company_id):
-#     url = f"https://api.themoviedb.org/3/company/{company_id}"
-#     headers = {"Authorization
-#     ": f"Bearer {TOKEN}"}
-#     params = {"append_to_response": "movies"}  # Include movies in the response
-#     response = requests.get(url, headers=headers, params=params)
-#     if response.status_code == 200:
-#         return response.json().get('movies', [])
 
 def daily_export_to_csv(key, new_path):
 
@@ -64,7 +56,6 @@ def daily_export_to_csv(key, new_path):
     # Create a DataFrame from the list of dictionaries
     df = pd.DataFrame(json_list).rename(columns={'id': f'{FILE_LINKS[key][1]}_id', 'name': f'{FILE_LINKS[key][1]}_name'})
     df.to_csv(f'{new_path}/{key}.csv', index=False)
-
 
 
 
