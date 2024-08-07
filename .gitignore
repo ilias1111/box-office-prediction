@@ -5,12 +5,16 @@ __pycache__/*
 *.pyc
 code/data_pipeline/__pycache__/*
 code/ml_explore/__pycache__/*
+code/charts/
 /bop/*
 /models/*
 /metadata/*
 /data/ml_ready_data/*
-/data/retrieved_data/tmdb/*
 /data/processed_data/*
+/data/retrieved_data/tmdb/collection_export.csv
+/data/retrieved_data/tmdb/keyword_export.csv
+/data/retrieved_data/tmdb/production_company_export.csv
+/data/retrieved_data/tmdb/person_export.csv
 /logs/*
 
 # Terraform files
