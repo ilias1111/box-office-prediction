@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import plotly.express as px
-
+import math
 import pandas as pd
 import joblib
 from sklearn.utils import class_weight
@@ -82,10 +82,10 @@ class MOTR:
             return base_models
         elif task_type == 'regression':
             return {
-                # "dummy_regressor" : DummyRegressor(strategy='mean'),
-                # "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
-                # "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
-                # "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
+                "dummy_regressor" : DummyRegressor(strategy='mean'),
+                "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
+                "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
+                "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
                 "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1, verbosity=-1)
             }
         else:
@@ -213,7 +213,7 @@ class MOTR:
             'preprocessor__numerical__scaler': [scaler_mapping[scaler] for scaler in param_grid.get('preprocessor__numerical__scaler',["StandardScaler"])]
         }
         if self.grid_type == 'random_search':
-            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=5, n_iter=100, scoring=self.select_scoring(), random_state=42, task_type = self.task_type)
+            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=3, n_iter=2, scoring=self.select_scoring(), random_state=42, task_type = self.task_type)
         elif self.grid_type != 'non_grid':
             number_of_combinations = len(list(ParameterGrid(param_grid)))
             model_with_parameters = GridSearchCV(model, param_grid, cv=5, scoring=self.select_scoring(), n_jobs=-1, verbose=0, pre_dispatch='4*n_jobs', error_score='raise')
@@ -228,7 +228,7 @@ class MOTR:
 
         stop_time = datetime.now()
         duration = stop_time - start_time
-        metrics, conf_matrix, class_report, predicted_vs_actual = self.evaluate_model(model_with_parameters, X_test, y_test, label_encoder, X_test_id)
+        metrics, conf_matrix, class_report, predicted_vs_actual = self.evaluate_model(model_with_parameters, X_test, y_test, label_encoder, X_test_id, X)
         feature_importance = self.get_feature_importance(model_with_parameters.named_steps['model'], model_with_parameters.named_steps['preprocessor'])
         self.save_model_and_metadata(model_with_parameters, metrics, conf_matrix, class_report, model_name, feature_importance,duration,number_of_combinations, predicted_vs_actual)
         return metrics
@@ -267,7 +267,7 @@ class MOTR:
         else:
             raise ValueError("Unsupported task type for scoring")
 
-    def evaluate_model(self, model, X_test, y_test,label_encoder, X_test_id):
+    def evaluate_model(self, model, X_test, y_test,label_encoder, X_test_id, X):
         logging.info("Evaluating model")
 
         transformer = model.named_steps['preprocessor']
@@ -283,7 +283,7 @@ class MOTR:
                 pred_proba = model.predict_proba(X_test)
 
                 metrics = {
-                    # "ROC AUC Score": roc_auc_score(y_test, pred_proba, average='weighted', multi_class='ovr'),
+                    #"ROC AUC Score": roc_auc_score(y_test, pred_proba, average='weighted', multi_class='ovr'),
                     "Accuracy": accuracy_score(y_test, pred),
                     "Precision": precision_score(y_test, pred, zero_division=0, average='weighted'),
                     "Recall": recall_score(y_test, pred, zero_division=0, average='weighted'),
@@ -331,6 +331,7 @@ class MOTR:
             class_report = None
 
             predicted_vs_actual = pd.DataFrame({self.id_column_name: X_test_id.values, 'actual': y_test, 'predicted': pred})
+            predicted_vs_actual['year'] = 10 *  np.floor(predicted_vs_actual.merge(X[['year',self.id_column_name]], on=self.id_column_name, how='left')['year']/10).astype(int)
             predicted_vs_actual['absolute_error'] = (predicted_vs_actual['predicted'] - predicted_vs_actual['actual']).abs()
             predicted_vs_actual['squared_error'] = (predicted_vs_actual['predicted'] - predicted_vs_actual['actual']) ** 2
             predicted_vs_actual['percentage_error'] = ((predicted_vs_actual['predicted'] - predicted_vs_actual['actual']) / predicted_vs_actual['actual'])
@@ -368,28 +369,29 @@ class MOTR:
             
             # Create a dataframe styler object
 
-            sfromater = {
-                'actual': "{:,.2f}",
-                'predicted': "{:,.2f}",
-                'absolute_error': "{:,.2f}",
-                'squared_error': "{:,.2f}",
-                'percentage_error': "{:.2f}",
-                'absolute_percentage_error': "{:.2f}",
-                'residuals': "{:,.2f}"
-            }
+            # sfromater = {
+            #     'actual': "{:,.2f}",
+            #     'predicted': "{:,.2f}",
+            #     'absolute_error': "{:,.2f}",
+            #     'squared_error': "{:,.2f}",
+            #     'percentage_error': "{:.2f}",
+            #     'absolute_percentage_error': "{:.2f}",
+            #     'residuals': "{:,.2f}"
+            # }
 
 
-            print("Top 10 predictions with highest absolute percentage error")
-            print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
+            # print("Top 10 predictions with highest absolute percentage error")
+            # print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
 
-            print("Top 10 predictions with lowest absolute percentage error")
-            print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
+            # print("Top 10 predictions with lowest absolute percentage error")
+            # print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
 
-            print("Summary statistics for predictions")
-            # I also want to format the thousand separator
+            # print("Summary statistics for predictions")
+            # # I also want to format the thousand separator
             
-            print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
+            # print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
             
+            # print(predicted_vs_actual.groupby('year')['absolute_percentage_error'].describe().sort_values(by='year').to_markdown(floatfmt=",.2f"))
 
                   
         return metrics, conf_matrix, class_report, predicted_vs_actual_describe
@@ -446,12 +448,12 @@ if __name__ == "__main__":
 
     DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
     # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
-    DATA_FILES_LIST = [
-                       "full__regression__no_outliers__complex.csv",
-                       "small_productions__regression__no_outliers__complex.csv",
-                       "medium_productions__regression__no_outliers__complex.csv",
-                       "large_productions__regression__no_outliers__complex.csv"
-                       ]
+    # DATA_FILES_LIST = [
+    #                    "full__regression__no_outliers__complex.csv",
+    #                    "small_productions__regression__no_outliers__complex.csv",
+    #                    "medium_productions__regression__no_outliers__complex.csv",
+    #                    "large_productions__regression__no_outliers__complex.csv"
+    #                    ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
         "revenue_usd_adj" if i == "regression" else i for i in TASK_TYPE_LIST

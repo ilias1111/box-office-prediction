@@ -2101,7 +2101,7 @@ movie_id,title,url_wiki,lang.,revenue,revenue_wiki,revenue_mojo,ratio,revenue_de
 375742,The Lure,https://en.wikipedia.org/wiki/The_Lure_(2015_film),pl,102986,108846,108846,1,0,0,108846,1300000,0,-1,1300000,0,,,,
 10950,I Am Sam,https://en.wikipedia.org/wiki/I_Am_Sam,en,92542418,97800000,97818302,1,0,0,97818302,22000000,22000000,0,22000000,4,,,Keep,
 994,Straw Dogs,https://en.wikipedia.org/wiki/Straw_Dogs_(1971_film),en,3251794,8000000,0,0,1,1,3251794,2200000,0,-1,2200000,1,,,,
-43949,Flipped,https://en.wikipedia.org/wiki/Flipped_(2010_film),en,1755212,4300000,0,0,1,1,1755212,14000000,14000000,0,14000000,0,,,Keep,
+43949,Flipped,https://en.wikipedia.org/wiki/Flipped_(2010_film),en,1755212,4300000,0,0,1,1,1755212,14000000,14000000,0,14000000,0,4294635,,Change,
 248774,Obvious Child,https://en.wikipedia.org/wiki/Obvious_Child,en,3123963,3300000,3325417,1,0,0,3325417,0,1000000,-1,1000000,3,,,,
 847,Willow,https://en.wikipedia.org/wiki/Willow_(1988_film),en,57300000,137600000,0,0,1,1,57300000,35000000,35000000,0,35000000,2,,,Keep,
 10894,May,https://en.wikipedia.org/wiki/May_(film),en,264349,634803,0,0,1,1,264349,500000,1700000,2,500000,1,,,,
