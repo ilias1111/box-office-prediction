@@ -165,3 +165,18 @@ Outlier Detection steps :
 
 Warning : Because we can remove data points that are out of scope of the project manually
 
+
+
+
+
+=================================
+===============NEW===============
+=================================
+
+Removed 3908 movies with runtime < 70 minutes. Remaining: 63650
+Removed 43984 movies with revenue <= 0. Remaining: 19666
+Removed 7508 movies with budget <= 0. Remaining: 12158
+Removed 33 movies released before 1970 or after 2020. Remaining: 12125
+Total movies removed: 55433
+Final number of movies: 12125
+

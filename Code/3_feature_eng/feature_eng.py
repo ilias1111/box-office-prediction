@@ -18,23 +18,43 @@ CLASSIFICATION_THRESHOLDS = {
     'Huge Success': (0.1, None)
 }
 
-def remove_outliers(movie,remove_outliers):
 
-    roi_5 = movie['ratio_adj'].quantile(0.05)
-    roi_95 = movie['ratio_adj'].quantile(0.95)
-    movie['is_within_scope'] = np.where((movie['budget_usd_adj'] > 25_000) & (movie['revenue_usd_adj']> 25_000), 1, 0).astype(bool)
-    movie['is_outlier'] = ~(movie['is_within_scope']) | (movie['ratio_adj'] < roi_5) | (movie['ratio_adj'] > roi_95) | (movie['release_category'] != 'Far streaming release')
+BUDGET_THRESHOLDS = {
+    'small_productions': (0, 15_000_000),          # Small budget
+    'medium_productions': (15_000_001, 35_000_000), # Medium budget
+    'large_productions': (35_000_001, 999_999_999), # Large budget
+    'full' : (0, 999_999_999)          # Full range
+}
 
-    if remove_outliers:
-        try:
+def remove_outliers(movie, remove_outliers_flag):
+    try:
+        # Define is_within_scope
+        movie['is_within_scope'] = np.where(
+            (movie['budget_usd_adj'] > 25_000) & 
+            (movie['revenue_usd_adj'] > 25_000) & 
+            (movie['release_category'] == 'Far streaming release'),
+            True, False
+        )
+        
+        # Calculate extremes based on data within scope
+        movie_in_scope = movie[movie['is_within_scope']]
+        roi_5 = movie_in_scope['ratio_adj'].quantile(0.05)
+        roi_95 = movie_in_scope['ratio_adj'].quantile(0.95)
+        
+        # Define is_outlier for all entries
+        movie['is_outlier'] = ~movie['is_within_scope'] | (movie['ratio_adj'] < roi_5) | (movie['ratio_adj'] > roi_95)
+        
+        if remove_outliers_flag:
             movie_clean = movie[~movie['is_outlier']]
-            logging.info(f"{len(movie)- len(movie_clean)} outliers removed successfully.")
+            logging.info(f"{len(movie) - len(movie_clean)} outliers removed successfully.")
             return movie_clean
-        except Exception as e:
-            logging.error(f"Error removing outliers: {e}", exc_info=True)
+        else:
+            logging.info("Outliers identified but not removed.")
             return movie
-    else:
+    except Exception as e:
+        logging.error(f"Error in outlier processing: {e}", exc_info=True)
         return movie
+
 
 def sin_cos(n, k):
     """
@@ -66,6 +86,20 @@ def classify_binary(surplus):
     Classify surplus as either 'Bankrupt' if negative or 'Success' if positive or zero.
     """
     return 'Bankrupt' if surplus < 0 else 'Success'
+
+def classify_production_size(budget):
+
+    for label, (low, high) in BUDGET_THRESHOLDS.items():
+        if low is None and budget < high:
+            return label
+        elif high is None and budget >= low:
+            return label
+        elif low is not None and high is not None and low <= budget < high:
+            return label
+        
+    logging.warning(f"Budget value {budget} did not match any classification.")
+    return 'Unknown'  # Default return if no conditions are met
+
 
 def check_holiday_window(date, days=10, holidays=holidays.US()):
     
@@ -437,6 +471,8 @@ def add_features(feature_flag, movie, production, keyword, genre, collection, mo
     return movie
 
 def add_target_variable(movie_df, task_type):
+
+    movie_df['production_size'] = movie_df['budget_usd_adj'].apply(classify_production_size)    
 
     # Classifying data
     if task_type == 'binary_classification':

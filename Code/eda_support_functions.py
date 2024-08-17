@@ -250,7 +250,7 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
         if display_chart:
             fig.show()
 
-    return experiment_df
+    return None
 
 
 def plot_one_metric_of_different_models_per_dataset_with_plotly(
@@ -265,9 +265,9 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
     GROUP_ORDER = ["none_False", "complex_False", "none_True", "complex_True"]
     NEW_LABELS = {
         "none_False": "FE: none<br>With Outliers",
-        "none_True": "FE: none<br>No Outliers",
         "complex_False": "FE: complex<br>With Outliers",
-        "complex_True": "FE: complex<br>No Outliers",
+        "none_True": "FE: none<br>No Outliers",
+        "complex_True": "FE: complex<br>No Outliers"
     }
 
     experiment_df = experiment_df[experiment_df["problem_type"] == problem_type]
@@ -295,10 +295,11 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
         fig = go.Figure()
 
         benchmark_data = dataset_data[dataset_data["model_type"] == benchmark_model]
+        benchmark_data = benchmark_data.set_index("group").reindex(GROUP_ORDER).reset_index()
         fig.add_trace(
             go.Scatter(
                 name=f"{benchmark_model} (Benchmark)",
-                x=benchmark_data["group"],
+                x=GROUP_ORDER,
                 y=benchmark_data[metric],
                 mode="markers+text",
                 marker=dict(color="#000000", size=12, symbol="diamond"),
@@ -325,7 +326,7 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
                 fig.add_trace(
                     go.Bar(
                         name=model,
-                        x=model_data["group"],
+                        x=GROUP_ORDER,
                         y=model_data[metric],
                         text=model_data[metric].round(2),
                         textposition="outside",
@@ -343,7 +344,8 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
         )
 
         fig.update_xaxes(
-            ticktext=list(NEW_LABELS.values()), tickvals=list(NEW_LABELS.keys())
+            ticktext=[NEW_LABELS[group] for group in GROUP_ORDER],
+            tickvals=GROUP_ORDER
         )
 
         filename = generate_filename(
@@ -361,7 +363,7 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
         if display_chart:
             fig.show()
 
-    return experiment_df
+    return None
 
 
 def plot_and_export_categorical_distribution(
@@ -371,6 +373,7 @@ def plot_and_export_categorical_distribution(
     sort_by_value: bool = True,
     display_chart: bool = True,
     output_dir: str = "charts",
+    format_as_int: bool = False,
 ) -> pd.DataFrame:
     counts = df[agg_column].value_counts().reset_index()
     counts.columns = [agg_column, "count"]
@@ -391,11 +394,8 @@ def plot_and_export_categorical_distribution(
 
     grouped_counts["grouped"] = grouped_counts["grouped"].astype(str)
 
-    color_map = {
-        category: COLORS[i % len(COLORS)]
-        for i, category in enumerate(grouped_counts["grouped"].unique())
-    }
-    color_map["Other"] = "#B3B3B3"  # Always use gray for 'Other'
+    color_map = {category: "#66C2A5" for category in grouped_counts["grouped"].unique()}
+    color_map["Other"] = "#E78AC3"  # Use pink for 'Other'
 
     fig = px.bar(
         grouped_counts,
@@ -406,7 +406,10 @@ def plot_and_export_categorical_distribution(
         color_discrete_map=color_map,
     )
 
-    fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+    if format_as_int:
+        fig.update_traces(texttemplate="%{text:.0f}", textposition="outside")
+    else:
+        fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
 
     fig = apply_common_style(
         fig,
@@ -417,6 +420,9 @@ def plot_and_export_categorical_distribution(
     )
 
     fig.update_xaxes(tickangle=-45)
+
+    # Remove the legend
+    fig.update_layout(showlegend=False)
 
     filename = generate_filename(
         "categorical_distribution",
@@ -431,4 +437,4 @@ def plot_and_export_categorical_distribution(
     if display_chart:
         fig.show()
 
-    return df
+    return None

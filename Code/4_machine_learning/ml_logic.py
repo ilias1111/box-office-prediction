@@ -69,8 +69,8 @@ class MOTR:
                 "logistic_regression": LogisticRegression(random_state=42, n_jobs=-1, max_iter=1000),
                 "random_forest_classifier": RandomForestClassifier(random_state=42, n_jobs=-1),
                 "decision_tree_classifier": DecisionTreeClassifier(random_state=42),
-                "xgboost_classifier": XGBClassifier(random_state=42, n_jobs=-1),
-                "lightgbm_classifier": LGBMClassifier(random_state=42, n_jobs=-1, verbosity=-1)
+                # "xgboost_classifier": XGBClassifier(random_state=42, n_jobs=-1),
+                # "lightgbm_classifier": LGBMClassifier(random_state=42, n_jobs=-1, verbosity=-1)
             }
 
             if task_type == 'multi_class_classification':
@@ -82,11 +82,11 @@ class MOTR:
             return base_models
         elif task_type == 'regression':
             return {
-                "dummy_regressor" : DummyRegressor(strategy='mean'),
+                # "dummy_regressor" : DummyRegressor(strategy='mean'),
                 "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
-                "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
-                "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
-                "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1, verbosity=-1)
+                # "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
+                # "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
+                # "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1, verbosity=-1)
             }
         else:
             raise ValueError("Invalid task type specified. Choose 'binary_classification', 'multi_class_classification', or 'regression'.")
@@ -213,7 +213,7 @@ class MOTR:
             'preprocessor__numerical__scaler': [scaler_mapping[scaler] for scaler in param_grid.get('preprocessor__numerical__scaler',["StandardScaler"])]
         }
         if self.grid_type == 'random_search':
-            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=3, n_iter=2, scoring=self.select_scoring(), random_state=42, task_type = self.task_type)
+            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=5, n_iter=100, scoring=self.select_scoring(), random_state=42, task_type = self.task_type)
         elif self.grid_type != 'non_grid':
             number_of_combinations = len(list(ParameterGrid(param_grid)))
             model_with_parameters = GridSearchCV(model, param_grid, cv=5, scoring=self.select_scoring(), n_jobs=-1, verbose=0, pre_dispatch='4*n_jobs', error_score='raise')
@@ -380,16 +380,16 @@ class MOTR:
             # }
 
 
-            # print("Top 10 predictions with highest absolute percentage error")
-            # print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
+            print("Top 10 predictions with highest absolute percentage error")
+            print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
 
-            # print("Top 10 predictions with lowest absolute percentage error")
-            # print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
+            print("Top 10 predictions with lowest absolute percentage error")
+            print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
 
-            # print("Summary statistics for predictions")
-            # # I also want to format the thousand separator
+            print("Summary statistics for predictions")
+            # I also want to format the thousand separator
             
-            # print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
+            print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
             
             # print(predicted_vs_actual.groupby('year')['absolute_percentage_error'].describe().sort_values(by='year').to_markdown(floatfmt=",.2f"))
 
@@ -448,12 +448,12 @@ if __name__ == "__main__":
 
     DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
     # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
-    # DATA_FILES_LIST = [
-    #                    "full__regression__no_outliers__complex.csv",
-    #                    "small_productions__regression__no_outliers__complex.csv",
-    #                    "medium_productions__regression__no_outliers__complex.csv",
-    #                    "large_productions__regression__no_outliers__complex.csv"
-    #                    ]
+    DATA_FILES_LIST = [
+                       "full__regression__no_outliers__complex.csv",
+                        # "small_productions__regression__no_outliers__complex.csv",
+                        # "medium_productions__regression__no_outliers__complex.csv",
+                        # "large_productions__regression__no_outliers__complex.csv"
+                       ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
         "revenue_usd_adj" if i == "regression" else i for i in TASK_TYPE_LIST

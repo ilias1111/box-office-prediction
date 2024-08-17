@@ -30,21 +30,38 @@ CERTIFICATE_MAPPINGS = {
     "BPjM Restricted": "R"
 }
 
-
 def filter_rows(df: pd.DataFrame) -> pd.DataFrame:
+    original_count = df.shape[0]
+    current_count = original_count
 
-    # Make sure release_date is not null and revenue and budget are not 0
-    filtered_df = df[df['release_date'].notnull() & (df['revenue'] > 0) & (df['budget'] > 0)]
+    # Filter movies with runtime >= 70 minutes
+    df = df[df['runtime'] >= 70]
+    removed = current_count - df.shape[0]
+    current_count = df.shape[0]
+    print(f"Removed {removed} movies with runtime < 70 minutes. Remaining: {current_count}")
 
-    return filtered_df
+    # Filter movies with revenue > 0
+    df = df[df['revenue'] > 0]
+    removed = current_count - df.shape[0]
+    current_count = df.shape[0]
+    print(f"Removed {removed} movies with revenue <= 0. Remaining: {current_count}")
 
-# Functions
-def fix_certificates(df: pd.DataFrame) -> pd.DataFrame:
-    try:
-        df['ageCert'] = df['ageCert'].replace(CERTIFICATE_MAPPINGS).fillna("U")
-    except Exception as e:
-        logging.error(
-            f'An error occurred while fixing certificates: {e}', exc_info=True)
+    # Filter movies with budget > 0
+    df = df[df['budget'] > 0]
+    removed = current_count - df.shape[0]
+    current_count = df.shape[0]
+    print(f"Removed {removed} movies with budget <= 0. Remaining: {current_count}")
+
+    # Filter movies released between 1970-01-01 and 2020-01-01
+    df = df[(df['release_date'] >= "1970-01-01") & (df['release_date'] <= "2020-01-01")]
+    removed = current_count - df.shape[0]
+    current_count = df.shape[0]
+    print(f"Removed {removed} movies released before 1970 or after 2020. Remaining: {current_count}")
+
+    total_removed = original_count - current_count
+    print(f"Total movies removed: {total_removed}")
+    print(f"Final number of movies: {current_count}")
+
     return df
 
 

@@ -40,17 +40,18 @@ def save_data(movie_df, task_type, remove_outliers, feature_flag):
     """
 
     budget_categories = {
-        'small_productions': (0, 15_000_000),          # Small budget
-        'medium_productions': (15_000_001, 35_000_000), # Medium budget
-        'large_productions': (35_000_001, 999_999_999), # Large budget
-        'full' : (0, 999_999_999)          # Full range
+        'small_productions': ['small_productions'],
+        'medium_productions': ['medium_productions'],
+        'large_productions': ['large_productions'],
+        'full' : ['small_productions', 'medium_productions', 'large_productions']
     }
 
     os.makedirs(ML_READY_DATA_PATH, exist_ok=True)
 
-    for production_size, (lower_bound, upper_bound) in budget_categories.items():
-        subset = movie_df[movie_df.budget_usd_adj.between(lower_bound, upper_bound)]
-        file_name = generate_file_name(production_size, task_type, remove_outliers, feature_flag)
+
+    for label, production_size in budget_categories.items():
+        subset = movie_df[movie_df['production_size'].isin(production_size)]
+        file_name = generate_file_name(label, task_type, remove_outliers, feature_flag)
         full_path = f'{ML_READY_DATA_PATH}/{file_name}'
         subset.to_csv(full_path, index=False)
         print(f"Data saved to {full_path}")
@@ -78,12 +79,11 @@ def construct_dataset(feature_flag, task_type, to_remove_outliers=False):
 
 if __name__ == "__main__":
 
-    TASK_TYPE = ['binary_classification', 'multi_class_classification', 'regression']
+    TASK_TYPE = ['regression','binary_classification', 'multi_class_classification']
     REMOVE_OUTLIERS = [True, False]
-    FEATURE_FLAG = ['complex','none']
-
-    for task in TASK_TYPE:
-        for outlier_status in REMOVE_OUTLIERS:
-            for feature_flag in FEATURE_FLAG:
-
+    FEATURE_FLAG = ['none','complex']
+    
+    for outlier_status in REMOVE_OUTLIERS:
+        for feature_flag in FEATURE_FLAG:
+            for task in TASK_TYPE:
                 construct_dataset(feature_flag, task, outlier_status)
