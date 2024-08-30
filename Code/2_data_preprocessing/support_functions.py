@@ -230,27 +230,27 @@ def calculate_release_info_with_checks(df):
 
     # Add flags for release in each country and overall release
     for country in countries:
-        final_df[f'is_released_{country}'] = final_df[country].notna()
-    final_df['is_released'] = final_df[countries].notna().any(axis=1)
+        final_df[f'is_released__{country}'] = final_df[country].notna()
+    final_df['is_released__scope'] = final_df[countries].notna().any(axis=1)
 
     # Calculate days from US release to digital/physical release
     final_df['digital_physical_date'] = pd.to_datetime(final_df['digital_physical_date'].fillna(pd.Timestamp('2050-01-01', tz='UTC')), utc=True)
     final_df['days_from_us_release'] = ((final_df['digital_physical_date'] - final_df['US']).dt.days).fillna(-1)
 
     # Selecting the required columns
-    final_df = final_df[['is_released_US', 'is_released_CN', 'is_released_FR', 'is_released_GB', 'is_released_JP', 'is_released', 'digital_physical_date', 'days_from_us_release', 'ageCert']]
+    final_df = final_df[['is_released__US', 'is_released__CN', 'is_released__FR', 'is_released__GB', 'is_released__JP', 'is_released__scope', 'digital_physical_date', 'days_from_us_release', 'ageCert']]
     final_df.reset_index(inplace=True)
     final_df.rename(columns={'index': 'movie_id'}, inplace=True)
 
     final_df['is_first_released_in_cinemas'] = np.where(final_df['days_from_us_release'] > 0, 1, 0).astype(bool)
     final_df['is_first_released_in_cinemas_safe'] = np.where(final_df['days_from_us_release'] > 60, 1, 0).astype(bool)
-    final_df['is_released'] = final_df['is_released'].astype(bool)
+    final_df['is_released__scope'] = final_df['is_released__scope'].astype(bool)
 
     conditions = [
-        (final_df['is_released']) & (~final_df['is_first_released_in_cinemas']),
-        (final_df['is_released']) & (final_df['is_first_released_in_cinemas_safe']),
-        (final_df['is_released']) & (final_df['is_first_released_in_cinemas']) & (~final_df['is_first_released_in_cinemas_safe']),
-        ~final_df['is_released']
+        (final_df['is_released__scope']) & (~final_df['is_first_released_in_cinemas']),
+        (final_df['is_released__scope']) & (final_df['is_first_released_in_cinemas_safe']),
+        (final_df['is_released__scope']) & (final_df['is_first_released_in_cinemas']) & (~final_df['is_first_released_in_cinemas_safe']),
+        ~final_df['is_released__scope']
     ]
 
     # Define the corresponding categories for each condition
