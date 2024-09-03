@@ -82,10 +82,10 @@ class MOTR:
             return base_models
         elif task_type == 'regression':
             return {
-                "dummy_regressor" : DummyRegressor(strategy='mean'),
-                "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
-                "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
-                "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
+                # "dummy_regressor" : DummyRegressor(strategy='mean'),
+                # "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
+                # "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
+                # "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
                 "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1, verbosity=-1)
             }
         else:
@@ -380,18 +380,18 @@ class MOTR:
             # }
 
 
-            # print("Top 10 predictions with highest absolute percentage error")
-            # print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
+            print("Top 10 predictions with highest absolute percentage error")
+            print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
 
-            # print("Top 10 predictions with lowest absolute percentage error")
-            # print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
+            print("Top 10 predictions with lowest absolute percentage error")
+            print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
 
-            # print("Summary statistics for predictions")
-            # # I also want to format the thousand separator
+            print("Summary statistics for predictions")
+            # I also want to format the thousand separator
             
-            # print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
+            print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
             
-            # print(predicted_vs_actual.groupby('year')['absolute_percentage_error'].describe().sort_values(by='year').to_markdown(floatfmt=",.2f"))
+            print(predicted_vs_actual.groupby('year')['absolute_percentage_error'].describe().sort_values(by='year').to_markdown(floatfmt=",.2f"))
 
                   
         return metrics, conf_matrix, class_report, predicted_vs_actual_describe
@@ -448,12 +448,12 @@ if __name__ == "__main__":
 
     DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
     # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
-    # DATA_FILES_LIST = [
-    #                    "full__regression__no_outliers__complex.csv",
-    #                     # "small_productions__regression__no_outliers__complex.csv",
-    #                     # "medium_productions__regression__no_outliers__complex.csv",
-    #                     # "large_productions__regression__no_outliers__complex.csv"
-    #                    ]
+    DATA_FILES_LIST = [
+                       "full__regression__no_outliers__complex.csv",
+                        # "small_productions__regression__no_outliers__complex.csv",
+                        # "medium_productions__regression__no_outliers__complex.csv",
+                        # "large_productions__regression__no_outliers__complex.csv"
+                       ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
         "revenue_usd_adj" if i == "regression" else i for i in TASK_TYPE_LIST
