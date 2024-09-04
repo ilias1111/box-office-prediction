@@ -9,7 +9,7 @@ from sklearn.linear_model import LogisticRegression
 PARAM_DISTRIBUTIONS = {
     "C": loguniform(1e-4, 1e2),
     "max_depth": randint(2, 32),
-    "n_estimators": randint(50, 2000),
+    "n_estimators": randint(50, 1000),
     "learning_rate": uniform(0.001, 0.2),
     "num_leaves": randint(16, 256),
     "min_samples_split": randint(2, 32),

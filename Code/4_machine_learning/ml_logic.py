@@ -23,10 +23,7 @@ from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, BaggingRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC
-# dummy regressor
-from sklearn.dummy import DummyRegressor
-# dummy classifier
-from sklearn.dummy import DummyClassifier
+from sklearn.dummy import DummyRegressor, DummyClassifier
 
 from random_search import perform_random_search
 from utils import threshold_mape, threshold_probability_accuracy, log10_threshold_probability_accuracy
@@ -40,15 +37,14 @@ from sklearn.metrics import (
 )
 from scikeras.wrappers import KerasClassifier, KerasRegressor
 
-# suppress warnings UndefinedMetricWarning
+# suppress warnings
 import warnings
 from sklearn.exceptions import UndefinedMetricWarning
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 warnings.filterwarnings("ignore", category=pd.errors.DtypeWarning)
 
 class MOTR:
-    # MOTR : Model Optimization and Training Rig
-    def __init__(self,run_id, file_path, target_column_name, id_column_name, task_type, grid_type, positive_class='Success'):
+    def __init__(self, run_id, file_path, target_column_name, id_column_name, task_type, grid_type, positive_class='Success'):
         self.file_path = file_path
         self.dataset_name = os.path.basename(file_path).split('.')[0].split('__')[0]
         self.outliers = os.path.basename(file_path).split('.')[0].split('__')[2]
@@ -70,7 +66,7 @@ class MOTR:
                 "random_forest_classifier": RandomForestClassifier(random_state=42, n_jobs=-1),
                 "decision_tree_classifier": DecisionTreeClassifier(random_state=42),
                 "xgboost_classifier": XGBClassifier(random_state=42, n_jobs=-1),
-                "lightgbm_classifier": LGBMClassifier(random_state=42, n_jobs=-1, verbosity=-1)
+                # "lightgbm_classifier": LGBMClassifier(random_state=42, n_jobs=-1, verbosity=-1)
             }
 
             if task_type == 'multi_class_classification':
@@ -82,11 +78,11 @@ class MOTR:
             return base_models
         elif task_type == 'regression':
             return {
-                # "dummy_regressor" : DummyRegressor(strategy='mean'),
-                # "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
-                # "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
-                # "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
-                "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1, verbosity=-1)
+                "dummy_regressor" : DummyRegressor(strategy='mean'),
+                "random_forest_regressor": RandomForestRegressor(random_state=42, n_jobs=-1),
+                "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
+                "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
+                # "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1, verbosity=-1)
             }
         else:
             raise ValueError("Invalid task type specified. Choose 'binary_classification', 'multi_class_classification', or 'regression'.")
@@ -168,7 +164,6 @@ class MOTR:
 
         return preprocessor
     
-
     def train_model(self, X, y, model_name, numerical_features, categorical_features, binary_features, label_encoder=None):
         logging.info(f"Training model: {model_name}")
 
@@ -208,23 +203,22 @@ class MOTR:
             "RobustScaler": RobustScaler(),
             "PowerTransformer": PowerTransformer(method='yeo-johnson')
         }
-        # Example usage in param_grid:
         param_grid = { **param_grid,
             'preprocessor__numerical__scaler': [scaler_mapping[scaler] for scaler in param_grid.get('preprocessor__numerical__scaler',["StandardScaler"])]
         }
+
         if self.grid_type == 'random_search':
-            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=5, n_iter=60, scoring=self.select_scoring(), random_state=42, task_type = self.task_type)
+            model_with_parameters, number_of_combinations = perform_random_search(model, model_name, X_train, y_train, cv=5, n_iter=20, scoring=self.select_scoring(), random_state=42, task_type=self.task_type)
         elif self.grid_type != 'non_grid':
             number_of_combinations = len(list(ParameterGrid(param_grid)))
             model_with_parameters = GridSearchCV(model, param_grid, cv=5, scoring=self.select_scoring(), n_jobs=-1, verbose=0, pre_dispatch='4*n_jobs', error_score='raise')
             model_with_parameters.fit(X_train, y_train)
             model_with_parameters = model_with_parameters.best_estimator_
-
         else:
             number_of_combinations = 1
             model_params = {k: v[0] for k, v in param_grid.items() if k.startswith('model__')}
             model.set_params(**model_params)
-            model_with_parameters =  model.fit(X_train, y_train)
+            model_with_parameters = model.fit(X_train, y_train)
 
         stop_time = datetime.now()
         duration = stop_time - start_time
@@ -234,7 +228,6 @@ class MOTR:
         return metrics
 
     def get_feature_importance(self, model, preprocessor):
-        """Generate and return a DataFrame containing feature importances."""
         feature_names = preprocessor.get_feature_names_out()
         if hasattr(model, "feature_importances_"):
             feature_importance = pd.DataFrame(
@@ -267,7 +260,7 @@ class MOTR:
         else:
             raise ValueError("Unsupported task type for scoring")
 
-    def evaluate_model(self, model, X_test, y_test,label_encoder, X_test_id, X):
+    def evaluate_model(self, model, X_test, y_test, label_encoder, X_test_id, X):
         logging.info("Evaluating model")
 
         transformer = model.named_steps['preprocessor']
@@ -309,7 +302,6 @@ class MOTR:
             pred = np.power(10,  np.where(abs(pred_raw) >= 12, 12, abs(pred_raw)))
             #pred = abs(pred_raw)
 
-
             conf_matrix = None
             class_report = None
 
@@ -324,12 +316,10 @@ class MOTR:
                 "Threshold Probability Accuracy": threshold_probability_accuracy(y_test, pred, threshold=0.2),
                 "Threshold MAPE": threshold_mape(y_test, pred),
                 "Threshold MAPE (25%)": threshold_mape(y_test, pred, threshold=0.25),
-
             }
 
             conf_matrix = None
             class_report = None
-
             predicted_vs_actual = pd.DataFrame({self.id_column_name: X_test_id.values, 'actual': y_test, 'predicted': pred})
             predicted_vs_actual['year'] = 10 *  np.floor(predicted_vs_actual.merge(X[['year',self.id_column_name]], on=self.id_column_name, how='left')['year']/10).astype(int)
             predicted_vs_actual['absolute_error'] = (predicted_vs_actual['predicted'] - predicted_vs_actual['actual']).abs()
@@ -339,8 +329,6 @@ class MOTR:
 
             predicted_vs_actual.sort_values(by='absolute_percentage_error', ascending=False, inplace=True)
 
-
-            # Assuming 'predicted_vs_actual' is your DataFrame with 'actual' and 'predicted' columns
             predicted_vs_actual['squared_error'] = (predicted_vs_actual['predicted'] - predicted_vs_actual['actual']) ** 2
             predicted_vs_actual['residuals'] = predicted_vs_actual['predicted'] - predicted_vs_actual['actual']
             predicted_vs_actual['threshold_mape'] = threshold_mape(predicted_vs_actual['actual'], predicted_vs_actual['predicted'])
@@ -380,19 +368,16 @@ class MOTR:
             # }
 
 
-            print("Top 10 predictions with highest absolute percentage error")
-            print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
+            # print("Top 10 predictions with highest absolute percentage error")
+            # print(predicted_vs_actual.head(40).to_markdown(floatfmt=",.2f"))
 
-            print("Top 10 predictions with lowest absolute percentage error")
-            print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
+            # print("Top 10 predictions with lowest absolute percentage error")
+            # print(predicted_vs_actual.tail(25).to_markdown(floatfmt=",.2f"))
 
-            print("Summary statistics for predictions")
-            # I also want to format the thousand separator
+            # print("Summary statistics for predictions")
+            # print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
             
-            print(predicted_vs_actual_describe.to_markdown(floatfmt=",.2f"))
-            
-            print(predicted_vs_actual.groupby('year')['absolute_percentage_error'].describe().sort_values(by='year').to_markdown(floatfmt=",.2f"))
-
+            # print(predicted_vs_actual.groupby('year')['absolute_percentage_error'].describe().sort_values(by='year').to_markdown(floatfmt=",.2f"))
                   
         return metrics, conf_matrix, class_report, predicted_vs_actual_describe
 
@@ -436,13 +421,11 @@ class MOTR:
         results = []
         X, y, numerical_features, categorical_features, binary_features, label_encoder = self.load_data()
         for model_name in self.models.keys():
-            ##print(f"Training model: {model_name}\n")
             metrics = self.train_model(X, y, model_name, numerical_features, categorical_features, binary_features, label_encoder)
             results.append({"Model": model_name, **metrics})
         return pd.DataFrame(results)
 
 if __name__ == "__main__":
-
     GRID_TYPE = "random_search"
     ID_COLUMN_NAME = "movie_id"
 
@@ -450,16 +433,15 @@ if __name__ == "__main__":
     # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
     DATA_FILES_LIST = [
                        "full__regression__no_outliers__complex.csv",
-                        # "small_productions__regression__no_outliers__complex.csv",
-                        # "medium_productions__regression__no_outliers__complex.csv",
-                        # "large_productions__regression__no_outliers__complex.csv"
+                        "small_productions__regression__no_outliers__complex.csv",
+                        "medium_productions__regression__no_outliers__complex.csv",
+                        "large_productions__regression__no_outliers__complex.csv"
                        ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
         "revenue_usd_adj" if i == "regression" else i for i in TASK_TYPE_LIST
     ]
 
-    # create a hash for each run
     RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
     cases = len(
         [
