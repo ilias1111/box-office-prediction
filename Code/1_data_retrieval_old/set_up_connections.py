@@ -1,11 +1,12 @@
 from google.oauth2 import service_account
-import json
 # import pymongo
 
 
 # Service account for google cloud from json file
 def get_gbq_credentials():
-    credentials = service_account.Credentials.from_service_account_file('Code/data_pipeline/big_query_credentials.json')
+    credentials = service_account.Credentials.from_service_account_file(
+        "Code/data_pipeline/big_query_credentials.json"
+    )
     return credentials, credentials.project_id
 
 

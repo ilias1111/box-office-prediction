@@ -7,8 +7,6 @@ from datetime import datetime
 from glob import glob
 import os
 import json
-import pandas as pd
-from typing import List, Dict, Union, Tuple
 
 
 def load_metadata(type: str, metadata_path: str) -> pd.DataFrame:
@@ -267,7 +265,7 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
         "none_False": "FE: none<br>With Outliers",
         "complex_False": "FE: complex<br>With Outliers",
         "none_True": "FE: none<br>No Outliers",
-        "complex_True": "FE: complex<br>No Outliers"
+        "complex_True": "FE: complex<br>No Outliers",
     }
 
     experiment_df = experiment_df[experiment_df["problem_type"] == problem_type]
@@ -295,7 +293,9 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
         fig = go.Figure()
 
         benchmark_data = dataset_data[dataset_data["model_type"] == benchmark_model]
-        benchmark_data = benchmark_data.set_index("group").reindex(GROUP_ORDER).reset_index()
+        benchmark_data = (
+            benchmark_data.set_index("group").reindex(GROUP_ORDER).reset_index()
+        )
         fig.add_trace(
             go.Scatter(
                 name=f"{benchmark_model} (Benchmark)",
@@ -344,8 +344,7 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
         )
 
         fig.update_xaxes(
-            ticktext=[NEW_LABELS[group] for group in GROUP_ORDER],
-            tickvals=GROUP_ORDER
+            ticktext=[NEW_LABELS[group] for group in GROUP_ORDER], tickvals=GROUP_ORDER
         )
 
         filename = generate_filename(

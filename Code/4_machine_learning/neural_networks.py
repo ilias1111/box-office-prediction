@@ -10,7 +10,7 @@ def build_neural_network_model(
     dropout: float = 0.2,
     layers_activation: str = "relu",
     output_activation: str = "linear",
-    loss: str = 'mean_absolute_percentage_error',
+    loss: str = "mean_absolute_percentage_error",
 ):
     n_features_in_ = meta["n_features_in_"]
 
