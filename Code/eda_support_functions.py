@@ -2,14 +2,161 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union, Any, Optional
 from datetime import datetime
 from glob import glob
 import os
 import json
+import plotly.figure_factory as ff
+from plotly.subplots import make_subplots
+
+# Define constants
+COLORS = [
+    "#66C2A5",  # Teal
+    "#8DA0CB",  # Blue-gray
+    "#E78AC3",  # Pink
+    "#A6D854",  # Light green
+    "#FFD92F",  # Yellow
+    "#E5C494",  # Tan
+    "#B3B3B3",  # Gray
+]
+
+DEFAULT_CHART_CONFIG = {
+    "font_family": "Arial",
+    "base_font_size": 20,
+    "title_font_size": 28,
+    "axis_font_size": 20,
+    "label_font_size": 20,
+    "text_color": "#000000",
+    "grid_color": "#E5E5E5",
+    "border_color": "#000000",
+    "border_width": 2.5,
+    "margin": dict(l=100, r=50, t=160, b=80),
+    "height": 800,
+    "width": 1200,
+    "legend_font_size": 12,  # Added this
+}
+
+
+def should_use_log_scale(values: np.ndarray) -> bool:
+    """Determine if log scale should be used based on data range."""
+    min_val = np.min(values)
+    max_val = np.max(values)
+    return max_val / max(min_val, 1e-10) > 100
+
+
+def generate_filename(base: str, params: Dict[str, Any], prefix: Optional[str] = None) -> str:
+    """Generate a smart, descriptive filename for the chart."""
+    param_str = "_".join(f"{k}_{v}" for k, v in params.items() if v is not None)
+    filename = f"{base}_{param_str}.png".replace(" ", "_").lower()
+    return f"{prefix}_{filename}" if prefix else filename
+
+
+def save_figure(fig: go.Figure, filename: str, output_dir: str = "charts") -> None:
+    """Save the figure as a PNG file in the specified output directory."""
+    os.makedirs(output_dir, exist_ok=True)
+    fig.write_image(os.path.join(output_dir, filename), scale=2)
+
+
+def apply_common_style(
+    fig: go.Figure,
+    title: str,
+    xaxis_title: str,
+    yaxis_title: str,
+    y_values: List[float],
+) -> go.Figure:
+    """Apply common style to all charts."""
+    cfg = DEFAULT_CHART_CONFIG
+    use_log_scale = should_use_log_scale(y_values)
+
+    # Title configuration
+    title_config = {
+        "text": f"<b>{title}</b>",
+        "y": 0.95,
+        "x": 0.5,
+        "xanchor": "center",
+        "yanchor": "top",
+        "font": dict(size=cfg["title_font_size"], color=cfg["text_color"]),
+    }
+
+    # Axis configuration
+    axis_config = dict(
+        showgrid=True,
+        gridcolor=cfg["grid_color"],
+        gridwidth=1,
+        tickfont=dict(size=cfg["base_font_size"]),
+        linecolor=cfg["border_color"],
+        linewidth=2,
+        ticks="outside",
+        tickwidth=2,
+    )
+
+    # Layout update
+    fig.update_layout(
+        title=title_config,
+        xaxis_title=dict(
+            text=f"<b>{xaxis_title}</b>",
+            font=dict(size=cfg["axis_font_size"], color=cfg["text_color"])
+        ),
+        yaxis_title=dict(
+            text=f"<b>{yaxis_title}</b>",
+            font=dict(size=cfg["axis_font_size"], color=cfg["text_color"])
+        ),
+        font=dict(
+            family=cfg["font_family"],
+            size=cfg["base_font_size"],
+            color=cfg["text_color"]
+        ),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        xaxis=axis_config,
+        yaxis={
+            **axis_config,
+            "zeroline": True,
+            "zerolinecolor": cfg["border_color"],
+            "zerolinewidth": 2,
+            "type": "log" if use_log_scale else "linear",
+        },
+        margin=cfg["margin"],
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(size=cfg["base_font_size"]),
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor=cfg["border_color"],
+            borderwidth=cfg["border_width"],
+        ),
+        bargap=0.2,
+        height=cfg["height"],
+        width=cfg["width"],
+    )
+
+    # Add border
+    fig.update_layout(
+        shapes=[
+            dict(
+                type="rect",
+                xref="paper",
+                yref="paper",
+                x0=0,
+                y0=0,
+                x1=1,
+                y1=1,
+                line=dict(color=cfg["border_color"], width=cfg["border_width"]),
+                fillcolor="rgba(0,0,0,0)",
+            )
+        ]
+    )
+    
+    return fig
 
 
 def load_metadata(type: str, metadata_path: str) -> pd.DataFrame:
+    """Load and process metadata from JSON files."""
     json_files = glob(os.path.join(metadata_path, "*.json"))
     results = []
 
@@ -17,14 +164,8 @@ def load_metadata(type: str, metadata_path: str) -> pd.DataFrame:
         try:
             with open(file, "r") as f:
                 data = json.load(f)
-
-                if type == "metrics":
-                    parametric_data = data.get("metrics", {})
-                elif type == "parameters":
-                    parametric_data = data.get("model_parameters", {})
-                elif type == "feature_importance":
-                    parametric_data = data.get("feature_importance", {})
-
+                
+                # Extract common experiment info
                 experiment_info = {
                     "run_id": data.get("run_id"),
                     "timestamp": datetime.strptime(
@@ -40,38 +181,29 @@ def load_metadata(type: str, metadata_path: str) -> pd.DataFrame:
                     "variance_threshold": data.get("variance_threshold"),
                     "duration": data.get("duration"),
                     "number_of_combinations": data.get("number_of_combinations"),
-                    **parametric_data,
                 }
+                
+                # Select appropriate data based on type
+                if type == "metrics":
+                    metrics_data = data.get("metrics", {})
+                    experiment_info.update(metrics_data)
+                    # Add regression prediction data if available
+                    if data.get("problem_type") == "regression":
+                        experiment_info["predicted_vs_actual"] = json.dumps(
+                            data.get("predicted_vs_actual", {})
+                        )
+                elif type == "parameters":
+                    experiment_info.update(data.get("model_parameters", {}))
+                elif type == "confusion_matrix":
+                    experiment_info["conf_matrix"] = data.get("conf_matrix", {})
+                else:
+                    raise ValueError(f"Unknown metadata type: {type}")
+
                 results.append(experiment_info)
         except Exception as e:
             print(f"Error loading file {file}: {e}")
 
     return pd.DataFrame(results)
-
-
-def generate_filename(base: str, params: Dict[str, Any]) -> str:
-    """Generate a smart, descriptive filename for the chart."""
-    param_str = "_".join([f"{k}_{v}" for k, v in params.items() if v is not None])
-    return f"{base}_{param_str}.png".replace(" ", "_").lower()
-
-
-def save_figure(fig: go.Figure, filename: str, output_dir: str = "charts") -> None:
-    """Save the figure as a PNG file in the specified output directory."""
-    os.makedirs(output_dir, exist_ok=True)
-    fig.write_image(os.path.join(output_dir, filename), scale=2)
-
-
-# Define a consistent color palette
-COLORS = [
-    "#66C2A5",
-    "#FC8D62",
-    "#8DA0CB",
-    "#E78AC3",
-    "#A6D854",
-    "#FFD92F",
-    "#E5C494",
-    "#B3B3B3",
-]
 
 
 def select_best_models(
@@ -129,60 +261,6 @@ def select_best_models(
     return results
 
 
-def should_use_log_scale(values):
-    """Determine if log scale should be used based on data range."""
-    min_val = np.min(values)
-    max_val = np.max(values)
-    return (
-        max_val / max(min_val, 1e-10) > 100
-    )  # Use log scale if range spans more than 2 orders of magnitude
-
-
-def apply_common_style(
-    fig: go.Figure,
-    title: str,
-    xaxis_title: str,
-    yaxis_title: str,
-    y_values: List[float],
-) -> go.Figure:
-    """Apply common style to all charts."""
-    use_log_scale = should_use_log_scale(y_values)
-
-    fig.update_layout(
-        title={
-            "text": title,
-            "y": 0.95,
-            "x": 0.5,
-            "xanchor": "center",
-            "yanchor": "top",
-            "font": dict(size=20, color="#333333"),
-        },
-        xaxis_title=xaxis_title,
-        yaxis_title=yaxis_title,
-        font=dict(family="Arial", size=12, color="#333333"),
-        plot_bgcolor="white",
-        xaxis=dict(
-            showgrid=True,
-            gridcolor="#E5E5E5",
-            tickfont=dict(size=10),
-            tickangle=0,
-        ),
-        yaxis=dict(
-            showgrid=True,
-            gridcolor="#E5E5E5",
-            tickfont=dict(size=10),
-            zeroline=True,
-            zerolinecolor="#E5E5E5",
-            type="log" if use_log_scale else "linear",
-        ),
-        margin=dict(l=60, r=30, t=80, b=50),
-        showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        bargap=0.15,
-    )
-    return fig
-
-
 def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
     experiment_df: pd.DataFrame,
     problem_type: str = "binary_classification",
@@ -190,6 +268,8 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
     metric_agg: str = "max",
     display_chart: bool = True,
     output_dir: str = "charts",
+    print_stats: bool = False,
+    filename_prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     experiment_df = experiment_df[experiment_df["problem_type"] == problem_type]
 
@@ -224,7 +304,14 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
             barmode="group",
         )
 
-        fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+        fig.update_traces(
+            texttemplate="<b>%{text:.2f}</b>",  # Bold text
+            textposition="outside",
+            textfont=dict(size=16, color="#000000"),  # Larger, darker text
+            textangle=0,  # Horizontal text
+            marker_line_color="#000000",  # Black border for bars
+            marker_line_width=1.5,
+        )
 
         fig = apply_common_style(
             fig,
@@ -242,11 +329,15 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
                 "metric": metric,
                 "agg": metric_agg,
             },
+            prefix=filename_prefix
         )
         save_figure(fig, filename, output_dir)
 
         if display_chart:
             fig.show()
+
+    if print_stats:
+        print(grouped_data)
 
     return None
 
@@ -259,6 +350,8 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
     benchmark_model: str = "dummy_regressor",
     display_chart: bool = True,
     output_dir: str = "charts",
+    print_stats: bool = False,
+    filename_prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     GROUP_ORDER = ["none_False", "complex_False", "none_True", "complex_True"]
     NEW_LABELS = {
@@ -302,17 +395,29 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
                 x=GROUP_ORDER,
                 y=benchmark_data[metric],
                 mode="markers+text",
-                marker=dict(color="#000000", size=12, symbol="diamond"),
+                marker=dict(
+                    color="#000000",
+                    size=14,
+                    symbol="diamond",
+                    line=dict(color="#000000", width=2)
+                ),
                 text=benchmark_data[metric].round(2),
                 textposition="top center",
-                textfont=dict(color="#000000", size=10),
+                textfont=dict(color="#000000", size=16),
+                texttemplate='<b>%{text:.2f}</b>',
             )
         )
 
+        # Get unique models excluding benchmark
+        non_benchmark_models = [
+            model for model in dataset_data["model_type"].unique() 
+            if model != benchmark_model
+        ]
+        
+        # Assign colors only to non-benchmark models
         model_colors = {
             model: COLORS[i % len(COLORS)]
-            for i, model in enumerate(dataset_data["model_type"].unique())
-            if model != benchmark_model
+            for i, model in enumerate(non_benchmark_models)
         }
 
         for model in dataset_data["model_type"].unique():
@@ -331,7 +436,11 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
                         text=model_data[metric].round(2),
                         textposition="outside",
                         marker_color=model_colors[model],
-                        textfont=dict(size=10),
+                        marker_line_color="#000000",
+                        marker_line_width=1.5,
+                        textfont=dict(size=16, color="#000000"),
+                        textangle=0,
+                        texttemplate='<b>%{text:.2f}</b>',
                     )
                 )
 
@@ -356,11 +465,15 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
                 "agg": metric_agg,
                 "benchmark": benchmark_model,
             },
+            prefix=filename_prefix
         )
         save_figure(fig, filename, output_dir)
 
         if display_chart:
             fig.show()
+
+    if print_stats:
+        print(grouped_data)
 
     return None
 
@@ -368,15 +481,23 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
 def plot_and_export_categorical_distribution(
     df: pd.DataFrame,
     agg_column: str,
-    other_threshold: int,
+    nickname_agg_column: str = None,
+    other_threshold: int = 10,
     sort_by_value: bool = True,
     display_chart: bool = True,
     output_dir: str = "charts",
     format_as_int: bool = False,
+    print_stats: bool = False,
+    filename_prefix: Optional[str] = None,
 ) -> pd.DataFrame:
+
+    if nickname_agg_column is not None:
+        df[nickname_agg_column] = df[agg_column]
+        agg_column = nickname_agg_column
+    
     counts = df[agg_column].value_counts().reset_index()
     counts.columns = [agg_column, "count"]
-
+    
     counts["grouped"] = counts.apply(
         lambda x: "Other" if x["count"] < other_threshold else x[agg_column], axis=1
     )
@@ -394,7 +515,7 @@ def plot_and_export_categorical_distribution(
     grouped_counts["grouped"] = grouped_counts["grouped"].astype(str)
 
     color_map = {category: "#66C2A5" for category in grouped_counts["grouped"].unique()}
-    color_map["Other"] = "#E78AC3"  # Use pink for 'Other'
+    color_map["Other"] = "#E78AC3"
 
     fig = px.bar(
         grouped_counts,
@@ -406,13 +527,27 @@ def plot_and_export_categorical_distribution(
     )
 
     if format_as_int:
-        fig.update_traces(texttemplate="%{text:.0f}", textposition="outside")
+        fig.update_traces(
+            texttemplate="<b>%{text:.0f}</b>",
+            textposition="outside",
+            textfont=dict(size=16, color="#000000"),
+            textangle=0,
+            marker_line_color="#000000",
+            marker_line_width=1.5,
+        )
     else:
-        fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+        fig.update_traces(
+            texttemplate="<b>%{text:.2s}</b>",
+            textposition="outside",
+            textfont=dict(size=16, color="#000000"),
+            textangle=0,
+            marker_line_color="#000000",
+            marker_line_width=1.5,
+        )
 
     fig = apply_common_style(
         fig,
-        title=f"Count of Movies by {agg_column}",
+        title=f"Number of Movies by {agg_column}",
         xaxis_title=f"{agg_column}",
         yaxis_title="Number of Movies",
         y_values=grouped_counts["total"],
@@ -430,10 +565,565 @@ def plot_and_export_categorical_distribution(
             "threshold": other_threshold,
             "sort": "value" if sort_by_value else "name",
         },
+        prefix=filename_prefix
     )
     save_figure(fig, filename, output_dir)
 
     if display_chart:
         fig.show()
 
+    if print_stats:
+        ## Pretty print the stats
+        print(grouped_counts)
+
+
     return None
+
+
+def plot_confusion_matrix(
+    conf_matrix_data: Union[List[Dict[str, int]], Dict[str, Dict[str, int]]],
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    print_stats: bool = False,
+    filename: Optional[str] = None,
+    title: Optional[str] = None,
+    subtitle: Optional[str] = None,
+) -> None:
+    """Create and save a styled confusion matrix visualization."""
+    # Convert list format to dictionary format if needed
+    if isinstance(conf_matrix_data, list):
+        labels = sorted(list(set([k for d in conf_matrix_data for k in d.keys()])))
+        matrix = np.zeros((len(labels), len(labels)))
+        for i, true_dict in enumerate(conf_matrix_data):
+            for pred_label, count in true_dict.items():
+                j = labels.index(pred_label)
+                matrix[i][j] = count
+    else:
+        labels = sorted(list(set(
+            list(conf_matrix_data.keys()) + 
+            [k for d in conf_matrix_data.values() for k in d.keys()]
+        )))
+        matrix = np.zeros((len(labels), len(labels)))
+        for i, true_label in enumerate(labels):
+            for j, pred_label in enumerate(labels):
+                matrix[i][j] = conf_matrix_data[true_label].get(pred_label, 0)
+    
+    # Calculate percentages
+    matrix_sum = matrix.sum()
+    matrix_pct = (matrix / matrix_sum) * 100
+    
+    # Create annotations
+    annotations = []
+    for i in range(len(labels)):
+        row_annotations = []
+        for j in range(len(labels)):
+            row_annotations.append(
+                f"<b>{matrix[i][j]:.0f}</b><br>({matrix_pct[i][j]:.1f}%)"
+            )
+        annotations.append(row_annotations)
+    
+    # Split title into main title and subtitle
+    title_parts = title.split("\n") if title else ["Confusion Matrix"]
+    main_title = title_parts[0]
+    subtitle = "<br>".join(title_parts[1:]) if len(title_parts) > 1 else ""
+    
+    # Create heatmap with updated styling
+    fig = ff.create_annotated_heatmap(
+        z=matrix,
+        x=labels,
+        y=labels,
+        annotation_text=annotations,
+        colorscale=[
+            [0, DEFAULT_CHART_CONFIG["grid_color"]], 
+            [1, COLORS[0]]
+        ],
+        showscale=True,
+        hoverongaps=False,
+        hoverinfo='z',
+    )
+    
+    # Update layout with improved styling
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"<b>{main_title}</b>" +
+                (f"<br><sup>{subtitle}</sup>" if subtitle else "")
+            ),
+            y=0.95,
+            x=0.5,
+            xanchor="center",
+            yanchor="top",
+            font=dict(
+                size=DEFAULT_CHART_CONFIG["title_font_size"],
+                color=DEFAULT_CHART_CONFIG["text_color"]
+            ),
+        ),
+        xaxis_title=dict(
+            text="<b>Predicted Label</b>",
+            font=dict(
+                size=DEFAULT_CHART_CONFIG["axis_font_size"],
+                color=DEFAULT_CHART_CONFIG["text_color"]
+            )
+        ),
+        yaxis_title=dict(
+            text="<b>True Label</b>",
+            font=dict(
+                size=DEFAULT_CHART_CONFIG["axis_font_size"],
+                color=DEFAULT_CHART_CONFIG["text_color"]
+            )
+        ),
+        font=dict(
+            family=DEFAULT_CHART_CONFIG["font_family"],
+            size=DEFAULT_CHART_CONFIG["base_font_size"],
+            color=DEFAULT_CHART_CONFIG["text_color"]
+        ),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        width=DEFAULT_CHART_CONFIG["width"],
+        height=DEFAULT_CHART_CONFIG["height"],
+        margin=DEFAULT_CHART_CONFIG["margin"],
+    )
+    
+    # Update axes
+    fig.update_xaxes(
+        side="bottom",
+        tickfont=dict(size=DEFAULT_CHART_CONFIG["axis_font_size"]),
+        showgrid=True,
+        gridcolor=DEFAULT_CHART_CONFIG["grid_color"],
+        gridwidth=1,
+        linecolor=DEFAULT_CHART_CONFIG["border_color"],
+        linewidth=2,
+        ticks="outside",
+        tickwidth=2,
+    )
+    
+    fig.update_yaxes(
+        tickfont=dict(size=DEFAULT_CHART_CONFIG["axis_font_size"]),
+        showgrid=True,
+        gridcolor=DEFAULT_CHART_CONFIG["grid_color"],
+        gridwidth=1,
+        linecolor=DEFAULT_CHART_CONFIG["border_color"],
+        linewidth=2,
+        ticks="outside",
+        tickwidth=2,
+    )
+    
+    # Add border
+    fig.update_layout(
+        shapes=[
+            dict(
+                type="rect",
+                xref="paper",
+                yref="paper",
+                x0=0,
+                y0=0,
+                x1=1,
+                y1=1,
+                line=dict(
+                    color=DEFAULT_CHART_CONFIG["border_color"],
+                    width=DEFAULT_CHART_CONFIG["border_width"]
+                ),
+                fillcolor="rgba(0,0,0,0)",
+            )
+        ]
+    )
+    
+    # Add hover template
+    fig.update_traces(
+        hovertemplate="True: %{y}<br>Predicted: %{x}<br>Count: %{z}<extra></extra>"
+    )
+    
+    # Save figure with provided filename
+    save_figure(fig, filename, output_dir)
+    
+    if display_chart:
+        fig.show()
+        
+    if print_stats:
+        print("\nConfusion Matrix:")
+        print(pd.DataFrame(matrix, index=labels, columns=labels))
+        print(f"\nTotal samples: {matrix_sum:.0f}")
+
+
+def plot_confusion_matrices_from_metadata(
+    metadata_path: str,
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    print_stats: bool = False,
+    filename_prefix: Optional[str] = None,
+) -> None:
+    """
+    Load confusion matrices from metadata files and create visualizations.
+    
+    Parameters:
+    - metadata_path: Path to metadata directory
+    - display_chart: Whether to display charts interactively
+    - output_dir: Directory to save output images
+    - print_stats: Whether to print confusion matrix statistics
+    - filename_prefix: Optional prefix for output filenames
+    """
+    # Load confusion matrix data
+    df = load_metadata("confusion_matrix", metadata_path)
+    
+    # Process each experiment
+    for _, row in df.iterrows():
+        # Create title
+        title = (
+            f"Confusion Matrix - {row['model_type']}\n"
+            f"Dataset: {row['dataset_name']} | "
+            f"FE: {row['feature_engineering']} | "
+            f"Outliers Removed: {row['has_outliers_removed']}"
+        )
+        
+        # Generate unique prefix for this experiment
+        exp_prefix = f"{filename_prefix}_{row['run_id']}" if filename_prefix else row['run_id']
+        
+        # Update filename generation in the loop
+        filename = generate_filename(
+            "confusion_matrix_metadata",
+            {
+                "dataset": row['dataset_name'],
+                "model": row['model_type'],
+                "fe": row['feature_engineering'],
+                "outliers": row['has_outliers_removed']
+            },
+            prefix=filename_prefix
+        )
+        
+        # Plot confusion matrix
+        plot_confusion_matrix(
+            conf_matrix_data=row['conf_matrix'],
+            display_chart=display_chart,
+            output_dir=output_dir,
+            print_stats=print_stats,
+            filename=filename,
+            title=title
+        )
+
+
+def plot_best_confusion_matrices_from_metadata(
+    experiment_df: pd.DataFrame,
+    conf_matrix_df: pd.DataFrame,
+    problem_types: List[str],
+    groupby_columns: List[str],
+    metrics: Dict[str, Dict[str, str]],
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    print_stats: bool = False,
+    filename_prefix: Optional[str] = None,
+) -> None:
+    """Create confusion matrix visualizations for the best models."""
+    # Label mapping for binary classification
+    binary_labels = {"0": "Bankrupt", "1": "Success"}
+    
+    for problem_type in problem_types:
+        if print_stats:
+            print(f"\nProcessing {problem_type}...")
+            
+        problem_exp_df = experiment_df[experiment_df["problem_type"] == problem_type].copy()
+        problem_conf_df = conf_matrix_df[conf_matrix_df["problem_type"] == problem_type].copy()
+        
+        if len(problem_exp_df) == 0 or len(problem_conf_df) == 0:
+            print(f"No data found for problem type: {problem_type}")
+            continue
+            
+        metric = metrics[problem_type]["metric"]
+        operation = metrics[problem_type]["operation"]
+        
+        grouped = problem_exp_df.groupby(groupby_columns)
+        if operation == "max":
+            idx = grouped[metric].idxmax()
+        else:
+            idx = grouped[metric].idxmin()
+        
+        best_models = problem_exp_df.loc[idx]
+        
+        for _, row in best_models.iterrows():
+            matrix_row = problem_conf_df[
+                (problem_conf_df["dataset_name"] == row["dataset_name"]) &
+                (problem_conf_df["has_outliers_removed"] == row["has_outliers_removed"]) &
+                (problem_conf_df["feature_engineering"] == row["feature_engineering"]) &
+                (problem_conf_df["model_type"] == row["model_type"])
+            ]
+            
+            if len(matrix_row) == 0:
+                if print_stats:
+                    print(f"No confusion matrix found for configuration: {row.to_dict()}")
+                continue
+            
+            # Format dataset name for title
+            dataset_name = row["dataset_name"].replace("_", " ").title()
+            
+            # Create descriptive title
+            title = (
+                f"Confusion Matrix for {dataset_name}\n"
+                f"{row['model_type']} Model | "
+                f"FE: {row['feature_engineering']} | "
+                f"{'Outliers Removed' if row['has_outliers_removed'] else 'With Outliers'}"
+            )
+            
+            # Create subtitle with metrics only
+            subtitle = (
+                f"F1: {row['F1 Score']:.3f} | "
+                f"Accuracy: {row['Accuracy']:.3f} | "
+                f"Precision: {row['Precision']:.3f} | "
+                f"Recall: {row['Recall']:.3f}"
+            )
+            
+            # Get confusion matrix data and map labels if needed
+            conf_matrix = matrix_row.iloc[0]["conf_matrix"]
+            
+            # Determine number of classes from the confusion matrix
+            if isinstance(conf_matrix, list):
+                num_classes = len(conf_matrix)
+            else:
+                num_classes = len(conf_matrix.keys())
+            
+            # Map labels if binary classification
+            if problem_type == "binary_classification":
+                mapped_conf_matrix = []
+                for d in conf_matrix:
+                    mapped_conf_matrix.append({
+                        binary_labels[k]: v for k, v in d.items()
+                    })
+                conf_matrix = mapped_conf_matrix
+            
+            # Generate filename using consistent pattern
+            filename = generate_filename(
+                "matrix",
+                {
+                    "classes": num_classes,
+                    "dataset": row['dataset_name'],
+                    "model": row['model_type'],
+                    "fe": row['feature_engineering'],
+                    "outliers": row['has_outliers_removed']
+                },
+                prefix=filename_prefix
+            )
+            
+            plot_confusion_matrix(
+                conf_matrix_data=conf_matrix,
+                display_chart=display_chart,
+                output_dir=output_dir,
+                print_stats=print_stats,
+                filename=filename,
+                title=title,
+                subtitle=subtitle
+            )
+
+
+def plot_best_regression_results_from_metadata(
+    experiment_df: pd.DataFrame,
+    problem_types: List[str] = ["regression"],
+    groupby_columns: List[str] = ["dataset_name", "has_outliers_removed", "feature_engineering"],
+    metrics: Dict[str, Dict[str, str]] = {"regression": {"metric": "MAPE", "operation": "min"}},
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    print_stats: bool = False,
+    filename_prefix: Optional[str] = None,
+) -> None:
+    """Create regression result visualizations for the best models."""
+    # Filter for regression problems
+    regression_df = experiment_df[experiment_df["problem_type"].isin(problem_types)].copy()
+    
+    if len(regression_df) == 0:
+        print("No regression data found")
+        return
+    
+    # Get best models for each dataset configuration
+    metric = metrics["regression"]["metric"]
+    operation = metrics["regression"]["operation"]
+    
+    if print_stats:
+        print(f"\n🔍 Finding best models using {metric} ({operation})")
+    
+    grouped = regression_df.groupby(groupby_columns)
+    if operation == "max":
+        idx = grouped[metric].idxmax()
+    else:
+        idx = grouped[metric].idxmin()
+    
+    best_models = regression_df.loc[idx]
+    
+    if print_stats:
+        print(f"\n📈 Found {len(best_models)} best models:")
+        for _, row in best_models.iterrows():
+            print(f"\n• Dataset: {row['dataset_name']}")
+            print(f"  Model: {row['model_type']}")
+            print(f"  MAPE: {row['MAPE']*100:.1f}%")
+            print(f"  MAE: ${row['MAE']:,.0f}")
+            print(f"  R²: {row['R2']:.3f}")
+    
+    for _, row in best_models.iterrows():
+        if pd.isna(row.get("predicted_vs_actual")):
+            if print_stats:
+                print(f"\n⚠️ No prediction data found for {row['dataset_name']}")
+            continue
+        
+        # Format dataset name
+        dataset_name = row["dataset_name"].replace("_", " ").title()
+        
+        # Create title
+        title = (
+            f"{dataset_name} Revenue Prediction Results\n"
+            f"{'with outliers removed' if row['has_outliers_removed'] else 'with all data'} "
+            f"and {row['feature_engineering']} feature engineering"
+        )
+        
+        # Create metrics text
+        metrics_text = (
+            f"Model: {row['model_type']} | "
+            f"MAE: ${row['MAE']:,.0f} | "
+            f"MAPE: {row['MAPE']*100:.1f}% | "
+            f"R²: {row['R2']:.3f}"
+        )
+        
+        # Update filename generation to match standard pattern
+        filename = generate_filename(
+            "best_regression_results",
+            {
+                "dataset": row['dataset_name'],
+                "model": row['model_type'],
+                "fe": row['feature_engineering'],
+                "outliers": row['has_outliers_removed'],
+                "mape": f"{row['MAPE']*100:.1f}",
+                "r2": f"{row['R2']:.3f}"
+            },
+            prefix=filename_prefix
+        )
+        
+        plot_regression_results(
+            predicted_vs_actual=row["predicted_vs_actual"],
+            display_chart=display_chart,
+            output_dir=output_dir,
+            print_stats=print_stats,
+            filename_prefix=filename_prefix,
+            title=title,
+            subtitle=metrics_text
+        )
+
+
+def plot_regression_results(
+    predicted_vs_actual: str,
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    print_stats: bool = False,
+    filename_prefix: Optional[str] = None,
+    title: Optional[str] = None,
+    subtitle: Optional[str] = None,
+) -> None:
+    """Create a clean table visualization of regression results."""
+    # Parse the JSON string into a dictionary
+    data = json.loads(predicted_vs_actual)
+    if isinstance(data, str):
+        data = json.loads(data)
+    
+    # Create a figure with a single table
+    stats_df = pd.DataFrame({
+        'Metric': [
+            'Model Performance',
+            '• Mean Absolute Error',
+            '• Mean Absolute % Error',
+            '• Mean Squared Error',
+            '',  # Spacer
+            'Actual vs Predicted',
+            '• Mean Revenue (Actual)',
+            '• Mean Revenue (Predicted)',
+            '• Median Revenue (Actual)',
+            '• Median Revenue (Predicted)',
+            '',  # Spacer
+            'Distribution',
+            '• Revenue Range (Actual)',
+            '• Revenue Range (Predicted)',
+            '• Standard Deviation (Actual)',
+            '• Standard Deviation (Predicted)'
+        ],
+        'Value': [
+            '<b>Value</b>',  # Header
+            f"${data['absolute_error']['mean']:,.0f}",
+            f"{data['absolute_percentage_error']['mean']*100:.1f}%",
+            f"${data['squared_error']['mean']:,.0f}",
+            '',  # Spacer
+            '<b>Value</b>',  # Header
+            f"${data['actual']['mean']:,.0f}",
+            f"${data['predicted']['mean']:,.0f}",
+            f"${data['actual']['50%']:,.0f}",
+            f"${data['predicted']['50%']:,.0f}",
+            '',  # Spacer
+            '<b>Value</b>',  # Header
+            f"${data['actual']['min']:,.0f} - ${data['actual']['max']:,.0f}",
+            f"${data['predicted']['min']:,.0f} - ${data['predicted']['max']:,.0f}",
+            f"${data['actual']['std']:,.0f}",
+            f"${data['predicted']['std']:,.0f}"
+        ]
+    })
+    
+    # Create alternating colors for better readability
+    fill_colors = []
+    current_section = 0
+    for metric in stats_df['Metric']:
+        if metric in ['Model Performance', 'Actual vs Predicted', 'Distribution']:
+            current_section += 1
+        if metric == '':  # Spacer
+            fill_colors.append('#ffffff')
+        elif metric in ['Model Performance', 'Actual vs Predicted', 'Distribution']:
+            fill_colors.append('#e6e6e6')  # Header color
+        else:
+            fill_colors.append('#ffffff' if current_section % 2 == 0 else '#f9f9f9')
+    
+    fig = go.Figure(data=[go.Table(
+        header=dict(
+            values=['<b>Metrics</b>', '<b>Values</b>'],
+            font=dict(size=14, color='white'),
+            fill_color=DEFAULT_CHART_CONFIG["border_color"],
+            align=['left', 'right'],
+            height=40
+        ),
+        cells=dict(
+            values=[stats_df['Metric'], stats_df['Value']],
+            font=dict(size=13),
+            fill_color=[fill_colors, fill_colors],
+            align=['left', 'right'],
+            height=30,
+            line_color='#f0f0f0'
+        )
+    )])
+    
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text=(f"<b>{title}</b>" + (f"<br><sup>{subtitle}</sup>" if subtitle else "")),
+            y=0.98,
+            x=0.5,
+            xanchor="center",
+            yanchor="top",
+            font=dict(size=16)
+        ),
+        width=800,
+        height=600,
+        margin=dict(t=80, l=0, r=0, b=0)
+    )
+    
+    # Update filename generation to match standard pattern
+    filename = generate_filename(
+        "regression_results",
+        {
+            "title": title.split('\n')[0] if title else None,  # Include only main title
+            "metrics": f"mae_{data['absolute_error']['mean']:.0f}_mape_{data['absolute_percentage_error']['mean']*100:.1f}"
+        },
+        prefix=filename_prefix
+    )
+    
+    # Save figure
+    save_figure(fig, filename, output_dir)
+    
+    if display_chart:
+        fig.show()
+        
+    if print_stats:
+        print("\n📊 Model Performance Summary:")
+        print(f"• Average Error: ${data['absolute_error']['mean']:,.0f}")
+        print(f"• Typical Error Range: {data['absolute_percentage_error']['mean']*100:.1f}% of actual value")
+        bias = data['predicted']['mean'] - data['actual']['mean']
+        print(f"• Bias: Model tends to {'overestimate' if bias > 0 else 'underestimate'} by ${abs(bias):,.0f}")
+        print(f"• Error Distribution: 50% of predictions are within ${data['absolute_error']['25%']:,.0f} to ${data['absolute_error']['75%']:,.0f} of actual value")

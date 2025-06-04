@@ -1,0 +1,150 @@
+Towards an Effective Over-The-Top Platform Service: A Machine Learning Approach for Box Office Analysis
+10.1109/BigComp57234.2023.00102
+* Intresting Approach i didnt follow, reduce, cluster and then apply model on that
+* Korean only
+* Covid
+* Dont use
+
+
+Performance Prediction for IMDB Movies
+https://doi.org/10.21203/rs.3.rs-1243202/v1
+* Crap paper, achieved high F1 (0.9) by using after release features. No point on using that
+* They mention the imbalance
+
+Movie’s box office performance prediction
+An approach based on movie’s script, text mining and deep learning
+
+Personal Comments
+* Master Thesis
+* Brazilian Market
+* Used text mining on the script
+* Pretty good results and good approach, not exactly relevant to us
+* Want to optimize the review proccess for a relevant Agency
+
+Conclusion:
+This work has its main objective implementing a machine learning model that could predict movies’ box office performance and as complementary goals enable a decision support tool do reduce cost and time of analysis spent by the Brazilian Film Agency (ANCINE).
+Best performance was achieved by the SVM model with FastText embeddings trained on the domain-specific task, this model outperformed all others on this study reaching a F1-score of 0,77.
+Although the champion model has been obtained with a domain-specific embedding, in general, pre-trained embeddings outperformed embeddings trained on the corpus of the project. This result is in accordance with literature about word embeddings techniques that demonstrate that for small datasets, which is clearly the case of this project, pre-trained word embeddings deliver better results than domain-specific ones.
+Another important finding is that the performance of classifiers having a binary target was far better than the performance of the models that have a dependent variable on multi-class format, what is expected too once multiclass classification problems are more difficult to address.
+It is important to notice that none of the multi-classes models has achieved an acceptable level of performance, with the best of them reaching a F1-score of only 0,43 and a Precision of at maximum 0,48.
+
+
+Movie Box-Office Success Prediction using Machine Learning
+10.1109/ICPC2T53885.2022.9776798
+
+Personal Comments
+* 2022 paper
+* India based, but wide dataset (6k movies), they used again rating and post release features
+* Intresting approach as they created a "reccomentantion system" by doing a back tracking. The idea of this project is to develop a model to predict the revenue of a film pre-release and another reverse regression model which could take in the revenue that a film producer wants to generate and help design the budget, cast, runtime, and several other vital aspects of the film could be very useful for production companies before the start of film production.
+* They use star power
+
+Conclusion:
+This paper successfully implements a Box Office Success Recommendation System, which can be used by Production Companies across the globe to assist them with decision making at the beginning or before the production of a movie. The machine learning model that taken in an expected revenue and is able to give the required features for achieving that goal would be extremely useful during Film Productions, and can help Companies make more well informed decisions while setting out to make a new film.
+This paper has been able to perform detailed data ex- ploration, model building using several algorithms, study of the important features in revenue prediction, graphically represented the predicted and true data to understand the performance of the model, and has performed detailed data extraction to achieve a high accuracy. Also, the advantages and differences between each of the different regression models were observed and analysed with respect to their performance. The reverse prediction system taking an input of revenue was observed to work with good accuracy, despite the fact that there were very few input features and a basic regression model was used.
+In the future, instead of making each of the features like budget prediction and runtime prediction during backtracking completely independent, the predicted output features could interact with each other and update their results according to each other’s predictions. More complex training algorithms like CNNs and RNNs could be used to give better results. Also,
+Fig. 10. Star Power vs Revenue
+an alternative approach to using the revenue to predict all the features could be done using Generative Adversarial Networks (GANs). GANs are a semi supervised learning algorithms that would be able to generate completely different data each time, and applying GANs instead of supervised learning algorithms, could give far more promising results.
+
+
+
+
+
+Predicting and Ranking Box Office Revenue of Movies Based on Big Data
+https://doi.org/10.1016/j.inffus.2020.02.002
+
+Personal Comments
+
+* 2020
+* Neural Networks
+* Chinese market dataset (the Chinese film market was established in 2008, we collected about 2,500 movies from 2008 to 2017,)
+* Multimodal approach, its pretty powerfull and advance
+* Focus on distribution ( which makes sense )
+
+Conclusion
+
+In this paper, we proposed a two-stage machine learning method for pre- dicting the BOR of a movie before releasing it. We propose utilizing various feature learning models for extracting different features from multi-modal data of the movie. In particular, we propose a novel dynamic heterogeneous network embedding model to collectively learn latent representations of actors, direc-
+actors, and companies, capturing their cooperation relationship collectively. We design a deep neural network-based model to uncover high-level representations
+ of movie quality from trailers. Then, a movies feature vector, consisting of these vectors, is fed into a prediction and ranking model to obtain the BOR prediction. The experimental results on the Chinese film market data show the
+advantage of both our movie feature vectors and the prediction results. In par- ticular, the solution only has an error of about 40% absolute percentage error for bankable movies in a very large prediction space and also offers a promising ranking result. Finally, the real-world applicability of the solution drives us to deploy the solution as a business service to support investment decisions.
+For future work, it is promising to explore NLP technologies in-depth for these textual data about movies. Second, in this paper, we specified an em- bedding method, i.e., MINE, for the participant embedding problem. In the future, it is interesting to investigate a general version of our model, such that our model can be employed to wide applications.
+
+
+
+
+IMDB Box Office Prediction Using Machine Learning Algorithms
+https://doi.org/10.22214/ijraset.2022.42653
+
+
+
+Personal Comments
+* Used kaggle classic dataset
+* 2022
+* Used post release features
+* Did regression
+* Clustered movies and applied models on top
+* They didnt do it, but mentioned using socioeconomic features
+
+
+
+Conclusion
+Predicting movie revenue can be done by using various data analysis techniques. Regression analysis is one of the techniques that uses numerical data to predict the related response. In this paper, we apply various regression techniques onto movie data, with and without grouping, in order to predict the movie revenue. We found that the linear regression without applying clustering technique is the most accurate method in terms of R-square. Moreover, dividing movie data by its genre before doing regression can improve revenue prediction accuracy in some cases. However, applying clustering techniques, such as EM and K- means, can improve revenue prediction accuracy in terms of RMSE. We achieved an accuracy score of approximately 81%. Let’s compare this to the scores we got with previous regression models: Simple Linear Regression: 50% Multiple Linear Regression: 65% Decision Tree Regression: 65% Support Vector Regression: 71% Random Forest Regression: 81% We can see that our Random Forest Regression model made the most accurate predictions thus far with an improvement of 10% from the last model.
+
+
+Predicting Box-Office Markets with Machine Learning Methods
+https://doi.org/10.3390/e24050711
+
+
+Personal Comments
+
+* Totally different thing, predicting marker size, Intresting approach, next work, could incorporate a model like this in the first layer
+
+
+
+Conclusion
+
+
+In this work, we provided a machine learning-based method for predicting the na- tionwide box-office markets of movie revenue using economic factors. We compared the prediction performances of eight methods to identify the superiority of the SVM-based method for our forecasting. We also evaluated the predictions using different combinations of dependent variables of economic factors, i.e., GDP, the available resources in movie industry, i.e., NMS, as well as the past data of box-offices, i.e., BOX. Given the easy avail- ability of GDP statistics and estimations, it was identified as the most applicable prediction variable in the SVM-based prediction method. The precise predictions provide direct evi-
+dence for the effectiveness and efficiency of our proposed strategy. The comparison studies of different prediction methods with different combinations of the dependent factors in the time-series studies of the box-office indicate the advantages of our developed method.
+Moreover, our proposed method is general and is flexible enough to be extended. It can be easily applied to predict other important incomes in cultural industries, such as books, music and copyright. It is also expected to include more intricate indices or attributors for describing complex phenomena [32,33] in cultural production and consumption. The alternative artificial intelligence strategy of handling the uncertainty of complex economic systems is also a direction our research will take in the future [34]. These predictions will deeply benefit the future and potential understanding of the tendencies of economic development in the industry, especially when the time-series data of days, weeks, months and quarters are available. The crucial patterns of the time-series movie revenues will greatly benefit related investment and other decision making.
+
+
+
+COMPARATIVE ANALYSIS OF DATA MINING TECHNIQUES FOR MOVIE PREDICTION
+https://doi.org/10.33003/fjs-2022-0606-1117
+
+Personal Comments
+
+* 2022
+* Comperatative study
+* CRAPPY PAPER, SHOULD EVEN BE PUBLISHED, used the kaggle dataset, kept the post release variables, and of course they had tremendous feature importance ()
+
+
+
+Conclusion
+
+Data mining techniques has a lot of prospects for predicting
+movies success so as to bring a total transformation in the
+entertainment industry. This technology if effectively used can
+assist to increase the profit and reduce the loss of the
+stakeholders in the movie industry. The study concluded that
+Gradient Boosting algorithm is more robust in predicting
+movie success. Based on the outcome of the model developed
+it can be deduced that Gradient Boosting algorithm and SVM-
+Poly were more consistent in the prediction. The study
+recommends that comparison should be done with different
+machine learning techniques
+
+
+Final comments :
+
+* We will focus on the thesis on the global market with an extra intrest in Hollywood and west markets
+* We will not do a multi modal model but we believe that we will gain the information of parsing the abstact by using the keywords we retrieve duruin dataset cooperation
+* We want to use NOTHING ( very important focus ) that we a production company or the meant user will know after the release (Ratings, votes, number of screens etc), we know they would be a good indicator but it doesnt make sense to us.
+* Star power is really important as its evident from the papers but also the hinch of everyone thinking about it and we need to incoporate it to the thesis
+* We will also focus on distribution which the literature indicates it matters
+* Most researchers use the classification method to approach the issue, and it makes sense, though we will try to also apparoch it as regression of course knowing the limirations of that ( as you cannot be that precise to make sense )
+* Movies are quite non balanced dataset (small big prods, different genres, different home markets etc) lots of researchers use clustering and train different models on top of them, we will try the same
+
+
+
+tn43?A8EnSQ#KQGt

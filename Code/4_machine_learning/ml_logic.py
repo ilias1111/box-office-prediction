@@ -293,7 +293,7 @@ class MOTR:
                 X_train,
                 y_train,
                 cv=5,
-                n_iter=20,
+                n_iter=25,
                 scoring=self.select_scoring(),
                 random_state=42,
                 task_type=self.task_type,
@@ -634,10 +634,18 @@ if __name__ == "__main__":
     DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
     # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
     DATA_FILES_LIST = [
+        "full__binary_classification__no_outliers__complex.csv",
+        "large_productions__binary_classification__no_outliers__complex.csv",
+        "medium_productions__binary_classification__no_outliers__complex.csv",
+        "small_productions__binary_classification__no_outliers__complex.csv",
         "full__regression__no_outliers__complex.csv",
-        "small_productions__regression__no_outliers__complex.csv",
-        "medium_productions__regression__no_outliers__complex.csv",
         "large_productions__regression__no_outliers__complex.csv",
+        "medium_productions__regression__no_outliers__complex.csv",
+        "small_productions__regression__no_outliers__complex.csv",
+        "full__multi_class_classification__no_outliers__complex.csv",
+        "large_productions__multi_class_classification__no_outliers__complex.csv",
+        "medium_productions__multi_class_classification__no_outliers__complex.csv",
+        "small_productions__multi_class_classification__no_outliers__complex.csv",
     ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
