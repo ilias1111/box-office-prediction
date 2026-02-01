@@ -31,10 +31,15 @@ DEFAULT_CHART_CONFIG = {
     "grid_color": "#E5E5E5",
     "border_color": "#000000",
     "border_width": 2.5,
-    "margin": dict(l=100, r=50, t=160, b=80),
-    "height": 800,
+    "margin": dict(l=100, r=50, t=160, b=300), # Increased bottom margin for legend
+    "height": 1000, # Increased height to accommodate legend
     "width": 1200,
-    "legend_font_size": 12,  # Added this
+    "legend_font_size": 16,
+    "legend_y_anchor": "top",
+    "legend_x_anchor": "center",
+    "legend_orientation": "h",
+    "legend_y": -0.25,
+    "legend_x": 0.5,
 }
 
 
@@ -120,12 +125,12 @@ def apply_common_style(
         margin=cfg["margin"],
         showlegend=True,
         legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            font=dict(size=cfg["base_font_size"]),
+            orientation=cfg["legend_orientation"],
+            yanchor=cfg["legend_y_anchor"],
+            y=cfg["legend_y"],
+            xanchor=cfg["legend_x_anchor"],
+            x=cfg["legend_x"],
+            font=dict(size=cfg["legend_font_size"]),
             bgcolor="rgba(255, 255, 255, 0.8)",
             bordercolor=cfg["border_color"],
             borderwidth=cfg["border_width"],
@@ -339,7 +344,7 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
     if print_stats:
         print(grouped_data)
 
-    return None
+    return grouped_data
 
 
 def plot_one_metric_of_different_models_per_dataset_with_plotly(
@@ -475,7 +480,7 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
     if print_stats:
         print(grouped_data)
 
-    return None
+    return grouped_data
 
 
 def plot_and_export_categorical_distribution(
@@ -577,7 +582,7 @@ def plot_and_export_categorical_distribution(
         print(grouped_counts)
 
 
-    return None
+    return grouped_counts
 
 
 def plot_confusion_matrix(

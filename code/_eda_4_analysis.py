@@ -10,6 +10,16 @@ import sys
 import re
 from glob import glob
 
+# --- EXPORT TABLES TO TEX ---
+def save_latex(df, filename, caption, label):
+    if df.empty:
+        return
+    path = os.path.join(TABLES_DIR, filename)
+    latex = generate_latex_table(df, caption=caption, label=label)
+    with open(path, "w") as f:
+        f.write(latex)
+    print(f"Saved LaTeX table to {path}")
+
 # Add 4_machine_learning to path to allow unpickling models that reference utils
 # Assuming this script is run from Code/ directory
 sys.path.append(os.path.abspath("4_machine_learning"))
@@ -34,8 +44,8 @@ pio.renderers.default = "notebook"
 # If RUNS_IDS is populated, the analysis will focus ONLY on these runs.
 # If empty, it will consider ALL runs.
 RUNS_IDS = [
-    # "20240905_183321",
-    # "20240905_231518",
+    "20240905_183321",
+    "20240905_231518",
 ]
 
 # --- LOAD METADATA ---
@@ -76,6 +86,7 @@ try:
         }
     ).rename(columns={"run_id": "count"}).sort_values("timestamp", ascending=False)
     print(summary_stats)
+    save_latex(summary_stats.reset_index(), "table_summary_stats.tex", "Summary Statistics of Experiments", "tab:summary_stats")
 except Exception as e:
     print(f"Could not generate summary stats: {e}")
 
@@ -98,8 +109,12 @@ param_cols = [
 ]
 # Only show columns that exist in the dataframe
 valid_cols = [c for c in param_cols if c in parameters_df.columns]
+
+# Save detailed parameters to latex
 if not parameters_df.empty:
-    print(parameters_df[valid_cols].sort_values(by=["model_type", "problem_type", "dataset_name"]))
+    df_to_save = parameters_df[valid_cols].sort_values(by=["model_type", "problem_type", "dataset_name"])
+    print(df_to_save)
+    save_latex(df_to_save, "table_detailed_params.tex", "Detailed Model Parameters", "tab:detailed_params")
 
 # --- XGBOOST DEEP DIVE (Notebook Cell 9) ---
 if "xgboost_regressor" in parameters_df["model_type"].values:
@@ -158,15 +173,6 @@ if not result_multi_class.empty:
 
 
 # --- EXPORT TABLES TO TEX ---
-def save_latex(df, filename, caption, label):
-    if df.empty:
-        return
-    path = os.path.join(TABLES_DIR, filename)
-    latex = generate_latex_table(df, caption=caption, label=label)
-    with open(path, "w") as f:
-        f.write(latex)
-    print(f"Saved LaTeX table to {path}")
-
 save_latex(result_reg, "table_best_reg.tex", "Best Regression Models", "tab:best_reg")
 save_latex(result_class, "table_best_bin_class.tex", "Best Binary Classification Models", "tab:best_bin_class")
 
@@ -177,7 +183,7 @@ print("\n--- Generating Plots ---")
 # 1. Dataset Comparison Plots
 print("Generating Dataset Comparison Plots...")
 try:
-    plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
+    df_f1_bin = plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
         experiment_df,
         problem_type="binary_classification",
         metric="F1 Score",
@@ -187,8 +193,9 @@ try:
         filename_prefix="step_4",
         display_chart=False 
     )
+    save_latex(df_f1_bin, "table_dataset_comp_f1_bin.tex", "Dataset Comparison - F1 Score (Binary)", "tab:dataset_comp_f1_bin")
 
-    plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
+    df_f1_multi = plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
         experiment_df,
         problem_type="multi_class_classification",
         metric="F1 Score",
@@ -198,8 +205,9 @@ try:
         filename_prefix="step_4",
         display_chart=False 
     )
+    save_latex(df_f1_multi, "table_dataset_comp_f1_multi.tex", "Dataset Comparison - F1 Score (Multi-class)", "tab:dataset_comp_f1_multi")
 
-    plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
+    df_mape_reg = plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
         experiment_df, 
         problem_type="regression", 
         metric="MAPE", 
@@ -209,8 +217,9 @@ try:
         filename_prefix="step_4",
         display_chart=False 
     )
+    save_latex(df_mape_reg, "table_dataset_comp_mape_reg.tex", "Dataset Comparison - MAPE (Regression)", "tab:dataset_comp_mape_reg")
 
-    plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
+    df_r2_reg = plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_plotly(
         experiment_df, 
         problem_type="regression", 
         metric="R2", 
@@ -220,13 +229,14 @@ try:
         filename_prefix="step_4",
         display_chart=False 
     )
+    save_latex(df_r2_reg, "table_dataset_comp_r2_reg.tex", "Dataset Comparison - R2 (Regression)", "tab:dataset_comp_r2_reg")
 except Exception as e:
     print(f"Error generating dataset comparison plots: {e}")
 
 # 2. Model Comparison Plots (with Benchmarks)
 print("Generating Model Comparison Plots...")
 try:
-    plot_one_metric_of_different_models_per_dataset_with_plotly(
+    df_model_r2_reg = plot_one_metric_of_different_models_per_dataset_with_plotly(
         experiment_df,
         problem_type="regression",
         metric="R2",
@@ -237,8 +247,9 @@ try:
         filename_prefix="step_4",
         display_chart=False 
     )
+    save_latex(df_model_r2_reg, "table_model_comp_r2_reg.tex", "Model Comparison - R2 (Regression)", "tab:model_comp_r2_reg")
 
-    plot_one_metric_of_different_models_per_dataset_with_plotly(
+    df_model_mape_reg = plot_one_metric_of_different_models_per_dataset_with_plotly(
         experiment_df,
         problem_type="regression",
         metric="MAPE",
@@ -249,8 +260,9 @@ try:
         filename_prefix="step_4",
         display_chart=False 
     )
+    save_latex(df_model_mape_reg, "table_model_comp_mape_reg.tex", "Model Comparison - MAPE (Regression)", "tab:model_comp_mape_reg")
 
-    plot_one_metric_of_different_models_per_dataset_with_plotly(
+    df_model_f1_bin = plot_one_metric_of_different_models_per_dataset_with_plotly(
         experiment_df,
         problem_type="binary_classification",
         metric="F1 Score",
@@ -261,6 +273,7 @@ try:
         filename_prefix="step_4",
         display_chart=False 
     )
+    save_latex(df_model_f1_bin, "table_model_comp_f1_bin.tex", "Model Comparison - F1 Score (Binary)", "tab:model_comp_f1_bin")
 except Exception as e:
     print(f"Error generating model comparison plots: {e}")
 
@@ -314,16 +327,5 @@ for idx, row in all_best_models.iterrows():
     run_data_full = load_specific_run_data(run_id, metadata_path)
 
     # 1. Feature Importance
-    if run_data_full.get("feature_importance"):
-        print(f"Plotting Feature Importance for {model_type} ({dataset}) - {run_id}")
-        plot_feature_importance(
-            run_data_full["feature_importance"],
-            top_n=20,
-            output_dir=CHARTS_DIR,
-            filename_prefix=f"imp_{run_id}",
-            title=f"Feature Importance - {model_type} ({dataset})",
-            display_chart=False
-        )
-    else:
-        # Could skip or try load model. Skipping for speed/consistency with notebook.
-        pass
+    # Feature Importance removed per user request
+    pass

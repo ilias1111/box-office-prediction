@@ -32,3 +32,6 @@ override.tf.json
 # OS generated files
 .DS_Store
 .DS_Store?
+
+
+thesis_assets/*
