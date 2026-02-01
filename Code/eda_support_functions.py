@@ -1123,17 +1123,16 @@ def plot_best_confusion_matrices_from_metadata(
             # Determine number of classes from the confusion matrix
             if isinstance(conf_matrix, list):
                 num_classes = len(conf_matrix)
+                # Map labels if binary classification and labels are "0"/"1"
+                if problem_type == "binary_classification":
+                    mapped_conf_matrix = []
+                    for d in conf_matrix:
+                        mapped_conf_matrix.append({
+                            binary_labels.get(str(k), k): v for k, v in d.items()
+                        })
+                    conf_matrix = mapped_conf_matrix
             else:
                 num_classes = len(conf_matrix.keys())
-            
-            # Map labels if binary classification
-            if problem_type == "binary_classification":
-                mapped_conf_matrix = []
-                for d in conf_matrix:
-                    mapped_conf_matrix.append({
-                        binary_labels[k]: v for k, v in d.items()
-                    })
-                conf_matrix = mapped_conf_matrix
             
             # Generate filename using consistent pattern
             filename = generate_filename(
@@ -1239,15 +1238,16 @@ def plot_best_regression_results_from_metadata(
             prefix=filename_prefix
         )
         
-        plot_regression_results(
-            predicted_vs_actual=row["predicted_vs_actual"],
-            display_chart=display_chart,
-            output_dir=output_dir,
-            print_stats=print_stats,
-            filename_prefix=filename_prefix,
-            title=title,
-            subtitle=metrics_text
-        )
+    plot_regression_results(
+        predicted_vs_actual=row["predicted_vs_actual"],
+        display_chart=display_chart,
+        output_dir=output_dir,
+        print_stats=print_stats,
+        filename_prefix=filename_prefix,
+        title=title,
+        subtitle=metrics_text,
+        dataset_name=row['dataset_name']
+    )
 
 
 def plot_regression_results(
@@ -1258,119 +1258,56 @@ def plot_regression_results(
     filename_prefix: Optional[str] = None,
     title: Optional[str] = None,
     subtitle: Optional[str] = None,
+    dataset_name: Optional[str] = None,
 ) -> None:
-    """Create a clean table visualization of regression results."""
+    """Format regression results into a LaTeX table and save it."""
     # Parse the JSON string into a dictionary
     data = json.loads(predicted_vs_actual)
     if isinstance(data, str):
         data = json.loads(data)
     
-    # Create a figure with a single table
-    stats_df = pd.DataFrame({
-        'Metric': [
-            'Model Performance',
-            '• Mean Absolute Error',
-            '• Mean Absolute % Error',
-            '• Mean Squared Error',
-            '',  # Spacer
-            'Actual vs Predicted',
-            '• Mean Revenue (Actual)',
-            '• Mean Revenue (Predicted)',
-            '• Median Revenue (Actual)',
-            '• Median Revenue (Predicted)',
-            '',  # Spacer
-            'Distribution',
-            '• Revenue Range (Actual)',
-            '• Revenue Range (Predicted)',
-            '• Standard Deviation (Actual)',
-            '• Standard Deviation (Predicted)'
-        ],
-        'Value': [
-            '<b>Value</b>',  # Header
-            f"${data['absolute_error']['mean']:,.0f}",
-            f"{data['absolute_percentage_error']['mean']*100:.1f}%",
-            f"${data['squared_error']['mean']:,.0f}",
-            '',  # Spacer
-            '<b>Value</b>',  # Header
-            f"${data['actual']['mean']:,.0f}",
-            f"${data['predicted']['mean']:,.0f}",
-            f"${data['actual']['50%']:,.0f}",
-            f"${data['predicted']['50%']:,.0f}",
-            '',  # Spacer
-            '<b>Value</b>',  # Header
-            f"${data['actual']['min']:,.0f} - ${data['actual']['max']:,.0f}",
-            f"${data['predicted']['min']:,.0f} - ${data['predicted']['max']:,.0f}",
-            f"${data['actual']['std']:,.0f}",
-            f"${data['predicted']['std']:,.0f}"
-        ]
-    })
+    # Create a cleaner DataFrame for the thesis LaTeX table
+    stats_data = [
+        ["Mean Absolute Error (MAE)", f"${data['absolute_error']['mean']:,.2f}"],
+        ["Mean Absolute Percentage Error (MAPE)", f"{data['absolute_percentage_error']['mean']*100:.2f}\\%"],
+        ["Mean Squared Error (MSE)", f"{data['squared_error']['mean']:.2e}"],
+        ["Actual Mean Revenue", f"${data['actual']['mean']:,.2f}"],
+        ["Predicted Mean Revenue", f"${data['predicted']['mean']:,.2f}"],
+        ["Actual Median Revenue", f"${data['actual']['50%']:,.2f}"],
+        ["Predicted Median Revenue", f"${data['predicted']['50%']:,.2f}"],
+        ["Revenue Range (Actual)", f"${data['actual']['min']:,.2f} to ${data['actual']['max']:,.2f}"],
+        ["Revenue Range (Predicted)", f"${data['predicted']['min']:,.2f} to ${data['predicted']['max']:,.2f}"],
+        ["Actual Std Dev", f"${data['actual']['std']:,.2f}"],
+        ["Predicted Std Dev", f"${data['predicted']['std']:,.2f}"],
+    ]
     
-    # Create alternating colors for better readability
-    fill_colors = []
-    current_section = 0
-    for metric in stats_df['Metric']:
-        if metric in ['Model Performance', 'Actual vs Predicted', 'Distribution']:
-            current_section += 1
-        if metric == '':  # Spacer
-            fill_colors.append('#ffffff')
-        elif metric in ['Model Performance', 'Actual vs Predicted', 'Distribution']:
-            fill_colors.append('#e6e6e6')  # Header color
-        else:
-            fill_colors.append('#ffffff' if current_section % 2 == 0 else '#f9f9f9')
+    df_latex = pd.DataFrame(stats_data, columns=["Metric", "Value"])
     
-    fig = go.Figure(data=[go.Table(
-        header=dict(
-            values=['<b>Metrics</b>', '<b>Values</b>'],
-            font=dict(size=14, color='white'),
-            fill_color=DEFAULT_CHART_CONFIG["border_color"],
-            align=['left', 'right'],
-            height=40
-        ),
-        cells=dict(
-            values=[stats_df['Metric'], stats_df['Value']],
-            font=dict(size=13),
-            fill_color=[fill_colors, fill_colors],
-            align=['left', 'right'],
-            height=30,
-            line_color='#f0f0f0'
-        )
-    )])
-    
-    # Update layout
-    fig.update_layout(
-        title=dict(
-            text=(f"<b>{title}</b>" + (f"<br><sup>{subtitle}</sup>" if subtitle else "")),
-            y=0.98,
-            x=0.5,
-            xanchor="center",
-            yanchor="top",
-            font=dict(size=16)
-        ),
-        width=800,
-        height=600,
-        margin=dict(t=80, l=0, r=0, b=0)
-    )
-    
-    # Update filename generation to match standard pattern
-    filename = generate_filename(
-        "regression_results",
-        {
-            "title": title.split('\n')[0] if title else None,  # Include only main title
-            "metrics": f"mae_{data['absolute_error']['mean']:.0f}_mape_{data['absolute_percentage_error']['mean']*100:.1f}"
-        },
-        prefix=filename_prefix
-    )
-    
-    # Save figure
-    save_figure(fig, filename, output_dir)
-    
-    if display_chart:
-        fig.show()
+    # Save as LaTeX table
+    if dataset_name:
+        table_filename = f"table_reg_results_{dataset_name}.tex"
+        caption = f"Regression Detailed Results for {dataset_name.replace('_', ' ').title()}"
+        label = f"tab:reg_results_{dataset_name}"
         
+        # We need a way to save this. Since this function is in support_functions, 
+        # it might not have access to save_latex from the main script.
+        # Let's return the LaTeX string or just print it if we can't save it directly.
+        # But wait, _eda_4_analysis.py has a save_latex function.
+        # Actually, let's just generate the latex string and print a message.
+        
+        latex_str = generate_latex_table(df_latex, caption=caption, label=label)
+        
+        # Determine tables directory (relative to code/)
+        tables_dir = os.path.join("thesis_assets", "tables")
+        os.makedirs(tables_dir, exist_ok=True)
+        
+        with open(os.path.join(tables_dir, table_filename), "w") as f:
+            f.write(latex_str)
+            
+        if print_stats:
+            print(f"Saved LaTeX regression results to {os.path.join(tables_dir, table_filename)}")
+
     if print_stats:
-        print("\n📊 Model Performance Summary:")
+        print("\n📊 Model Performance Summary (Regression):")
         print(f"• Average Error: ${data['absolute_error']['mean']:,.0f}")
-        print(f"• Typical Error Range: {data['absolute_percentage_error']['mean']*100:.1f}% of actual value")
-        bias = data['predicted']['mean'] - data['actual']['mean']
-        print(f"• Bias: Model tends to {'overestimate' if bias > 0 else 'underestimate'} by ${abs(bias):,.0f}")
-        print(f"• Error Distribution: 50% of predictions are within ${data['absolute_error']['25%']:,.0f} to ${data['absolute_error']['75%']:,.0f} of actual value")
+        print(f"• MAPE: {data['absolute_percentage_error']['mean']*100:.2f}%")

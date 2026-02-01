@@ -175,6 +175,7 @@ if not result_multi_class.empty:
 # --- EXPORT TABLES TO TEX ---
 save_latex(result_reg, "table_best_reg.tex", "Best Regression Models", "tab:best_reg")
 save_latex(result_class, "table_best_bin_class.tex", "Best Binary Classification Models", "tab:best_bin_class")
+save_latex(result_multi_class, "table_best_multi_class.tex", "Best Multi-class Classification Models", "tab:best_multi_class")
 
 
 # --- PLOTS (Notebook Cells 15-23) ---
@@ -274,6 +275,19 @@ try:
         display_chart=False 
     )
     save_latex(df_model_f1_bin, "table_model_comp_f1_bin.tex", "Model Comparison - F1 Score (Binary)", "tab:model_comp_f1_bin")
+
+    df_model_f1_multi = plot_one_metric_of_different_models_per_dataset_with_plotly(
+        experiment_df,
+        problem_type="multi_class_classification",
+        metric="F1 Score",
+        metric_agg="max",
+        benchmark_model="dummy_classifier",
+        print_stats=True,
+        output_dir=CHARTS_DIR,
+        filename_prefix="step_4",
+        display_chart=False 
+    )
+    save_latex(df_model_f1_multi, "table_model_comp_f1_multi.tex", "Model Comparison - F1 Score (Multi-class)", "tab:model_comp_f1_multi")
 except Exception as e:
     print(f"Error generating model comparison plots: {e}")
 
@@ -282,7 +296,11 @@ print("Generating Detailed Results...")
 # Confusion Matrices
 try:
     plot_best_confusion_matrices_from_metadata(
-        metadata_path=metadata_path, 
+        experiment_df=experiment_df,
+        conf_matrix_df=conf_matrix_df,
+        problem_types=["binary_classification", "multi_class_classification"],
+        groupby_columns=groupby_columns,
+        metrics=metrics,
         display_chart=False,
         output_dir=CHARTS_DIR,
         print_stats=True,
