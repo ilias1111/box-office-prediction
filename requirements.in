@@ -1,0 +1,41 @@
+# Core Data Science & ML
+pandas
+numpy
+scipy
+scikit-learn
+xgboost
+lightgbm
+tensorflow
+torch
+imbalanced-learn
+shap
+
+# Visualization
+matplotlib
+seaborn
+plotly>=6.0.0  # Force newer plotly for kaleido 0.4+/1.x compatibility
+kaleido
+
+# Data Sources & Scraping
+requests
+beautifulsoup4
+lxml
+yfinance
+forex-python
+holidays
+
+# Utilities
+tqdm
+joblib
+python-dateutil
+openpyxl
+
+# Jupyter / Notebook
+jupyter
+ipykernel
+nbconvert
+notebook
+
+# Web / App (if applicable)
+flask
+gunicorn

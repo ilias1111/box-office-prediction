@@ -22,8 +22,8 @@ COLORS = [
 ]
 
 DEFAULT_CHART_CONFIG = {
-    "font_family": "Arial",
-    "base_font_size": 20,
+    "font_family": "Times New Roman",
+    "base_font_size": 26,
     "title_font_size": 28,
     "axis_font_size": 20,
     "label_font_size": 20,
@@ -55,7 +55,7 @@ def generate_filename(base: str, params: Dict[str, Any], prefix: Optional[str] =
 def save_figure(fig: go.Figure, filename: str, output_dir: str = "charts") -> None:
     """Save the figure as a PNG file in the specified output directory."""
     os.makedirs(output_dir, exist_ok=True)
-    fig.write_image(os.path.join(output_dir, filename), scale=2)
+    fig.write_image(os.path.join(output_dir, filename), scale=3)
 
 
 def apply_common_style(
@@ -799,6 +799,248 @@ def plot_confusion_matrices_from_metadata(
             filename=filename,
             title=title
         )
+
+    return None
+
+
+def plot_feature_importance(
+    feature_importance_data: List[Dict[str, Any]],
+    top_n: int = 20,
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    filename_prefix: Optional[str] = None,
+    title: str = "Feature Importance",
+) -> None:
+    """
+    Plot top feature importances.
+    
+    Parameters:
+    - feature_importance_data: List of dicts with 'Feature' and 'Importance' keys
+    - top_n: Number of top features to show
+    """
+    if not feature_importance_data:
+        print("Warning: No feature importance data provided.")
+        return
+
+    df = pd.DataFrame(feature_importance_data)
+    
+    if df.empty:
+        print("Warning: Feature importance data is empty.")
+        return
+
+    # Clean feature names for better display
+    df["Feature"] = df["Feature"].apply(lambda x: x.replace("numerical__", "").replace("binary__", "").replace("categorical__", "").replace("_kpis", " KPIs").replace("_", " ").title())
+    
+    # Sort and take top N by Absolute Value
+    df["AbsImportance"] = df["Importance"].abs()
+    df = df.sort_values("AbsImportance", ascending=True).tail(top_n)
+    
+    fig = px.bar(
+        df,
+        x="Importance",
+        y="Feature",
+        orientation='h',
+        text="Importance"
+    )
+    
+    fig.update_traces(
+        texttemplate="<b>%{text:.4f}</b>", # Added formatting
+        textposition="outside",
+        textfont=dict(size=14, color="#000000"),
+        marker_color=COLORS[0],
+        marker_line_color="#000000",
+        marker_line_width=1.5,
+    )
+    
+    fig = apply_common_style(
+        fig,
+        title=title,
+        xaxis_title="Importance Score",
+        yaxis_title="Feature",
+        y_values=df["Importance"]
+    )
+    
+    # Ensure y-axis labels are readable and not cut off
+    fig.update_layout(
+        yaxis=dict(
+            tickmode='linear',
+            automargin=True
+        ),
+        margin=dict(l=200) # Increase left margin for long feature names
+    )
+    
+    filename = generate_filename(
+        "feature_importance",
+        {"top": top_n},
+        prefix=filename_prefix
+    )
+    save_figure(fig, filename, output_dir)
+    
+    if display_chart:
+        fig.show()
+
+def plot_predicted_vs_actual(
+    y_true: Union[np.ndarray, List[float]],
+    y_pred: Union[np.ndarray, List[float]],
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    filename_prefix: Optional[str] = None,
+    title: str = "Predicted vs Actual",
+) -> None:
+    """
+    Plot Predicted vs Actual values scatter plot with perfect prediction line.
+    """
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    
+    # Create scatter plot
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=y_true,
+        y=y_pred,
+        mode='markers',
+        marker=dict(
+            color=COLORS[0],
+            size=8,
+            opacity=0.6,
+            line=dict(width=1, color=DEFAULT_CHART_CONFIG["border_color"])
+        ),
+        name='Predictions'
+    ))
+    
+    # Add perfect prediction line
+    min_val = min(y_true.min(), y_pred.min())
+    max_val = max(y_true.max(), y_pred.max())
+    
+    fig.add_trace(go.Scatter(
+        x=[min_val, max_val],
+        y=[min_val, max_val],
+        mode='lines',
+        line=dict(color=COLORS[2], width=3, dash='dash'),
+        name='Perfect Prediction'
+    ))
+    
+    fig = apply_common_style(
+        fig,
+        title=title,
+        xaxis_title="Actual Value",
+        yaxis_title="Predicted Value",
+        y_values=y_pred
+    )
+    
+    # Generate filename
+    filename = generate_filename(
+        "predicted_vs_actual",
+        {},
+        prefix=filename_prefix
+    )
+    save_figure(fig, filename, output_dir)
+    
+    if display_chart:
+        fig.show()
+
+
+def plot_residuals(
+    y_true: Union[np.ndarray, List[float]],
+    y_pred: Union[np.ndarray, List[float]],
+    display_chart: bool = True,
+    output_dir: str = "charts",
+    filename_prefix: Optional[str] = None,
+    title: str = "Residual Analysis",
+) -> None:
+    """
+    Plot Residuals vs Predicted values.
+    """
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    residuals = y_true - y_pred
+    
+    # Create scatter plot
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=y_pred,
+        y=residuals,
+        mode='markers',
+        marker=dict(
+            color=COLORS[1],
+            size=8,
+            opacity=0.6,
+            line=dict(width=1, color=DEFAULT_CHART_CONFIG["border_color"])
+        ),
+        name='Residuals'
+    ))
+    
+    # Add zero line
+    min_pred = y_pred.min()
+    max_pred = y_pred.max()
+    
+    fig.add_trace(go.Scatter(
+        x=[min_pred, max_pred],
+        y=[0, 0],
+        mode='lines',
+        line=dict(color=COLORS[2], width=3, dash='dash'),
+        name='Zero Error'
+    ))
+    
+    fig = apply_common_style(
+        fig,
+        title=title,
+        xaxis_title="Predicted Value",
+        yaxis_title="Residuals (Actual - Predicted)",
+        y_values=residuals
+    )
+    
+    # Generate filename
+    filename = generate_filename(
+        "residuals",
+        {},
+        prefix=filename_prefix
+    )
+    save_figure(fig, filename, output_dir)
+    
+    if display_chart:
+        fig.show()
+
+
+
+def generate_latex_table(
+    df: pd.DataFrame,
+    caption: str,
+    label: str,
+    columns_to_include: Optional[List[str]] = None,
+    column_renames: Optional[Dict[str, str]] = None,
+    float_format: str = "%.3f"
+) -> str:
+    """
+    Generate a LaTeX table from a DataFrame using booktabs style.
+    """
+    if columns_to_include:
+        df = df[columns_to_include].copy()
+    else:
+        df = df.copy()
+        
+    if column_renames:
+        df = df.rename(columns=column_renames)
+        
+    # Generate LaTeX
+    latex_code = df.to_latex(
+        index=False,
+        float_format=float_format,
+        caption=caption,
+        label=label,
+        position="htbp",
+        column_format="l" * len(df.columns), # Left align by default
+        bold_rows=False,
+    )
+    
+    # Add booktabs commands if not present (pandas to_latex usually adds them if asked, but let's ensure standard formatting)
+    # Note: to_latex is deprecated in favor of style.to_latex but for basic usage it's fine. 
+    # Let's clean up the output to be more "thesis-like"
+    
+    return latex_code
+
 
 
 def plot_best_confusion_matrices_from_metadata(
