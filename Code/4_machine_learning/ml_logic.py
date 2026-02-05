@@ -1,13 +1,23 @@
+# Suppress all warnings first, BEFORE any imports (critical for parallel workers)
+import warnings
 import os
+os.environ["PYTHONWARNINGS"] = "ignore"  # Propagate to subprocesses
+os.environ["XGB_VERBOSITY"] = "0"  # Suppress XGBoost warnings
+os.environ["LIGHTGBM_VERBOSITY"] = "-1"  # Suppress LightGBM warnings
+warnings.filterwarnings("ignore")  # Suppress all warnings
+
 import json
 import logging
 import numpy as np
 import pandas as pd
 import joblib
+from pathlib import Path
 from sklearn.utils import class_weight
 from xgboost import XGBClassifier, XGBRegressor
+from lightgbm import LGBMClassifier, LGBMRegressor
+from joblib import Parallel, delayed
 from datetime import datetime
-from sklearn.base import is_classifier, is_regressor
+from sklearn.base import is_classifier, is_regressor, clone
 from sklearn.model_selection import train_test_split, GridSearchCV, ParameterGrid
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
@@ -50,13 +60,6 @@ from sklearn.metrics import (
     r2_score,
 )
 
-# suppress warnings
-import warnings
-from sklearn.exceptions import UndefinedMetricWarning
-
-warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-warnings.filterwarnings("ignore", category=pd.errors.DtypeWarning)
-
 
 class MOTR:
     def __init__(
@@ -68,6 +71,18 @@ class MOTR:
         task_type,
         grid_type,
         positive_class="Success",
+        *,
+        cv_folds=5,
+        random_search_iter=25,
+        search_n_jobs=-1,
+        model_n_jobs=-1,
+        enable_pipeline_cache=False,
+        pipeline_cache_dir=".cache/sklearn-pipeline",
+        onehot_sparse=False,
+        compute_feature_importance=True,
+        compute_predicted_vs_actual=False,
+        save_model=True,
+        save_metadata=True,
     ):
         self.file_path = file_path
         self.dataset_name = os.path.basename(file_path).split(".")[0].split("__")[0]
@@ -80,23 +95,45 @@ class MOTR:
         self.task_type = task_type
         self.grid_type = grid_type
         self.positive_class = positive_class
-        self.models = self.init_models(task_type)
+        self.cv_folds = cv_folds
+        self.random_search_iter = random_search_iter
+        self.search_n_jobs = search_n_jobs
+        self.model_n_jobs = model_n_jobs
+        self.enable_pipeline_cache = enable_pipeline_cache
+        self.pipeline_cache_dir = pipeline_cache_dir
+        self.onehot_sparse = onehot_sparse
+        self.compute_feature_importance = compute_feature_importance
+        self.compute_predicted_vs_actual = compute_predicted_vs_actual
+        self.save_model = save_model
+        self.save_metadata = save_metadata
+
+        self._all_param_grids = self._load_all_param_grids()
+        self.models = self.init_models(task_type, n_jobs=model_n_jobs)
         self.run_id = run_id
         self.setup_logging()
 
-    def init_models(self, task_type):
+    def _load_all_param_grids(self):
+        grids_path = Path(__file__).resolve().parents[2] / "param_grids.json"
+        with grids_path.open("r") as file:
+            return json.load(file)
+
+    def init_models(self, task_type, n_jobs=-1):
         if task_type in ["binary_classification", "multi_class_classification"]:
             base_models = {
                 "dummy_classifier": DummyClassifier(strategy="stratified"),
                 "logistic_regression": LogisticRegression(
-                    random_state=42, n_jobs=-1, max_iter=1000
+                    random_state=42, max_iter=1000
                 ),
                 "random_forest_classifier": RandomForestClassifier(
-                    random_state=42, n_jobs=-1
+                    random_state=42, n_jobs=n_jobs
                 ),
                 "decision_tree_classifier": DecisionTreeClassifier(random_state=42),
-                "xgboost_classifier": XGBClassifier(random_state=42, n_jobs=-1),
-                # "lightgbm_classifier": LGBMClassifier(random_state=42, n_jobs=-1, verbosity=-1)
+                "xgboost_classifier": XGBClassifier(
+                    random_state=42, n_jobs=n_jobs, tree_method="hist", verbosity=0
+                ),
+                "lightgbm_classifier": LGBMClassifier(
+                    random_state=42, n_jobs=n_jobs, verbosity=-1
+                ),
             }
 
             if task_type == "multi_class_classification":
@@ -114,11 +151,15 @@ class MOTR:
             return {
                 "dummy_regressor": DummyRegressor(strategy="mean"),
                 "random_forest_regressor": RandomForestRegressor(
-                    random_state=42, n_jobs=-1
+                    random_state=42, n_jobs=n_jobs
                 ),
                 "decision_tree_regressor": DecisionTreeRegressor(random_state=42),
-                "xgboost_regressor": XGBRegressor(random_state=42, n_jobs=-1),
-                # "lightgbm_regressor": LGBMRegressor(random_state=42, n_jobs=-1, verbosity=-1)
+                "xgboost_regressor": XGBRegressor(
+                    random_state=42, n_jobs=n_jobs, tree_method="hist", verbosity=0
+                ),
+                "lightgbm_regressor": LGBMRegressor(
+                    random_state=42, n_jobs=n_jobs, verbosity=-1
+                ),
             }
         else:
             raise ValueError(
@@ -139,7 +180,7 @@ class MOTR:
     def load_data(self):
         logging.info(f"Loading data from {self.file_path}")
         print(f"Loading data from {self.file_path}")
-        data = pd.read_csv(self.file_path)
+        data = pd.read_csv(self.file_path, engine='pyarrow')
 
         data = data.convert_dtypes(infer_objects=True)
 
@@ -208,7 +249,10 @@ class MOTR:
                 (
                     "onehot",
                     OneHotEncoder(
-                        handle_unknown="ignore", sparse_output=False, min_frequency=0.1
+                        handle_unknown="ignore",
+                        sparse_output=bool(self.onehot_sparse),
+                        min_frequency=0.1,
+                        dtype=np.float32,
                     ),
                 ),
             ]
@@ -227,13 +271,21 @@ class MOTR:
 
     def train_model(
         self,
-        X,
-        y,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        X_test_id,
+        X_full,
         model_name,
         numerical_features,
         categorical_features,
         binary_features,
         label_encoder=None,
+        class_weight_dict=None,
+        *,
+        search_n_jobs=None,
+        model_n_jobs=None,
     ):
         logging.info(f"Training model: {model_name}")
 
@@ -242,32 +294,42 @@ class MOTR:
         preprocessor = self.create_preprocessor(
             numerical_features, categorical_features, binary_features
         )
+
+        base_estimator = clone(self.models[model_name])
+        effective_model_n_jobs = self.model_n_jobs if model_n_jobs is None else model_n_jobs
+        if (
+            effective_model_n_jobs is not None
+            and "n_jobs" in base_estimator.get_params(deep=False)
+        ):
+            base_estimator.set_params(n_jobs=effective_model_n_jobs)
+
+        memory = (
+            joblib.Memory(
+                location=str(Path(self.pipeline_cache_dir) / self.filename), verbose=0
+            )
+            if self.enable_pipeline_cache
+            else None
+        )
         model = Pipeline(
-            [("preprocessor", preprocessor), ("model", self.models[model_name])]
+            [("preprocessor", preprocessor), ("model", base_estimator)],
+            memory=memory,
         )
 
         param_grid = self.load_param_grids("param_grids.json", model_name)
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-
-        X_test_id = X_test[self.id_column_name]
-        X_train = X_train.drop(self.id_column_name, axis=1)
-        X_test = X_test.drop(self.id_column_name, axis=1)
-
         if self.task_type == "regression":
             y_train = np.log10(y_train)
 
-        class_weights = class_weight.compute_class_weight(
-            class_weight="balanced", classes=np.unique(y_train), y=y_train
-        )
-
-        class_weight_dict = {i: class_weights[i] for i in range(len(class_weights))}
-
         if (self.task_type != "regression") and (
-            model_name not in ("mlp_classifier", "nn_classifier")
+            model_name not in ("mlp_classifier", "nn_classifier", "dummy_classifier", "xgboost_classifier")
         ):
+            if class_weight_dict is None:
+                class_weights = class_weight.compute_class_weight(
+                    class_weight="balanced", classes=np.unique(y_train), y=y_train
+                )
+                class_weight_dict = {
+                    i: class_weights[i] for i in range(len(class_weights))
+                }
             param_grid["model__class_weight"] = [class_weight_dict]
 
         scaler_mapping = {
@@ -292,22 +354,23 @@ class MOTR:
                 model_name,
                 X_train,
                 y_train,
-                cv=5,
-                n_iter=25,
+                cv=self.cv_folds,
+                n_iter=self.random_search_iter,
                 scoring=self.select_scoring(),
                 random_state=42,
                 task_type=self.task_type,
+                n_jobs=self.search_n_jobs if search_n_jobs is None else search_n_jobs,
             )
         elif self.grid_type != "non_grid":
-            number_of_combinations = len(list(ParameterGrid(param_grid)))
+            number_of_combinations = len(ParameterGrid(param_grid))
             model_with_parameters = GridSearchCV(
                 model,
                 param_grid,
-                cv=5,
+                cv=self.cv_folds,
                 scoring=self.select_scoring(),
-                n_jobs=-1,
+                n_jobs=self.search_n_jobs if search_n_jobs is None else search_n_jobs,
                 verbose=0,
-                pre_dispatch="4*n_jobs",
+                pre_dispatch="2*n_jobs",
                 error_score="raise",
             )
             model_with_parameters.fit(X_train, y_train)
@@ -323,11 +386,15 @@ class MOTR:
         stop_time = datetime.now()
         duration = stop_time - start_time
         metrics, conf_matrix, class_report, predicted_vs_actual = self.evaluate_model(
-            model_with_parameters, X_test, y_test, label_encoder, X_test_id, X
+            model_with_parameters, X_test, y_test, label_encoder, X_test_id, X_full
         )
-        feature_importance = self.get_feature_importance(
-            model_with_parameters.named_steps["model"],
-            model_with_parameters.named_steps["preprocessor"],
+        feature_importance = (
+            self.get_feature_importance(
+                model_with_parameters.named_steps["model"],
+                model_with_parameters.named_steps["preprocessor"],
+            )
+            if self.compute_feature_importance
+            else pd.DataFrame()
         )
         self.save_model_and_metadata(
             model_with_parameters,
@@ -358,9 +425,7 @@ class MOTR:
 
     def load_param_grids(self, file_path, model_name):
         logging.info(f"Loading parameter grids for {model_name}")
-        with open(file_path, "r") as file:
-            all_grids = json.load(file)
-        return all_grids[model_name].get(self.grid_type, {})
+        return self._all_param_grids[model_name].get(self.grid_type, {})
 
     def select_scoring(self):
         if self.task_type in ["binary_classification"]:
@@ -392,7 +457,7 @@ class MOTR:
 
         if is_classifier(model):
             if self.task_type == "multi_class_classification":
-                pred_proba = model.predict_proba(X_test)
+                pred_proba = estimator.predict_proba(X_test_transformed)
 
                 metrics = {
                     # "ROC AUC Score": roc_auc_score(y_test, pred_proba, average='weighted', multi_class='ovr'),
@@ -415,8 +480,12 @@ class MOTR:
                 )
 
             else:
+                if hasattr(estimator, "predict_proba"):
+                    pred_proba = estimator.predict_proba(X_test_transformed)[:, 1]
+                else:
+                    pred_proba = pred
                 metrics = {
-                    "ROC AUC Score": roc_auc_score(y_test, pred),
+                    "ROC AUC Score": roc_auc_score(y_test, pred_proba),
                     "Accuracy": accuracy_score(y_test, pred),
                     "Precision": precision_score(y_test, pred, zero_division=0),
                     "Recall": recall_score(y_test, pred, zero_division=0),
@@ -426,7 +495,7 @@ class MOTR:
                 class_report = classification_report(y_test, pred)
 
         elif is_regressor(model):
-            pred_raw = model.predict(X_test)
+            pred_raw = pred
 
             pred = np.power(10, np.where(abs(pred_raw) >= 12, 12, abs(pred_raw)))
             # pred = abs(pred_raw)
@@ -449,53 +518,36 @@ class MOTR:
                 "Threshold MAPE (25%)": threshold_mape(y_test, pred, threshold=0.25),
             }
 
-            conf_matrix = None
-            class_report = None
-            predicted_vs_actual = pd.DataFrame(
-                {
-                    self.id_column_name: X_test_id.values,
-                    "actual": y_test,
-                    "predicted": pred,
-                }
-            )
-            predicted_vs_actual["year"] = 10 * np.floor(
-                predicted_vs_actual.merge(
-                    X[["year", self.id_column_name]], on=self.id_column_name, how="left"
-                )["year"]
-                / 10
-            ).astype(int)
-            predicted_vs_actual["absolute_error"] = (
-                predicted_vs_actual["predicted"] - predicted_vs_actual["actual"]
-            ).abs()
-            predicted_vs_actual["squared_error"] = (
-                predicted_vs_actual["predicted"] - predicted_vs_actual["actual"]
-            ) ** 2
-            predicted_vs_actual["percentage_error"] = (
-                predicted_vs_actual["predicted"] - predicted_vs_actual["actual"]
-            ) / predicted_vs_actual["actual"]
-            predicted_vs_actual["absolute_percentage_error"] = (
-                abs(predicted_vs_actual["predicted"] - predicted_vs_actual["actual"])
-                / predicted_vs_actual["actual"]
-            )
-
-            predicted_vs_actual.sort_values(
-                by="absolute_percentage_error", ascending=False, inplace=True
-            )
-
-            predicted_vs_actual["squared_error"] = (
-                predicted_vs_actual["predicted"] - predicted_vs_actual["actual"]
-            ) ** 2
-            predicted_vs_actual["residuals"] = (
-                predicted_vs_actual["predicted"] - predicted_vs_actual["actual"]
-            )
-            predicted_vs_actual["threshold_mape"] = threshold_mape(
-                predicted_vs_actual["actual"], predicted_vs_actual["predicted"]
-            )
-            predicted_vs_actual["threshold_mape_25"] = threshold_mape(
-                predicted_vs_actual["actual"],
-                predicted_vs_actual["predicted"],
-                threshold=0.25,
-            )
+            if self.compute_predicted_vs_actual:
+                predicted_vs_actual = pd.DataFrame(
+                    {
+                        self.id_column_name: X_test_id.values,
+                        "actual": y_test,
+                        "predicted": pred,
+                    }
+                )
+                if X is not None and "year" in X.columns:
+                    predicted_vs_actual["year"] = 10 * np.floor(
+                        predicted_vs_actual.merge(
+                            X[["year", self.id_column_name]],
+                            on=self.id_column_name,
+                            how="left",
+                        )["year"]
+                        / 10
+                    ).astype(int)
+                predicted_vs_actual["absolute_error"] = (
+                    predicted_vs_actual["predicted"] - predicted_vs_actual["actual"]
+                ).abs()
+                predicted_vs_actual["squared_error"] = (
+                    predicted_vs_actual["predicted"] - predicted_vs_actual["actual"]
+                ) ** 2
+                predicted_vs_actual["absolute_percentage_error"] = (
+                    abs(predicted_vs_actual["predicted"] - predicted_vs_actual["actual"])
+                    / predicted_vs_actual["actual"]
+                )
+                predicted_vs_actual_describe = predicted_vs_actual.describe(
+                    include="all"
+                )
 
             # fig = px.scatter(predicted_vs_actual, x=predicted_vs_actual.index, y='squared_error',
             #                 title=f'Squared Errors for Each Prediction',
@@ -560,9 +612,10 @@ class MOTR:
         metadata_filename = f"{self.filename}.json"
         os.makedirs("models", exist_ok=True)
         os.makedirs("metadata", exist_ok=True)
-        if model_type not in ["nn_classifier", "nn_regression"]:
+        if self.save_model and model_type not in ["nn_classifier", "nn_regression"]:
             joblib.dump(model, os.path.join("models", model_filename))
-        feature_importance.to_dict(orient="records")
+        if not self.save_metadata:
+            return
         model_params = model.named_steps["model"].get_params()
         model_params.pop("model", None)
         model_params.pop("estimator", None)
@@ -603,8 +656,11 @@ class MOTR:
             json.dump(metadata, f, indent=4)
         logging.info(f"Saved model and metadata for {model_type}")
 
-    def run(self):
-        results = []
+    def run(self, parallel=True, n_parallel_jobs=2):
+        """
+        Run model training. Set parallel=True to train multiple models concurrently.
+        n_parallel_jobs controls how many models to train in parallel (default: 2 for 25GB RAM).
+        """
         (
             X,
             y,
@@ -613,39 +669,95 @@ class MOTR:
             binary_features,
             label_encoder,
         ) = self.load_data()
-        for model_name in self.models.keys():
+
+        stratify = y if self.task_type in ("binary_classification", "multi_class_classification") else None
+        try:
+            X_train_full, X_test_full, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42, stratify=stratify
+            )
+        except ValueError:
+            X_train_full, X_test_full, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42
+            )
+        X_test_id = X_test_full[self.id_column_name]
+        X_train = X_train_full.drop(self.id_column_name, axis=1)
+        X_test = X_test_full.drop(self.id_column_name, axis=1)
+
+        class_weight_dict = None
+        if self.task_type != "regression":
+            class_weights = class_weight.compute_class_weight(
+                class_weight="balanced", classes=np.unique(y_train), y=y_train
+            )
+            class_weight_dict = {i: class_weights[i] for i in range(len(class_weights))}
+
+        outer_parallel = parallel and len(self.models) > 1 and n_parallel_jobs != 1
+        effective_search_n_jobs = 1 if outer_parallel else self.search_n_jobs
+        effective_model_n_jobs = 1 if outer_parallel else self.model_n_jobs
+
+        def train_single_model(model_name):
             metrics = self.train_model(
+                X_train,
+                y_train,
+                X_test,
+                y_test,
+                X_test_id,
                 X,
-                y,
                 model_name,
                 numerical_features,
                 categorical_features,
                 binary_features,
                 label_encoder,
+                class_weight_dict=class_weight_dict,
+                search_n_jobs=effective_search_n_jobs,
+                model_n_jobs=effective_model_n_jobs,
             )
-            results.append({"Model": model_name, **metrics})
+            return {"Model": model_name, **metrics}
+
+        if parallel and len(self.models) > 1:
+            results = Parallel(n_jobs=n_parallel_jobs, verbose=10, backend="threading")(
+                delayed(train_single_model)(model_name)
+                for model_name in self.models.keys()
+            )
+        else:
+            results = [train_single_model(model_name) for model_name in self.models.keys()]
+
         return pd.DataFrame(results)
 
 
 if __name__ == "__main__":
     GRID_TYPE = "random_search"
     ID_COLUMN_NAME = "movie_id"
+    FAST_MODE = 1#os.getenv("MOTR_FAST", "0") == "1"
 
     DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
     # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
+    # DATA_FILES_LIST = [
+    #     "full__binary_classification__no_outliers__complex.csv",
+    #     "large_productions__binary_classification__no_outliers__complex.csv",
+    #     "medium_productions__binary_classification__no_outliers__complex.csv",
+    #     "small_productions__binary_classification__no_outliers__complex.csv",
+    #     "full__regression__no_outliers__complex.csv",
+    #     "large_productions__regression__no_outliers__complex.csv",
+    #     "medium_productions__regression__no_outliers__complex.csv",
+    #     "small_productions__regression__no_outliers__complex.csv",
+    #     "full__multi_class_classification__no_outliers__complex.csv",
+    #     "large_productions__multi_class_classification__no_outliers__complex.csv",
+    #     "medium_productions__multi_class_classification__no_outliers__complex.csv",
+    #     "small_productions__multi_class_classification__no_outliers__complex.csv",
+    # ]
     DATA_FILES_LIST = [
         "full__binary_classification__no_outliers__complex.csv",
-        "large_productions__binary_classification__no_outliers__complex.csv",
-        "medium_productions__binary_classification__no_outliers__complex.csv",
-        "small_productions__binary_classification__no_outliers__complex.csv",
+        # "large_productions__binary_classification__no_outliers__complex.csv",
+        # "medium_productions__binary_classification__no_outliers__complex.csv",
+        # "small_productions__binary_classification__no_outliers__complex.csv",
         "full__regression__no_outliers__complex.csv",
-        "large_productions__regression__no_outliers__complex.csv",
-        "medium_productions__regression__no_outliers__complex.csv",
-        "small_productions__regression__no_outliers__complex.csv",
+        # "large_productions__regression__no_outliers__complex.csv",
+        # "medium_productions__regression__no_outliers__complex.csv",
+        # "small_productions__regression__no_outliers__complex.csv",
         "full__multi_class_classification__no_outliers__complex.csv",
-        "large_productions__multi_class_classification__no_outliers__complex.csv",
-        "medium_productions__multi_class_classification__no_outliers__complex.csv",
-        "small_productions__multi_class_classification__no_outliers__complex.csv",
+        # "large_productions__multi_class_classification__no_outliers__complex.csv",
+        # "medium_productions__multi_class_classification__no_outliers__complex.csv",
+        # "small_productions__multi_class_classification__no_outliers__complex.csv",
     ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
@@ -674,7 +786,17 @@ if __name__ == "__main__":
             task_type=task_type,
             grid_type=GRID_TYPE,
             positive_class="Success",
+            cv_folds=2,
+            random_search_iter=4,
+            search_n_jobs=-1,
+            model_n_jobs=-1,
+            enable_pipeline_cache=FAST_MODE,
+            onehot_sparse=FAST_MODE,
+            compute_feature_importance=not FAST_MODE,
+            compute_predicted_vs_actual=True,
+            save_model=not FAST_MODE,
+            save_metadata=True,
         )
-        results = trainer.run()
+        results = trainer.run(parallel=not FAST_MODE)
         print(f"Results for {data_file}")
         print(results)

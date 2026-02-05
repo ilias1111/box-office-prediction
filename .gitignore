@@ -33,5 +33,6 @@ override.tf.json
 .DS_Store
 .DS_Store?
 
-
 thesis_assets/*
+.cache/
+.agent/
