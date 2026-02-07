@@ -44,8 +44,8 @@ pio.renderers.default = "notebook"
 # If RUNS_IDS is populated, the analysis will focus ONLY on these runs.
 # If empty, it will consider ALL runs.
 RUNS_IDS = [
-    "20240905_183321",
-    "20240905_231518",
+    # "20240905_183321",
+    # "20240905_231518",
 ]
 
 # --- LOAD METADATA ---
@@ -249,6 +249,21 @@ try:
         display_chart=False 
     )
     save_latex(df_model_r2_reg, "table_model_comp_r2_reg.tex", "Model Comparison - R2 (Regression)", "tab:model_comp_r2_reg")
+
+    ## Do it for "Threshold Probability Accuracy (log10)" regression
+
+    df_model_tpacc_log10_reg = plot_one_metric_of_different_models_per_dataset_with_plotly(
+        experiment_df,
+        problem_type="regression",
+        metric="Threshold Probability Accuracy (log10)",
+        metric_agg="max",
+        benchmark_model="dummy_regressor",
+        print_stats=True,
+        output_dir=CHARTS_DIR,
+        filename_prefix="step_4",
+        display_chart=False 
+    )
+    save_latex(df_model_tpacc_log10_reg, "table_model_comp_tpacc_log10_reg.tex", "Model Comparison - Threshold Probability Accuracy (log10) (Regression)", "tab:model_comp_tpacc_log10_reg")
 
     df_model_mape_reg = plot_one_metric_of_different_models_per_dataset_with_plotly(
         experiment_df,

@@ -1311,3 +1311,119 @@ def plot_regression_results(
         print("\n📊 Model Performance Summary (Regression):")
         print(f"• Average Error: ${data['absolute_error']['mean']:,.0f}")
         print(f"• MAPE: {data['absolute_percentage_error']['mean']*100:.2f}%")
+
+
+def generate_best_regression_models_table(
+    experiment_df: pd.DataFrame,
+    problem_types: List[str] = ["regression"],
+    groupby_columns: List[str] = ["dataset_name", "has_outliers_removed", "feature_engineering"],
+    metric: str = "MAPE",
+    metric_asc: bool = True,
+    output_dir: str = "thesis_assets/tables",
+    filename_prefix: str = "regression_results"
+) -> List[str]:
+    """
+    Generate LaTeX tables summarizing regression models, one per dataset configuration.
+    """
+    # Filter for regression problems
+    regression_df = experiment_df[experiment_df["problem_type"].isin(problem_types)].copy()
+    
+    if len(regression_df) == 0:
+        print("No regression data found")
+        return []
+    
+    generated_files = []
+    
+    # Process each configuration group
+    for name, group in regression_df.groupby(groupby_columns):
+        dataset_name, outliers_removed, feature_eng = name
+        
+        table_data = []
+        for _, row in group.iterrows():
+            # Parse predicted_vs_actual JSON
+            try:
+                pva = json.loads(row["predicted_vs_actual"])
+                if isinstance(pva, str):
+                    pva = json.loads(pva)
+            except (json.JSONDecodeError, TypeError):
+                 print(f"Warning: Could not parse predicted_vs_actual for {row['run_id']}")
+                 continue
+
+            # Extract detailed stats
+            # Metrics: R2, MAE (mean), MDAE (median), MAPE, Bias (mean residual), Max Error, RMSE
+            mae = pva.get("absolute_error", {}).get("mean", 0)
+            mdae = pva.get("absolute_error", {}).get("50%", 0)
+            mape = pva.get("absolute_percentage_error", {}).get("mean", 0)
+            bias = pva.get("residuals", {}).get("mean", 0)
+            max_error = pva.get("absolute_error", {}).get("max", 0)
+            rmse = pva.get("squared_error", {}).get("mean", 0) ** 0.5
+            r2 = row.get("R2", 0)
+
+            table_data.append({
+                "Model": row["model_type"].replace("_", " ").title(),
+                "R2": r2,
+                "MAE ($)": mae,
+                "Median AE ($)": mdae,
+                "RMSE ($)": rmse,
+                "MAPE (%)": mape, # Keep as float for sorting
+                "Bias ($)": bias,
+                "Max Error ($)": max_error
+            })
+        
+        if not table_data:
+            continue
+            
+        # Create DataFrame
+        df_table = pd.DataFrame(table_data)
+        
+        # Sort by Metric
+        if metric == "MAPE":
+             df_table = df_table.sort_values("MAPE (%)", ascending=True)
+        elif metric == "MAE":
+             df_table = df_table.sort_values("MAE ($)", ascending=True)
+        elif metric == "R2":
+             df_table = df_table.sort_values("R2", ascending=False)
+        
+        # Format for display
+        df_display = df_table.copy()
+        df_display["MAE ($)"] = df_display["MAE ($)"].apply(lambda x: f"{x:,.0f}")
+        df_display["Median AE ($)"] = df_display["Median AE ($)"].apply(lambda x: f"{x:,.0f}")
+        df_display["RMSE ($)"] = df_display["RMSE ($)"].apply(lambda x: f"{x:,.0f}")
+        df_display["MAPE (%)"] = df_display["MAPE (%)"].apply(lambda x: f"{x:.2%}".replace("%", "\\%"))
+        df_display["Bias ($)"] = df_display["Bias ($)"].apply(lambda x: f"{x:,.0f}")
+        df_display["Max Error ($)"] = df_display["Max Error ($)"].apply(lambda x: f"{x:,.0f}")
+        df_display["R2"] = df_display["R2"].apply(lambda x: f"{x:.3f}")
+
+        # Construct filename
+        outlier_str = "no_outliers" if outliers_removed else "with_outliers"
+        clean_dataset = dataset_name.lower().replace(" ", "_")
+        clean_fe = feature_eng.lower().replace(" ", "_")
+        safe_filename = f"{filename_prefix}_{clean_dataset}_{outlier_str}_{clean_fe}.tex"
+        
+        # Construct Caption
+        outlier_desc = "Outliers Removed" if outliers_removed else "With Outliers"
+        fe_desc = feature_eng.title() if feature_eng != "none" else "Basic"
+        caption = f"Regression Results for {dataset_name.replace('_', ' ').title()} ({outlier_desc}, Feature Eng: {fe_desc})"
+        label = f"tab:reg_{clean_dataset}_{outlier_str}_{clean_fe}"
+
+        # Generate LaTeX
+        latex_code = df_display.to_latex(
+            index=False, 
+            caption=caption, 
+            label=label,
+            position="htbp",
+            column_format="l" * len(df_display.columns),
+            bold_rows=False,
+        )
+        
+        # Save to file
+        os.makedirs(output_dir, exist_ok=True)
+        full_path = os.path.join(output_dir, safe_filename)
+        with open(full_path, "w") as f:
+            f.write(latex_code)
+            
+        print(f"Saved table to {full_path}")
+        generated_files.append(full_path)
+
+    return generated_files
+

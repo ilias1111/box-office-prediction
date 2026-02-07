@@ -9,6 +9,7 @@ tensorflow
 torch
 imbalanced-learn
 shap
+numba>=0.60.0
 
 # Visualization
 matplotlib
@@ -39,3 +40,4 @@ notebook
 # Web / App (if applicable)
 flask
 gunicorn
+pyarrow

@@ -425,7 +425,16 @@ class MOTR:
 
     def load_param_grids(self, file_path, model_name):
         logging.info(f"Loading parameter grids for {model_name}")
-        return self._all_param_grids[model_name].get(self.grid_type, {})
+        grid = self._all_param_grids[model_name].get(self.grid_type, {})
+        if (
+            isinstance(grid, dict)
+            and self.task_type in grid
+            and isinstance(grid[self.task_type], dict)
+        ):
+            return grid[self.task_type]
+        if isinstance(grid, dict) and "default" in grid and isinstance(grid["default"], dict):
+            return grid["default"]
+        return grid
 
     def select_scoring(self):
         if self.task_type in ["binary_classification"]:
@@ -500,6 +509,15 @@ class MOTR:
             pred = np.power(10, np.where(abs(pred_raw) >= 12, 12, abs(pred_raw)))
             # pred = abs(pred_raw)
 
+            # Pre-calculate log values for metrics that need them
+            # Using log10(pred) ensures we respect the clipping/abs logic applied above
+            y_test_log = np.log10(y_test)
+            pred_log = np.log10(pred)
+
+            # Define thresholds as constants or variables for readability
+            # 0.176... corresponds to a factor of 1.5 order of magnitude
+            LOG_THRESHOLD_50 = np.log10(1.5)
+
             conf_matrix = None
             class_report = None
 
@@ -513,6 +531,9 @@ class MOTR:
                 "R2": r2_score(y_test, pred),
                 "Threshold Probability Accuracy": threshold_probability_accuracy(
                     y_test, pred, threshold=0.2
+                ),
+                "Threshold Probability Accuracy (log10)": log10_threshold_probability_accuracy(
+                    y_test_log, pred_log, threshold=LOG_THRESHOLD_50
                 ),
                 "Threshold MAPE": threshold_mape(y_test, pred),
                 "Threshold MAPE (25%)": threshold_mape(y_test, pred, threshold=0.25),
@@ -725,7 +746,7 @@ class MOTR:
 
 
 if __name__ == "__main__":
-    GRID_TYPE = "random_search"
+    GRID_TYPE = "non_grid"
     ID_COLUMN_NAME = "movie_id"
     FAST_MODE = 1#os.getenv("MOTR_FAST", "0") == "1"
 
@@ -745,20 +766,6 @@ if __name__ == "__main__":
     #     "medium_productions__multi_class_classification__no_outliers__complex.csv",
     #     "small_productions__multi_class_classification__no_outliers__complex.csv",
     # ]
-    DATA_FILES_LIST = [
-        "full__binary_classification__no_outliers__complex.csv",
-        # "large_productions__binary_classification__no_outliers__complex.csv",
-        # "medium_productions__binary_classification__no_outliers__complex.csv",
-        # "small_productions__binary_classification__no_outliers__complex.csv",
-        "full__regression__no_outliers__complex.csv",
-        # "large_productions__regression__no_outliers__complex.csv",
-        # "medium_productions__regression__no_outliers__complex.csv",
-        # "small_productions__regression__no_outliers__complex.csv",
-        "full__multi_class_classification__no_outliers__complex.csv",
-        # "large_productions__multi_class_classification__no_outliers__complex.csv",
-        # "medium_productions__multi_class_classification__no_outliers__complex.csv",
-        # "small_productions__multi_class_classification__no_outliers__complex.csv",
-    ]
     TASK_TYPE_LIST = [i.split("__")[1] for i in DATA_FILES_LIST]
     TARGET_COLUMN_NAME_LIST = [
         "revenue_usd_adj" if i == "regression" else i for i in TASK_TYPE_LIST
@@ -776,7 +783,7 @@ if __name__ == "__main__":
     for data_file, task_type, target_column_name in zip(
         DATA_FILES_LIST, TASK_TYPE_LIST, TARGET_COLUMN_NAME_LIST
     ):
-        print(f"Running model {counter} from {cases}")
+        print(f"Running dataset {counter} from {cases}")
         counter += 1
         trainer = MOTR(
             RUN_ID,
@@ -786,8 +793,8 @@ if __name__ == "__main__":
             task_type=task_type,
             grid_type=GRID_TYPE,
             positive_class="Success",
-            cv_folds=2,
-            random_search_iter=4,
+            cv_folds=3,
+            random_search_iter=60,
             search_n_jobs=-1,
             model_n_jobs=-1,
             enable_pipeline_cache=FAST_MODE,

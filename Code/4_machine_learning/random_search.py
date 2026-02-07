@@ -15,11 +15,18 @@ from sklearn.linear_model import LogisticRegression
 PARAM_DISTRIBUTIONS = {
     "C": loguniform(1e-4, 1e2),
     "max_depth_tree": randint(2, 32),
-    "max_depth_gbm": randint(2, 11),
+    "max_depth_gbm": randint(2, 13),
     "n_estimators_rf": randint(200, 1200),
     "n_estimators_gbm": randint(200, 1400),
     "learning_rate_gbm": loguniform(5e-3, 2e-1),
-    "num_leaves": [31, 63, 127, 255],
+    # Correlated spaces (learning-rate vs number of trees) for more efficient search
+    "n_estimators_gbm_low_lr": randint(800, 1800),
+    "n_estimators_gbm_mid_lr": randint(300, 1400),
+    "n_estimators_gbm_high_lr": randint(200, 900),
+    "learning_rate_gbm_low": loguniform(5e-3, 3e-2),
+    "learning_rate_gbm_mid": loguniform(3e-2, 1e-1),
+    "learning_rate_gbm_high": loguniform(1e-1, 2e-1),
+    "num_leaves": randint(20, 256),
     "min_samples_split": randint(2, 40),
     "min_samples_leaf": randint(1, 20),
     "variance_threshold": uniform(0, 0.2),
@@ -61,7 +68,9 @@ PARAM_DISTRIBUTIONS = {
     "reg_lambda": loguniform(1e-3, 10.0),
     "min_child_samples": randint(5, 80),
     "ccp_alpha": loguniform(1e-4, 1e-1),
-    "scale_pos_weight": loguniform(0.5, 20.0),
+    "scale_pos_weight": loguniform(0.5, 10.0),
+    "gamma_xgb": loguniform(1e-4, 5.0),
+    "min_split_gain_lgbm": uniform(0.0, 0.2),
     # Bagging expects floats/ints for max_samples/max_features (no 'sqrt'/'log2')
     "bagging_n_estimators": randint(10, 200),
     "bagging_max_samples": uniform(0.3, 0.7),  # 0.3..1.0
@@ -116,46 +125,56 @@ MODEL_PARAM_DISTRIBUTIONS = {
         "model__ccp_alpha": PARAM_DISTRIBUTIONS["ccp_alpha"],
     },
     "xgboost_classifier": {
-        "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm"],
         "model__max_depth": PARAM_DISTRIBUTIONS["max_depth_gbm"],
-        "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm"],
         "model__subsample": PARAM_DISTRIBUTIONS["subsample"],
         "model__colsample_bytree": PARAM_DISTRIBUTIONS["colsample_bytree"],
         "model__min_child_weight": PARAM_DISTRIBUTIONS["min_child_weight"],
+        "model__gamma": PARAM_DISTRIBUTIONS["gamma_xgb"],
         "model__reg_alpha": PARAM_DISTRIBUTIONS["reg_alpha"],
         "model__reg_lambda": PARAM_DISTRIBUTIONS["reg_lambda"],
+        "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS[
+            "variance_threshold"
+        ],
     },
     "xgboost_regressor": {
-        "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm"],
         "model__max_depth": PARAM_DISTRIBUTIONS["max_depth_gbm"],
-        "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm"],
         "model__subsample": PARAM_DISTRIBUTIONS["subsample"],
         "model__colsample_bytree": PARAM_DISTRIBUTIONS["colsample_bytree"],
         "model__min_child_weight": PARAM_DISTRIBUTIONS["min_child_weight"],
+        "model__gamma": PARAM_DISTRIBUTIONS["gamma_xgb"],
         "model__reg_alpha": PARAM_DISTRIBUTIONS["reg_alpha"],
         "model__reg_lambda": PARAM_DISTRIBUTIONS["reg_lambda"],
+        "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS[
+            "variance_threshold"
+        ],
     },
     "lightgbm_regressor": {
         "model__num_leaves": PARAM_DISTRIBUTIONS["num_leaves"],
-        "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm"],
-        "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm"],
+        "model__max_depth": [-1, 6, 10],
         "model__subsample": PARAM_DISTRIBUTIONS["subsample"],
         "model__subsample_freq": [1],
         "model__colsample_bytree": PARAM_DISTRIBUTIONS["colsample_bytree"],
         "model__min_child_samples": PARAM_DISTRIBUTIONS["min_child_samples"],
+        "model__min_split_gain": PARAM_DISTRIBUTIONS["min_split_gain_lgbm"],
         "model__reg_alpha": PARAM_DISTRIBUTIONS["reg_alpha"],
         "model__reg_lambda": PARAM_DISTRIBUTIONS["reg_lambda"],
+        "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS[
+            "variance_threshold"
+        ],
     },
     "lightgbm_classifier": {
         "model__num_leaves": PARAM_DISTRIBUTIONS["num_leaves"],
-        "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm"],
-        "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm"],
+        "model__max_depth": [-1, 6, 10],
         "model__subsample": PARAM_DISTRIBUTIONS["subsample"],
         "model__subsample_freq": [1],
         "model__colsample_bytree": PARAM_DISTRIBUTIONS["colsample_bytree"],
         "model__min_child_samples": PARAM_DISTRIBUTIONS["min_child_samples"],
+        "model__min_split_gain": PARAM_DISTRIBUTIONS["min_split_gain_lgbm"],
         "model__reg_alpha": PARAM_DISTRIBUTIONS["reg_alpha"],
         "model__reg_lambda": PARAM_DISTRIBUTIONS["reg_lambda"],
+        "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS[
+            "variance_threshold"
+        ],
     },
     "svm_classifier": {
         "preprocessor__binary__variance_threshold__threshold": PARAM_DISTRIBUTIONS[
@@ -270,6 +289,42 @@ def perform_random_search(
         none_depth = {**param_distributions, "model__max_depth": [None]}
         bounded_depth = {**param_distributions, "model__max_depth": PARAM_DISTRIBUTIONS["max_depth_tree"]}
         param_distributions = [none_depth, bounded_depth]
+    elif model_name in ("xgboost_classifier", "xgboost_regressor"):
+        base_space = param_distributions
+        low_lr = {
+            **base_space,
+            "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm_low"],
+            "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm_low_lr"],
+        }
+        mid_lr = {
+            **base_space,
+            "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm_mid"],
+            "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm_mid_lr"],
+        }
+        high_lr = {
+            **base_space,
+            "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm_high"],
+            "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm_high_lr"],
+        }
+        param_distributions = [low_lr, mid_lr, high_lr]
+    elif model_name in ("lightgbm_classifier", "lightgbm_regressor"):
+        base_space = param_distributions
+        low_lr = {
+            **base_space,
+            "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm_low"],
+            "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm_low_lr"],
+        }
+        mid_lr = {
+            **base_space,
+            "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm_mid"],
+            "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm_mid_lr"],
+        }
+        high_lr = {
+            **base_space,
+            "model__learning_rate": PARAM_DISTRIBUTIONS["learning_rate_gbm_high"],
+            "model__n_estimators": PARAM_DISTRIBUTIONS["n_estimators_gbm_high_lr"],
+        }
+        param_distributions = [low_lr, mid_lr, high_lr]
 
     class_weight_supported = {
         "logistic_regression",
@@ -290,7 +345,11 @@ def perform_random_search(
 
     # XGBoost doesn't accept `class_weight`; use `scale_pos_weight` for binary tasks.
     if task_type == "binary_classification" and model_name == "xgboost_classifier":
-        param_distributions["model__scale_pos_weight"] = PARAM_DISTRIBUTIONS["scale_pos_weight"]
+        if isinstance(param_distributions, list):
+            for space in param_distributions:
+                space["model__scale_pos_weight"] = PARAM_DISTRIBUTIONS["scale_pos_weight"]
+        else:
+            param_distributions["model__scale_pos_weight"] = PARAM_DISTRIBUTIONS["scale_pos_weight"]
 
     random_search = RandomizedSearchCV(
         estimator,

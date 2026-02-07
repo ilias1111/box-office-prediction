@@ -18,15 +18,32 @@
       "preprocessor__numerical__scaler": ["StandardScaler", "MinMaxScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__C": [1.0],
-      "model__solver": ["saga"],
-      "model__penalty": ["l2"],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
-  "random_forest_classifier": {
+	    "non_grid": {
+	      "binary_classification": {
+	        "model__C": [1.2073834860996047],
+	        "model__solver": ["saga"],
+	        "model__penalty": ["l1"],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0.002652992231973306]
+	      },
+	      "multi_class_classification": {
+	        "model__C": [0.2397338207928651],
+	        "model__solver": ["saga"],
+	        "model__penalty": ["elasticnet"],
+	        "model__l1_ratio": [0.3046137691733707],
+	        "preprocessor__numerical__scaler": ["PowerTransformer"],
+	        "preprocessor__binary__variance_threshold__threshold": [0.019534422801276777]
+	      },
+	      "default": {
+	        "model__C": [1.2073834860996047],
+	        "model__solver": ["saga"],
+	        "model__penalty": ["l1"],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0.002652992231973306]
+	      }
+	    }
+	  },
+	  "random_forest_classifier": {
     "deep_grid_search": {
       "model__n_estimators": [100, 200, 400, 600, 800, 900, 1000],
       "model__max_depth": [4, 8, 16, 32, 64],
@@ -45,14 +62,36 @@
       "preprocessor__numerical__scaler": ["StandardScaler", "MinMaxScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__n_estimators": [100],
-      "model__max_depth": [8],
-      "model__max_features": ["log2"],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
+	    "non_grid": {
+	      "binary_classification": {
+	        "model__n_estimators": [578],
+	        "model__max_depth": [20],
+	        "model__max_features": [null],
+	        "model__min_samples_split": [34],
+	        "model__min_samples_leaf": [3],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      },
+	      "multi_class_classification": {
+	        "model__n_estimators": [320],
+	        "model__max_depth": [21],
+	        "model__max_features": ["sqrt"],
+	        "model__min_samples_split": [30],
+	        "model__min_samples_leaf": [1],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0.146398788362281]
+	      },
+	      "default": {
+	        "model__n_estimators": [578],
+	        "model__max_depth": [20],
+	        "model__max_features": [null],
+	        "model__min_samples_split": [34],
+	        "model__min_samples_leaf": [3],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      }
+	    }
+	  },
   "svm_classifier": {
     "deep_grid_search": {
       "model__C": [0.1, 1, 10, 50, 100, 500, 1000],
@@ -99,14 +138,33 @@
       "preprocessor__numerical__scaler": ["StandardScaler", "MinMaxScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__max_depth": [4],
-      "model__min_samples_split": [2],
-      "model__min_samples_leaf": [1],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
+	    "non_grid": {
+	      "binary_classification": {
+	        "model__max_depth": [4],
+	        "model__min_samples_split": [2],
+	        "model__min_samples_leaf": [1],
+	        "model__max_features": [null],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      },
+	      "multi_class_classification": {
+	        "model__max_depth": [null],
+	        "model__min_samples_split": [33],
+	        "model__min_samples_leaf": [19],
+	        "model__max_features": [0.8],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      },
+	      "default": {
+	        "model__max_depth": [4],
+	        "model__min_samples_split": [2],
+	        "model__min_samples_leaf": [1],
+	        "model__max_features": [null],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      }
+	    }
+	  },
   "xgboost_classifier": {
     "deep_grid_search": {
       "model__n_estimators": [400, 800],
@@ -130,19 +188,48 @@
       "preprocessor__numerical__scaler": ["StandardScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__n_estimators": [600],
-      "model__max_depth": [6],
-      "model__learning_rate": [0.1],
-      "model__subsample": [0.9],
-      "model__colsample_bytree": [0.8],
-      "model__min_child_weight": [1],
-      "model__reg_lambda": [1.0],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
-  "lightgbm_classifier": {
+	    "non_grid": {
+	      "binary_classification": {
+	        "model__n_estimators": [1251],
+	        "model__max_depth": [8],
+	        "model__learning_rate": [0.006570432809105998],
+	        "model__subsample": [0.7190675050858071],
+	        "model__colsample_bytree": [0.9313811040057837],
+	        "model__min_child_weight": [3.5159342425645614],
+	        "model__reg_alpha": [2.8340904295147746],
+	        "model__reg_lambda": [0.3113095956122124],
+	        "model__scale_pos_weight": [1.6946830712325633],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      },
+	      "multi_class_classification": {
+	        "model__n_estimators": [600],
+	        "model__max_depth": [9],
+	        "model__learning_rate": [0.07850440355418019],
+	        "model__subsample": [0.8908997854557685],
+	        "model__colsample_bytree": [0.7976199094477803],
+	        "model__min_child_weight": [6.3655382834765115],
+	        "model__reg_alpha": [0.017070379153059048],
+	        "model__reg_lambda": [0.14796565542584927],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      },
+	      "default": {
+	        "model__n_estimators": [1251],
+	        "model__max_depth": [8],
+	        "model__learning_rate": [0.006570432809105998],
+	        "model__subsample": [0.7190675050858071],
+	        "model__colsample_bytree": [0.9313811040057837],
+	        "model__min_child_weight": [3.5159342425645614],
+	        "model__reg_alpha": [2.8340904295147746],
+	        "model__reg_lambda": [0.3113095956122124],
+	        "model__scale_pos_weight": [1.6946830712325633],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      }
+	    }
+	  },
+	  "lightgbm_classifier": {
     "deep_grid_search": {
       "model__n_estimators": [300, 600],
       "model__num_leaves": [31, 63, 127],
@@ -165,18 +252,54 @@
       "preprocessor__numerical__scaler": ["StandardScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__n_estimators": [500],
-      "model__num_leaves": [63],
-      "model__learning_rate": [0.05],
-      "model__min_child_samples": [20],
-      "model__subsample": [0.8],
-      "model__colsample_bytree": [0.8],
-      "model__reg_lambda": [1.0],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
+	    "non_grid": {
+	      "binary_classification": {
+	        "model__n_estimators": [495],
+	        "model__num_leaves": [31],
+	        "model__max_depth": [-1],
+	        "model__learning_rate": [0.01667661511217403],
+	        "model__min_child_samples": [66],
+	        "model__subsample": [0.9486212527455787],
+	        "model__subsample_freq": [1],
+	        "model__colsample_bytree": [0.9181815987569262],
+	        "model__min_split_gain": [0.0],
+	        "model__reg_alpha": [0.03586816498627549],
+	        "model__reg_lambda": [0.01217295809836997],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      },
+	      "multi_class_classification": {
+	        "model__n_estimators": [802],
+	        "model__num_leaves": [161],
+	        "model__max_depth": [10],
+	        "model__learning_rate": [0.04757136120967272],
+	        "model__min_child_samples": [7],
+	        "model__subsample": [0.8282623055075649],
+	        "model__subsample_freq": [1],
+	        "model__colsample_bytree": [0.8683730277543102],
+	        "model__min_split_gain": [0.1521570097233795],
+	        "model__reg_alpha": [0.09444574254983566],
+	        "model__reg_lambda": [0.12329098365270515],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0.005083825348819038]
+	      },
+	      "default": {
+	        "model__n_estimators": [495],
+	        "model__num_leaves": [31],
+	        "model__max_depth": [-1],
+	        "model__learning_rate": [0.01667661511217403],
+	        "model__min_child_samples": [66],
+	        "model__subsample": [0.9486212527455787],
+	        "model__subsample_freq": [1],
+	        "model__colsample_bytree": [0.9181815987569262],
+	        "model__min_split_gain": [0.0],
+	        "model__reg_alpha": [0.03586816498627549],
+	        "model__reg_lambda": [0.01217295809836997],
+	        "preprocessor__numerical__scaler": ["StandardScaler"],
+	        "preprocessor__binary__variance_threshold__threshold": [0]
+	      }
+	    }
+	  },
   "linear_regression": {
     "deep_grid_search": {
       "model__fit_intercept": [true, false],
@@ -198,7 +321,7 @@
       "preprocessor__binary__variance_threshold__threshold": [0]
     }
   },
-  "random_forest_regressor": {
+	  "random_forest_regressor": {
     "deep_grid_search": {
       "model__n_estimators": [100, 200, 400, 600, 800, 900, 1000],
       "model__max_depth": [4, 8, 16, 32, 64],
@@ -217,15 +340,17 @@
       "preprocessor__numerical__scaler": ["StandardScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__n_estimators": [400],
-      "model__max_depth": [8],
-      "model__max_features": ["sqrt"],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
-  "decision_tree_regressor": {
+	    "non_grid": {
+	      "model__n_estimators": [216],
+	      "model__max_depth": [22],
+	      "model__max_features": [1.0],
+	      "model__min_samples_split": [10],
+	      "model__min_samples_leaf": [1],
+	      "preprocessor__numerical__scaler": ["StandardScaler"],
+	      "preprocessor__binary__variance_threshold__threshold": [0.002652992231973306]
+	    }
+	  },
+	  "decision_tree_regressor": {
     "deep_grid_search": {
       "model__max_depth": [2, 4, 8, 16, 32],
       "model__min_samples_split": [2, 4, 8, 16],
@@ -244,15 +369,16 @@
       "preprocessor__numerical__scaler": ["StandardScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__max_depth": [16],
-      "model__min_samples_split": [8],
-      "model__min_samples_leaf": [8],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
-  "xgboost_regressor": {
+	    "non_grid": {
+	      "model__max_depth": [8],
+	      "model__min_samples_split": [24],
+	      "model__min_samples_leaf": [19],
+	      "model__max_features": [null],
+	      "preprocessor__numerical__scaler": ["StandardScaler"],
+	      "preprocessor__binary__variance_threshold__threshold": [0.011616722433639893]
+	    }
+	  },
+	  "xgboost_regressor": {
     "deep_grid_search": {
       "model__n_estimators": [400, 800],
       "model__max_depth": [3, 6, 9],
@@ -275,19 +401,21 @@
       "preprocessor__numerical__scaler": ["StandardScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__n_estimators": [600],
-      "model__max_depth": [6],
-      "model__learning_rate": [0.1],
-      "model__subsample": [0.9],
-      "model__colsample_bytree": [0.8],
-      "model__min_child_weight": [1],
-      "model__reg_lambda": [1.0],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
-  "lightgbm_regressor": {
+	    "non_grid": {
+	      "model__n_estimators": [293],
+	      "model__max_depth": [6],
+	      "model__learning_rate": [0.10837805344306185],
+	      "model__subsample": [0.8422521487261975],
+	      "model__colsample_bytree": [0.9273538331393107],
+	      "model__min_child_weight": [0.6629351861488221],
+	      "model__gamma": [0.00011685157523232485],
+	      "model__reg_alpha": [2.641449645424224],
+	      "model__reg_lambda": [0.6525765108342366],
+	      "preprocessor__numerical__scaler": ["StandardScaler"],
+	      "preprocessor__binary__variance_threshold__threshold": [0.019566832130200298]
+	    }
+	  },
+	  "lightgbm_regressor": {
     "deep_grid_search": {
       "model__n_estimators": [300, 600],
       "model__num_leaves": [31, 63, 127],
@@ -310,18 +438,22 @@
       "preprocessor__numerical__scaler": ["StandardScaler"],
       "preprocessor__binary__variance_threshold__threshold": [0]
     },
-    "non_grid": {
-      "model__n_estimators": [500],
-      "model__num_leaves": [63],
-      "model__learning_rate": [0.05],
-      "model__min_child_samples": [20],
-      "model__subsample": [0.8],
-      "model__colsample_bytree": [0.8],
-      "model__reg_lambda": [1.0],
-      "preprocessor__numerical__scaler": ["StandardScaler"],
-      "preprocessor__binary__variance_threshold__threshold": [0]
-    }
-  },
+	    "non_grid": {
+	      "model__n_estimators": [710],
+	      "model__num_leaves": [163],
+	      "model__max_depth": [-1],
+	      "model__learning_rate": [0.17448944343157927],
+	      "model__min_child_samples": [74],
+	      "model__subsample": [0.7559555531199562],
+	      "model__subsample_freq": [1],
+	      "model__colsample_bytree": [0.7726479814832277],
+	      "model__min_split_gain": [0.07976488848891061],
+	      "model__reg_alpha": [2.1938654178115056],
+	      "model__reg_lambda": [0.019192001101561888],
+	      "preprocessor__numerical__scaler": ["StandardScaler"],
+	      "preprocessor__binary__variance_threshold__threshold": [0.008155028310952784]
+	    }
+	  },
   "mlp_classifier": {
     "deep_grid_search": {
       "model__hidden_layer_sizes": [[50], [100], [50, 50]],
