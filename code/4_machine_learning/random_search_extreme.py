@@ -245,6 +245,11 @@ MODEL_PARAM_DISTRIBUTIONS = {
 }
 
 
+from sklearn.model_selection import ParameterSampler, cross_val_score
+from sklearn.base import clone
+import time
+import numpy as np
+
 def perform_random_search(
     estimator,
     model_name,
@@ -259,8 +264,11 @@ def perform_random_search(
 ):
     param_distributions = MODEL_PARAM_DISTRIBUTIONS.get(model_name, {})
 
-    # Some models need conditional parameter spaces.
-    # RandomizedSearchCV supports a list of dicts to express such constraints.
+    # [Logic for conditional spaces remains the same, omitted for brevity in replacement if unchanged, 
+    #  but here we must include it to be safe or reference it. 
+    #  Since we are replacing the whole function, we must re-implement the conditional logic.]
+    
+    # ... (Re-implementing conditional logic from original function) ...
     if model_name == "logistic_regression":
         base_space = {
             **param_distributions,
@@ -286,17 +294,14 @@ def perform_random_search(
         }
         param_distributions = [linear_space, rbf_space]
     elif model_name in ("random_forest_classifier", "random_forest_regressor"):
-        # Only sample max_samples when bootstrap=True.
         base_space = {**param_distributions, "model__max_depth": [None]}
         boot_space = {**base_space, "model__bootstrap": [True], "model__max_samples": PARAM_DISTRIBUTIONS["max_samples"]}
         no_boot_space = {**base_space, "model__bootstrap": [False]}
-        # Allow bounded depths too (metadata shows good depths ~10-25).
         depth_space = {**param_distributions, "model__max_depth": PARAM_DISTRIBUTIONS["max_depth_tree"]}
         boot_depth_space = {**depth_space, "model__bootstrap": [True], "model__max_samples": PARAM_DISTRIBUTIONS["max_samples"]}
         no_boot_depth_space = {**depth_space, "model__bootstrap": [False]}
         param_distributions = [boot_space, no_boot_space, boot_depth_space, no_boot_depth_space]
     elif model_name in ("decision_tree_classifier", "decision_tree_regressor"):
-        # Allow either unlimited depth or a bounded depth search.
         none_depth = {**param_distributions, "model__max_depth": [None]}
         bounded_depth = {**param_distributions, "model__max_depth": PARAM_DISTRIBUTIONS["max_depth_tree"]}
         param_distributions = [none_depth, bounded_depth]
@@ -354,7 +359,6 @@ def perform_random_search(
         else:
             param_distributions["model__class_weight"] = ["balanced", None]
 
-    # XGBoost doesn't accept `class_weight`; use `scale_pos_weight` for binary tasks.
     if task_type == "binary_classification" and model_name == "xgboost_classifier":
         if isinstance(param_distributions, list):
             for space in param_distributions:
@@ -362,15 +366,62 @@ def perform_random_search(
         else:
             param_distributions["model__scale_pos_weight"] = PARAM_DISTRIBUTIONS["scale_pos_weight"]
 
-    random_search = RandomizedSearchCV(
-        estimator,
-        param_distributions,
-        n_iter=n_iter,
-        cv=cv,
-        scoring=scoring,
-        random_state=random_state,
-        verbose=2,
-        n_jobs=n_jobs,
-    )
-    random_search.fit(X, y)
-    return random_search.best_estimator_, n_iter
+    # --- CUSTOM SEARCH LOOP ---
+    print(f"Starting Custom Random Search for {model_name} with {n_iter} iterations...")
+    
+    # 1. Sample parameters
+    # ParameterSampler handles list of dicts naturally
+    param_list = list(ParameterSampler(param_distributions, n_iter=n_iter, random_state=random_state))
+    
+    best_score = -np.inf
+    best_params = None
+    best_estimator = None
+    
+    for i, params in enumerate(param_list):
+        candidate_model = clone(estimator)
+        candidate_model.set_params(**params)
+        
+        start_time = time.time()
+        
+        # Run CV
+        # n_jobs here controls parallelism of FOLDS. 
+        # If n_jobs=-1, standard sklearn parallelism is used.
+        try:
+            cv_scores = cross_val_score(
+                candidate_model, 
+                X, 
+                y, 
+                cv=cv, 
+                scoring=scoring, 
+                n_jobs=n_jobs, 
+                error_score='raise'
+            )
+            mean_score = cv_scores.mean()
+        except Exception as e:
+            print(f"  [!] Candidate {i+1}/{n_iter} failed: {e}")
+            mean_score = -np.inf
+            
+        duration = time.time() - start_time
+        
+        # Print update
+        metric_name = scoring if isinstance(scoring, str) else "Score"
+        print(f"  [Candidate {i+1}/{n_iter}] {metric_name}: {mean_score:.4f} (Time: {duration:.2f}s)")
+        
+        # Track best
+        if mean_score > best_score:
+            best_score = mean_score
+            best_params = params
+            print(f"   >>> New Best Score: {best_score:.4f}")
+
+    print(f"\nSearch complete. Best score: {best_score:.4f}")
+    
+    # Refit best model on full data
+    if best_params is not None:
+        final_model = clone(estimator)
+        final_model.set_params(**best_params)
+        final_model.fit(X, y)
+        return final_model, n_iter
+    else:
+        # Fallback if everything failed (unlikely)
+        estimator.fit(X, y)
+        return estimator, n_iter

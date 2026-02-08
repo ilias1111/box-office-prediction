@@ -361,6 +361,7 @@ class MOTR:
         model_n_jobs=None,
     ):
         logging.info(f"Training model: {model_name}")
+        print(f"\n--- Training model: {model_name} ---")
 
         self.filename = f"{self.dataset_name}__{self.task_type}__{self.outliers}__{self.feature_engineering}__{model_name}__{self.run_id}"
         start_time = datetime.now()
