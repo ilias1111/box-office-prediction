@@ -369,7 +369,7 @@ def perform_random_search(
         cv=cv,
         scoring=scoring,
         random_state=random_state,
-        verbose=1,
+        verbose=2,
         n_jobs=n_jobs,
     )
     random_search.fit(X, y)
