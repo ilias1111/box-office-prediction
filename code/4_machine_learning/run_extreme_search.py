@@ -19,7 +19,12 @@ if __name__ == "__main__":
     # If using multiple GPUs, increase this.
     N_PARALLEL_JOBS = 1 
     
-    DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
+    # Calculate absolute path to the data directory (2 levels up from this script)
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
+    DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'ml_ready_data')
+    
+    DATA_FILES_LIST = os.listdir(DATA_DIR)
     
     # You can filter here if you want to run only specific datasets
     # DATA_FILES_LIST = [f for f in DATA_FILES_LIST if "binary_classification" in f]
@@ -49,7 +54,7 @@ if __name__ == "__main__":
         
         trainer = MOTR(
             RUN_ID,
-            f"./data/ml_ready_data/{data_file}",
+            os.path.join(DATA_DIR, data_file),
             target_column_name,
             ID_COLUMN_NAME,
             task_type=task_type,
