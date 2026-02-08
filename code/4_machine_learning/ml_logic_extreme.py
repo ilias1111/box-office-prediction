@@ -119,7 +119,6 @@ class MOTR:
             return json.load(file)
 
     def init_models(self, task_type, n_jobs=-1):
-    def init_models(self, task_type, n_jobs=-1):
         """
         Initialize strictly GPU-accelerated models for the extreme run.
         Scikit-learn models (RF, DT, LR, etc.) are excluded to avoid paying for GPU time while using CPU.
