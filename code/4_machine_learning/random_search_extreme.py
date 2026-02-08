@@ -423,5 +423,5 @@ def perform_random_search(
         return final_model, n_iter
     else:
         # Fallback if everything failed (unlikely)
-        estimator.fit(X, y)
-        return estimator, n_iter
+        print("All candidates failed. Returning None.")
+        return None, n_iter

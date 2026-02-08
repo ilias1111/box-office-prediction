@@ -435,6 +435,9 @@ class MOTR:
                 task_type=self.task_type,
                 n_jobs=self.search_n_jobs if search_n_jobs is None else search_n_jobs,
             )
+            if model_with_parameters is None:
+                logging.error(f"Model {model_name} failed all iterations. Skipping.")
+                return {} # Return empty dict to signal failure
         elif self.grid_type != "non_grid": # Regular Grid Search not modified for extreme
              pass
         else: # non_grid
@@ -740,11 +743,14 @@ class MOTR:
             return {"Model": model_name, **metrics}
 
         if parallel and len(self.models) > 1:
-            results = Parallel(n_jobs=n_parallel_jobs, verbose=10, backend="threading")(
+            raw_results = Parallel(n_jobs=n_parallel_jobs, verbose=10, backend="threading")(
                 delayed(train_single_model)(model_name)
                 for model_name in self.models.keys()
             )
         else:
-            results = [train_single_model(model_name) for model_name in self.models.keys()]
+            raw_results = [train_single_model(model_name) for model_name in self.models.keys()]
 
+        # Filter out failures (empty dicts)
+        results = [res for res in raw_results if res]
+        
         return pd.DataFrame(results)
