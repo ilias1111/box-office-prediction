@@ -746,7 +746,7 @@ class MOTR:
 
 
 if __name__ == "__main__":
-    GRID_TYPE = "non_grid"
+    GRID_TYPE = "random_search"
     ID_COLUMN_NAME = "movie_id"
     FAST_MODE = 1#os.getenv("MOTR_FAST", "0") == "1"
 
@@ -794,7 +794,7 @@ if __name__ == "__main__":
             grid_type=GRID_TYPE,
             positive_class="Success",
             cv_folds=3,
-            random_search_iter=60,
+            random_search_iter=30,
             search_n_jobs=-1,
             model_n_jobs=-1,
             enable_pipeline_cache=FAST_MODE,

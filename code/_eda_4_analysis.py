@@ -44,6 +44,7 @@ pio.renderers.default = "notebook"
 # If RUNS_IDS is populated, the analysis will focus ONLY on these runs.
 # If empty, it will consider ALL runs.
 RUNS_IDS = [
+    "20260207_215143"
     # "20240905_183321",
     # "20240905_231518",
 ]
@@ -73,6 +74,12 @@ if RUNS_IDS:
     conf_matrix_df = conf_matrix_df[conf_matrix_df["run_id"].isin(RUNS_IDS)]
     print(f"Filtered to {len(experiment_df)} experiments.")
 
+# --- AUTOMATICALLY SELECT BEST RUN PER PROBLEM TYPE ---
+# Reverted per user feedback. The aggregation functions in plotting/selection will handle finding the best run per model/config.
+if not RUNS_IDS:
+    pass 
+    # Do NOT filter globally. Let the downstream functions aggregate.
+
 # --- SUMMARY STATS (Notebook Cell 6) ---
 print("\n--- Summary Statistics ---")
 try:
@@ -92,29 +99,63 @@ except Exception as e:
 
 # --- DETAILED PARAMETERS (Notebook Cell 8) ---
 print("\n--- Detailed Parameters ---")
-param_cols = [
-    "problem_type",
-    "dataset_name",
-    "has_outliers_removed",
-    "feature_engineering",
-    "model_type",
-    "scaler",
-    "variance_threshold",
-    "class_weight",
-    "C",
-    "min_child_samples",
-    "solver",
-    "num_leaves",
-    "n_estimators",
-]
-# Only show columns that exist in the dataframe
-valid_cols = [c for c in param_cols if c in parameters_df.columns]
 
-# Save detailed parameters to latex
+
+# Export detailed parameters to JSON for debugging
 if not parameters_df.empty:
-    df_to_save = parameters_df[valid_cols].sort_values(by=["model_type", "problem_type", "dataset_name"])
-    print(df_to_save)
-    save_latex(df_to_save, "table_detailed_params.tex", "Detailed Model Parameters", "tab:detailed_params")
+    common_params = [
+        "run_id", "timestamp", "model_type", "problem_type", "dataset_name",
+        "has_outliers_removed", "feature_engineering", "scaler",
+        "variance_threshold", "duration"
+    ]
+
+    model_specific_params = {
+        # Validated against code/4_machine_learning/random_search.py
+        "xgboost_regressor": ["n_estimators", "max_depth", "learning_rate", "subsample", "colsample_bytree", "min_child_weight", "gamma", "reg_alpha", "reg_lambda"],
+        "xgboost_classifier": ["n_estimators", "max_depth", "learning_rate", "subsample", "colsample_bytree", "min_child_weight", "gamma", "reg_alpha", "reg_lambda", "scale_pos_weight"],
+        "lightgbm_regressor": ["n_estimators", "num_leaves", "max_depth", "learning_rate", "subsample", "subsample_freq", "colsample_bytree", "min_child_samples", "min_split_gain", "reg_alpha", "reg_lambda"],
+        "lightgbm_classifier": ["n_estimators", "num_leaves", "max_depth", "learning_rate", "subsample", "subsample_freq", "colsample_bytree", "min_child_samples", "min_split_gain", "reg_alpha", "reg_lambda", "class_weight"],
+        "random_forest_regressor": ["n_estimators", "max_depth", "min_samples_split", "min_samples_leaf", "max_features", "bootstrap", "max_samples"],
+        "random_forest_classifier": ["n_estimators", "max_depth", "min_samples_split", "min_samples_leaf", "max_features", "bootstrap", "max_samples", "class_weight"],
+        "decision_tree_regressor": ["max_depth", "min_samples_split", "min_samples_leaf", "max_features", "ccp_alpha"],
+        "decision_tree_classifier": ["max_depth", "min_samples_split", "min_samples_leaf", "max_features", "ccp_alpha", "class_weight"],
+        "logistic_regression": ["C", "penalty", "solver", "l1_ratio", "class_weight"],
+        "linear_regression": ["fit_intercept"], 
+        "svm_classifier": ["C", "kernel", "gamma", "class_weight"],
+        "dummy_regressor": ["strategy"],
+        "dummy_classifier": ["strategy"],
+        "bagging_regressor": ["estimator", "n_estimators", "max_samples", "max_features", "bootstrap"],
+        # Neural Networks (if present in runs)
+        "nn_classifier": ["units", "dropout", "num_layers", "epochs", "optimizer"],
+        "nn_regression": ["units", "dropout", "num_layers", "epochs", "optimizer", "layers_activation", "output_activation"],
+    }
+
+    # Group by model_type to organize the JSON structure
+    grouped_params = {}
+    for model_type, group in parameters_df.groupby("model_type"):
+        relevant_keys = common_params + model_specific_params.get(model_type, [])
+        # Filter columns that exist in the dataframe
+        valid_keys = [k for k in relevant_keys if k in group.columns]
+        
+        # Convert to records and filter keys per record (to handle NaNs if we wanted, but robustly just selecting cols)
+        # Using [valid_keys] selects only those columns.
+        records = group[valid_keys].to_dict(orient="records")
+        
+        # Clean up NaNs from the records for cleaner JSON?
+        # The user said "Only the relevant parameters", implying if a param is NaN (not used), maybe hide it?
+        # But for now, let's just stick to the allowed list.
+        # simple cleaning:
+        cleaned_records = []
+        for r in records:
+            cleaned_r = {k: v for k, v in r.items() if pd.notna(v)}
+            cleaned_records.append(cleaned_r)
+
+        grouped_params[model_type] = cleaned_records
+    
+    json_path = os.path.join(OUTPUT_DIR, "detailed_parameters_debug.json")
+    with open(json_path, "w") as f:
+        json.dump(grouped_params, f, indent=4, default=str)
+    print(f"Saved detailed parameters to JSON for debugging: {json_path}")
 
 # --- XGBOOST DEEP DIVE (Notebook Cell 9) ---
 if "xgboost_regressor" in parameters_df["model_type"].values:
@@ -134,7 +175,7 @@ problem_types = ["regression", "binary_classification", "multi_class_classificat
 groupby_columns = ["dataset_name", "has_outliers_removed", "feature_engineering"]
 
 metrics = {
-    "regression": {"metric": "MAPE", "operation": "min"},
+    "regression": {"metric": "Threshold Probability Accuracy (log10)", "operation": "max"},
     "binary_classification": {"metric": "F1 Score", "operation": "max"},
     "multi_class_classification": {"metric": "F1 Score", "operation": "max"},
 }
@@ -326,12 +367,15 @@ except Exception as e:
 
 # Best Regression Results (Predicted vs Actual, Residuals from Metadata)
 try:
-    plot_best_regression_results_from_metadata(
+    # 1. Generate per-dataset comparison tables (User Request)
+    print("\nGenerating Regression Comparison Tables...")
+    generate_best_regression_models_table(
         experiment_df=experiment_df,
-        display_chart=False, # Don't open browser
-        output_dir=CHARTS_DIR,
-        print_stats=True,
-        filename_prefix="step_4"
+        problem_types=["regression"],
+        groupby_columns=["dataset_name", "has_outliers_removed", "feature_engineering"],
+        metric="Threshold Probability Accuracy (log10)",
+        output_dir=TABLES_DIR,
+        filename_prefix="table_reg_results"
     )
 except Exception as e:
     print(f"Error generating best regression results: {e}")
@@ -350,15 +394,5 @@ def load_specific_run_data(run_id, metadata_path):
 # Combined list of best models to iterate over for advanced plots
 all_best_models = pd.concat([result_reg, result_class, result_multi_class])
 
-print("\n--- Generating Feature Importance & Extra Plots ---")
-for idx, row in all_best_models.iterrows():
-    run_id = row['run_id']
-    dataset = row['dataset_name']
-    model_type = row['model_type']
-    
-    # Try to load full data for this run from metadata first (fastest)
-    run_data_full = load_specific_run_data(run_id, metadata_path)
 
-    # 1. Feature Importance
-    # Feature Importance removed per user request
-    pass
+print("\nAnalysis Complete. Check 'thesis_assets' for charts and tables.")

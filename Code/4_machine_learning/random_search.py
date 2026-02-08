@@ -9,7 +9,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, PowerTransformer
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 
 # Define general parameter distributions
 PARAM_DISTRIBUTIONS = {
@@ -37,7 +37,7 @@ PARAM_DISTRIBUTIONS = {
     "estimator": [
         DecisionTreeRegressor(random_state=42),
         RandomForestRegressor(random_state=42),
-        LogisticRegression(random_state=42),
+        LinearRegression(),
     ],
     "units": randint(4, 2048),
     "dropout": uniform(0.01, 0.8),

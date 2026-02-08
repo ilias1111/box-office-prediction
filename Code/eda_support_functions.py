@@ -344,6 +344,20 @@ def plot_one_metric_of_different_datasets_per_feature_engineering_outliers_with_
     if print_stats:
         print(grouped_data)
 
+    # Export to Markdown for LLM interpretation
+    if output_dir:
+        md_filename = generate_filename(
+            "dataset_comparison",
+            {
+                "dataset": "all_datasets",
+                "problem_type": problem_type,
+                "metric": metric,
+                "agg": metric_agg,
+            },
+            prefix=filename_prefix
+        ) + ".md"
+        save_markdown_table(grouped_data, md_filename, f"Dataset Comparison: {metric} ({problem_type})", output_dir)
+
     return grouped_data
 
 
@@ -479,6 +493,21 @@ def plot_one_metric_of_different_models_per_dataset_with_plotly(
 
     if print_stats:
         print(grouped_data)
+
+    # Export to Markdown for LLM interpretation
+    if output_dir:
+        md_filename = generate_filename(
+            "model_comparison",
+            {
+                "dataset": "all_datasets",
+                "problem_type": problem_type,
+                "metric": metric,
+                "agg": metric_agg,
+                "benchmark": benchmark_model,
+            },
+            prefix=filename_prefix
+        ) + ".md"
+        save_markdown_table(grouped_data, md_filename, f"Model Comparison: {metric} ({problem_type})", output_dir)
 
     return grouped_data
 
@@ -740,6 +769,13 @@ def plot_confusion_matrix(
     
     # Save figure with provided filename
     save_figure(fig, filename, output_dir)
+
+    # Export to Markdown for LLM interpretation
+    if output_dir and filename:
+        # Create a simple DataFrame representation of the matrix for Markdown export
+        md_df = pd.DataFrame(matrix, index=labels, columns=labels)
+        md_filename = filename + ".md"
+        save_markdown_table(md_df.reset_index().rename(columns={"index": "True Label"}), md_filename, title or "Confusion Matrix", output_dir)
     
     if display_chart:
         fig.show()
@@ -1046,6 +1082,35 @@ def generate_latex_table(
     
     return latex_code
 
+def save_markdown_table(df: pd.DataFrame, filename: str, caption: str, output_dir: str = "charts"):
+    """
+    Save a DataFrame as a Markdown table.
+    """
+    if df.empty:
+        return
+
+    # Ensure output directory exists (it should, but just in case)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Construct full path
+    # Determine where the file should go. If filename has no extension, add .md
+    if not filename.endswith(".md"):
+        filename += ".md"
+        
+    path = os.path.join(output_dir, filename)
+    
+    # Create Markdown content
+    md_content = f"### {caption}\n\n"
+    md_content += df.to_markdown(index=False, floatfmt=".3f")
+    md_content += "\n\n"
+    
+    with open(path, "w") as f:
+        f.write(md_content)
+    print(f"Saved Markdown table to {path}")
+
+
+
+
 
 
 def plot_best_confusion_matrices_from_metadata(
@@ -1307,6 +1372,19 @@ def plot_regression_results(
         if print_stats:
             print(f"Saved LaTeX regression results to {os.path.join(tables_dir, table_filename)}")
 
+    # Export to Markdown for LLM interpretation
+    if output_dir and filename_prefix and dataset_name:
+        # Construct filename similar to png but for MD
+        # We need a unique filename. Let's use the one generated in plot_best_regression_results_from_metadata if available, 
+        # but here we don't have it easily. Let's construct one based on dataset_name.
+        # Actually, let's pass a clear filename or prefix.
+        # The caller 'plot_best_regression_results_from_metadata' calls this function inside a loop.
+        # It updates 'filename' variable but doesn't pass it to 'plot_regression_results'.
+        # Let's use meaningful defaults.
+        
+        md_filename = f"{filename_prefix}_regression_details_{dataset_name}.md".replace(" ", "_").lower()
+        save_markdown_table(df_latex, md_filename, f"Regression Details for {dataset_name}", output_dir)
+
     if print_stats:
         print("\n📊 Model Performance Summary (Regression):")
         print(f"• Average Error: ${data['absolute_error']['mean']:,.0f}")
@@ -1354,10 +1432,17 @@ def generate_best_regression_models_table(
             mae = pva.get("absolute_error", {}).get("mean", 0)
             mdae = pva.get("absolute_error", {}).get("50%", 0)
             mape = pva.get("absolute_percentage_error", {}).get("mean", 0)
-            bias = pva.get("residuals", {}).get("mean", 0)
+            
+            # Calculate Bias (Mean Residual) from existing fields if residuals not present
+            if "residuals" in pva:
+                 bias = pva.get("residuals", {}).get("mean", 0)
+            else:
+                 bias = pva.get("actual", {}).get("mean", 0) - pva.get("predicted", {}).get("mean", 0)
+
             max_error = pva.get("absolute_error", {}).get("max", 0)
             rmse = pva.get("squared_error", {}).get("mean", 0) ** 0.5
             r2 = row.get("R2", 0)
+            tp_acc_log10 = row.get("Threshold Probability Accuracy (log10)", 0)
 
             table_data.append({
                 "Model": row["model_type"].replace("_", " ").title(),
@@ -1366,6 +1451,7 @@ def generate_best_regression_models_table(
                 "Median AE ($)": mdae,
                 "RMSE ($)": rmse,
                 "MAPE (%)": mape, # Keep as float for sorting
+                "Threshold Prob. Acc. (log10)": tp_acc_log10,
                 "Bias ($)": bias,
                 "Max Error ($)": max_error
             })
@@ -1383,6 +1469,8 @@ def generate_best_regression_models_table(
              df_table = df_table.sort_values("MAE ($)", ascending=True)
         elif metric == "R2":
              df_table = df_table.sort_values("R2", ascending=False)
+        elif metric == "Threshold Probability Accuracy (log10)":
+             df_table = df_table.sort_values("Threshold Prob. Acc. (log10)", ascending=False)
         
         # Format for display
         df_display = df_table.copy()
@@ -1390,6 +1478,7 @@ def generate_best_regression_models_table(
         df_display["Median AE ($)"] = df_display["Median AE ($)"].apply(lambda x: f"{x:,.0f}")
         df_display["RMSE ($)"] = df_display["RMSE ($)"].apply(lambda x: f"{x:,.0f}")
         df_display["MAPE (%)"] = df_display["MAPE (%)"].apply(lambda x: f"{x:.2%}".replace("%", "\\%"))
+        df_display["Threshold Prob. Acc. (log10)"] = df_display["Threshold Prob. Acc. (log10)"].apply(lambda x: f"{x:.3%}".replace("%", "\\%"))
         df_display["Bias ($)"] = df_display["Bias ($)"].apply(lambda x: f"{x:,.0f}")
         df_display["Max Error ($)"] = df_display["Max Error ($)"].apply(lambda x: f"{x:,.0f}")
         df_display["R2"] = df_display["R2"].apply(lambda x: f"{x:.3f}")
