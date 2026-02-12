@@ -24,7 +24,9 @@ if __name__ == "__main__":
     PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
     DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'ml_ready_data')
     
-    DATA_FILES_LIST = os.listdir(DATA_DIR)
+    
+    # Filter for valid CSV files that match the expected naming convention (must have double underscore)
+    DATA_FILES_LIST = [f for f in os.listdir(DATA_DIR) if f.endswith(".csv") and "__" in f]
     
     # You can filter here if you want to run only specific datasets
     # DATA_FILES_LIST = [f for f in DATA_FILES_LIST if "binary_classification" in f]
