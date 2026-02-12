@@ -207,12 +207,12 @@ class MOTR:
                     device="cuda", 
                     verbosity=0
                 ),
-                "lightgbm_classifier": LGBMClassifier(
-                    random_state=42, 
-                    n_jobs=n_jobs, 
-                    device="gpu", 
-                    verbosity=-1
-                ),
+                # "lightgbm_classifier": LGBMClassifier(
+                #     random_state=42, 
+                #     n_jobs=n_jobs, 
+                #     device="gpu", 
+                #     verbosity=-1
+                # ),
             }
 
             if task_type == "multi_class_classification":
@@ -232,12 +232,12 @@ class MOTR:
                     device="cuda", 
                     verbosity=0
                 ),
-                "lightgbm_regressor": LGBMRegressor(
-                    random_state=42, 
-                    n_jobs=n_jobs, 
-                    device="gpu", 
-                    verbosity=-1
-                ),
+                # "lightgbm_regressor": LGBMRegressor(
+                #     random_state=42, 
+                #     n_jobs=n_jobs, 
+                #     device="gpu", 
+                #     verbosity=-1
+                # ),
             }
         else:
             raise ValueError(

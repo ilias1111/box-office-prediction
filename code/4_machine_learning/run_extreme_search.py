@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # EXTREME SETTINGS
     # On a 3090/4090, 200 iterations per model is feasible for tabular data.
     # Adjust N_ITER based on time budget.
-    N_ITER = 5 
+    N_ITER = 2
     CV_FOLDS = 2
     
     # PARALLELISM
