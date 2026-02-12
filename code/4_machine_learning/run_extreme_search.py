@@ -26,7 +26,8 @@ if __name__ == "__main__":
     
     
     # Filter for valid CSV files that match the expected naming convention (must have double underscore)
-    DATA_FILES_LIST = [f for f in os.listdir(DATA_DIR) if f.endswith(".csv") and "__" in f]
+    # Also exclude hidden macOS resource files (starting with ._)
+    DATA_FILES_LIST = [f for f in os.listdir(DATA_DIR) if f.endswith(".csv") and "__" in f and not f.startswith("._")]
     
     # You can filter here if you want to run only specific datasets
     # DATA_FILES_LIST = [f for f in DATA_FILES_LIST if "binary_classification" in f]
