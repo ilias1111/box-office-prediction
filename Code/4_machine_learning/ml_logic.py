@@ -113,7 +113,7 @@ class MOTR:
         self.setup_logging()
 
     def _load_all_param_grids(self):
-        grids_path = Path(__file__).resolve().parents[2] / "param_grids.json"
+        grids_path = Path(__file__).resolve().parents[1] / "config" / "param_grids.json"
         with grids_path.open("r") as file:
             return json.load(file)
 

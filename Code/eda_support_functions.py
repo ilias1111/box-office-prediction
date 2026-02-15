@@ -1089,24 +1089,154 @@ def save_markdown_table(df: pd.DataFrame, filename: str, caption: str, output_di
     if df.empty:
         return
 
-    # Ensure output directory exists (it should, but just in case)
     os.makedirs(output_dir, exist_ok=True)
-    
-    # Construct full path
-    # Determine where the file should go. If filename has no extension, add .md
+
     if not filename.endswith(".md"):
         filename += ".md"
-        
+
     path = os.path.join(output_dir, filename)
-    
-    # Create Markdown content
+
     md_content = f"### {caption}\n\n"
-    md_content += df.to_markdown(index=False, floatfmt=".3f")
+
+    try:
+        md_content += df.to_markdown(index=False, floatfmt=".3f")
+    except Exception:
+        header = "| " + " | ".join([str(column) for column in df.columns]) + " |"
+        separator = "| " + " | ".join(["---"] * len(df.columns)) + " |"
+        rows = []
+        for _, row in df.iterrows():
+            rendered = []
+            for column in df.columns:
+                value = row[column]
+                if pd.isna(value):
+                    rendered.append("")
+                elif isinstance(value, (float, np.floating)):
+                    rendered.append(f"{value:.3f}")
+                else:
+                    rendered.append(str(value))
+            rows.append("| " + " | ".join(rendered) + " |")
+        md_content += "\n".join([header, separator] + rows)
+
     md_content += "\n\n"
     
     with open(path, "w") as f:
         f.write(md_content)
     print(f"Saved Markdown table to {path}")
+
+
+def save_latex_table(
+    df: pd.DataFrame,
+    filename: str,
+    caption: str,
+    label: str,
+    output_dir: str = "thesis_assets/tables",
+    float_format: str = "%.2f",
+) -> None:
+    """
+    Save a DataFrame as a LaTeX table.
+    """
+    if df.empty:
+        return
+
+    os.makedirs(output_dir, exist_ok=True)
+    if not filename.endswith(".tex"):
+        filename += ".tex"
+
+    path = os.path.join(output_dir, filename)
+    latex = generate_latex_table(df, caption=caption, label=label, float_format=float_format)
+    with open(path, "w") as f:
+        f.write(latex)
+    print(f"Saved LaTeX table to {path}")
+
+
+def save_analysis_table_bundle(
+    df: pd.DataFrame,
+    filename_base: str,
+    caption: str,
+    latex_label: str,
+    output_dir: str = "thesis_assets/tables",
+    latex_float_format: str = "%.2f",
+) -> None:
+    """
+    Save a DataFrame as CSV, LaTeX and Markdown in one call.
+    """
+    if df.empty:
+        return
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    csv_path = os.path.join(output_dir, f"{filename_base}.csv")
+    df.to_csv(csv_path, index=False)
+    print(f"Saved CSV table to {csv_path}")
+
+    save_latex_table(
+        df,
+        filename=f"{filename_base}.tex",
+        caption=caption,
+        label=latex_label,
+        output_dir=output_dir,
+        float_format=latex_float_format,
+    )
+    save_markdown_table(
+        df,
+        filename=f"{filename_base}.md",
+        caption=caption,
+        output_dir=output_dir,
+    )
+
+
+def save_figure_safe(fig: go.Figure, filename: str, output_dir: str = "charts") -> None:
+    """
+    Save a figure but do not crash if the export backend is unavailable.
+    """
+    try:
+        save_figure(fig, filename, output_dir)
+        print(f"Saved chart to {os.path.join(output_dir, filename)}")
+    except Exception as error:
+        print(f"Could not save chart {filename}: {error}")
+
+
+def apply_layout_overrides(
+    fig: go.Figure,
+    *,
+    legend: bool = True,
+    bottom_margin: int = 140,
+    width: int = 1300,
+    height: int = 780,
+    legend_y: float = -0.18,
+    legend_font_size: int = 16,
+) -> None:
+    """
+    Apply compact layout overrides on top of apply_common_style.
+    """
+    fig.update_layout(
+        width=width,
+        height=height,
+        margin=dict(l=90, r=40, t=130, b=bottom_margin),
+        showlegend=legend,
+    )
+    if legend:
+        fig.update_layout(
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=legend_y,
+                xanchor="center",
+                x=0.5,
+                title="",
+                font=dict(size=legend_font_size),
+            )
+        )
+
+
+def normalize_feature_group_label(group: str) -> str:
+    """
+    Convert raw feature-group prefixes into readable labels.
+    """
+    group = group.replace("_kpis", " KPIs")
+    group = group.replace("is_", "")
+    group = group.replace("_", " ")
+    return group.title()
 
 
 
@@ -1427,20 +1557,25 @@ def generate_best_regression_models_table(
                  print(f"Warning: Could not parse predicted_vs_actual for {row['run_id']}")
                  continue
 
+            if not pva:
+                 print(f"Warning: predicted_vs_actual is empty/null for {row['run_id']}")
+                 continue
+
             # Extract detailed stats
             # Metrics: R2, MAE (mean), MDAE (median), MAPE, Bias (mean residual), Max Error, RMSE
-            mae = pva.get("absolute_error", {}).get("mean", 0)
-            mdae = pva.get("absolute_error", {}).get("50%", 0)
-            mape = pva.get("absolute_percentage_error", {}).get("mean", 0)
+            # Use (dict.get(key) or {}) pattern to handle case where key exists but value is None
+            mae = (pva.get("absolute_error") or {}).get("mean", 0)
+            mdae = (pva.get("absolute_error") or {}).get("50%", 0)
+            mape = (pva.get("absolute_percentage_error") or {}).get("mean", 0)
             
             # Calculate Bias (Mean Residual) from existing fields if residuals not present
-            if "residuals" in pva:
-                 bias = pva.get("residuals", {}).get("mean", 0)
+            if "residuals" in pva and pva["residuals"]:
+                 bias = (pva.get("residuals") or {}).get("mean", 0)
             else:
-                 bias = pva.get("actual", {}).get("mean", 0) - pva.get("predicted", {}).get("mean", 0)
+                 bias = (pva.get("actual") or {}).get("mean", 0) - (pva.get("predicted") or {}).get("mean", 0)
 
-            max_error = pva.get("absolute_error", {}).get("max", 0)
-            rmse = pva.get("squared_error", {}).get("mean", 0) ** 0.5
+            max_error = (pva.get("absolute_error") or {}).get("max", 0)
+            rmse = (pva.get("squared_error") or {}).get("mean", 0) ** 0.5
             r2 = row.get("R2", 0)
             tp_acc_log10 = row.get("Threshold Probability Accuracy (log10)", 0)
 
@@ -1515,4 +1650,3 @@ def generate_best_regression_models_table(
         generated_files.append(full_path)
 
     return generated_files
-
