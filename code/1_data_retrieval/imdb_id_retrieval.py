@@ -95,5 +95,5 @@ if __name__ == "__main__":
     imdb_ids_to_lookup = df[df["tmdb_id"].isnull() & df["imdb_id"].notnull()][
         "imdb_id"
     ].tolist()
-    output_file_path = "Code/retrieved_data/tmdb_imdb_match.csv"  # The path to the CSV file where data will be stored
+    output_file_path = "data/retrieved_data/tmdb_imdb_match.csv"  # The path to the CSV file where data will be stored
     store_matches(imdb_ids_to_lookup, output_file_path)

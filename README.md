@@ -50,22 +50,46 @@ This project aims to predict box office performance for movies using machine lea
    pip install -r requirements.txt
    ```
 
-2. Set up your TMDb API token as an environment variable:
+2. Set up your API tokens as environment variables:
    ```
-   export TMDB_API_TOKEN=your_token_here
+   export TMDB_API_TOKEN=your_tmdb_token_here
+   export ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
    ```
 
-3. Run the data retrieval script:
+3. **Data Retrieval (Step 1: ID Retrieval)**:
+   Run the daily export retrieval to get TMDB IDs and the IMDB ID retrieval script.
+   ```
+   python code/1_data_retrieval/tmdb_daily_exports_retrieval.py
+   python code/1_data_retrieval/imdb_id_retrieval.py
+   ```
+
+4. **Data Retrieval (Step 2: TMDB Data)**:
+   Retrieve movie details from TMDB.
    ```
    python code/1_data_retrieval/tmdb_retrieval.py
    ```
 
-4. Run the preprocessing script:
+5. **Data Retrieval (Step 3: Financial Data)**:
+   Retrieve financial data from Wikipedia and convert currencies.
+   ```
+   python code/1_data_retrieval/wikipedia_retrieval.py
+   python code/1_data_retrieval/currency_converter.py
+   ```
+
+6. **Data Preprocessing**:
+   Process the raw data into a clean structure.
    ```
    python code/2_data_preprocessing/main_preprocessing.py
    ```
 
-5. Run the feature engineering and machine learning scripts (modify as needed):
+7. **Feature Engineering & Dataset Creation**:
+   Create the machine learning datasets (with/out outliers, simple/complex features).
+   ```
+   python code/3_feature_eng/ml_dataset_creation.py
+   ```
+
+8. **Machine Learning**:
+   Run the machine learning models.
    ```
    python code/4_machine_learning/ml_logic.py
    ```

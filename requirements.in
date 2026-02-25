@@ -23,7 +23,13 @@ beautifulsoup4
 lxml
 yfinance
 forex-python
+forex-python
 holidays
+cpi
+uroman
+unidecode
+duckdb
+aiohttp
 
 # Utilities
 tqdm
