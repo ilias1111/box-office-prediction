@@ -39,3 +39,13 @@ override.tf.json
 thesis_assets/*
 .cache/
 .agent/
+
+# Local notes and unused scripts. Kept on disk, not part of the handoff.
+code/1_data_retrieval/Notes/
+code/2_data_preprocessing/notes_preprocessing.txt
+code/3_feature_eng/notes_feature_eng.txt
+code/4_machine_learning/notes_machine_learning.txt
+code/4_machine_learning/experiment_data.csv
+code/4_machine_learning/neural_networks.py
+code/system_info.py
+docs/reads.txt
