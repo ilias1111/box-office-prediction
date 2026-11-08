@@ -4,8 +4,8 @@ SHAP + temporal-sensitivity EDA for the thesis (no retrain).
 Story:
   1) Random split remains the main reported protocol (tables + impurity FI).
   2) SHAP on the *same random protocol* complements FI with attribution.
-  3) Temporal split is only a sensitivity check on metrics: same winners,
-     forward holdout — are we still OK? No temporal SHAP charts.
+  3) Temporal split is only a sensitivity check on metrics: fixed earlier non-grid configurations,
+     forward holdout — how do the metrics change? No temporal SHAP charts.
 
 Charts:
   - eda_shap_top_binary_xgb_random.png
@@ -20,6 +20,7 @@ Charts:
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import sys
 import warnings
@@ -46,6 +47,7 @@ OUT_CHARTS = ROOT / "thesis_assets/charts"
 OUT_TABLES = ROOT / "thesis_assets/tables"
 OUT_DOCS = ROOT / "docs"
 SNAPSHOT = ROOT / "docs/thesis_results/temporal_vs_random_compare.csv"
+SUPPLEMENT = ROOT / "docs/thesis_results/supplementary_results.json"
 OUT_MD = OUT_DOCS / "shap_temporal_eda.md"
 TEX_IMG = ROOT.parent / "box-office-prediction-thesis/latex/images"
 EXPORT_CSV = False
@@ -136,6 +138,11 @@ def _bar_h(frame, *, x, y, title, xlabel, ylabel, filename, height=900):
 
 
 def _grouped_bar(long_df, *, metric, title, ylabel, filename):
+    long_df = long_df.copy()
+    long_df["model"] = long_df["model"].map(
+        lambda name: name.replace("_classifier", "").replace("_regressor", "")
+        .replace("_", " ").replace("xgboost", "XGBoost").replace("lightgbm", "LightGBM")
+    )
     fig = px.bar(
         long_df,
         x="model",
@@ -162,34 +169,25 @@ def _grouped_bar(long_df, *, metric, title, ylabel, filename):
         height=780,
         width=1200,
     )
+    fig.update_xaxes(tickangle=-25, title_standoff=12)
+    fig.update_layout(
+        margin=dict(b=180),
+        legend=dict(yref="container", y=0.01, yanchor="bottom"),
+    )
     save_chart(fig, filename)
 
 
 def load_shap_random() -> pd.DataFrame:
-    """Latest *random*-split SHAP CSV per (stem, model)."""
-    if not SHAP_ROOT.exists():
-        return pd.DataFrame()
-
-    latest = {}
-    for csv_path in sorted(SHAP_ROOT.glob("*/mean_abs_shap.csv")):
-        parts = csv_path.parent.name.split("__")
-        if len(parts) < 6 or parts[-2] != "random":
-            continue
-        key = ("__".join(parts[:-3]), parts[-3])
-        latest[key] = csv_path
-
+    """Read the pinned, tracked SHAP summaries, independent of local run folders."""
+    records = json.loads(SUPPLEMENT.read_text())["experiments"]
     rows = []
-    for (stem, model), csv_path in sorted(latest.items()):
-        frame = pd.read_csv(csv_path)
-        if frame.empty or "feature" not in frame.columns:
+    for record in records:
+        shap = record["random"].get("shap")
+        if not shap:
             continue
-        frame = (
-            frame.groupby("feature", as_index=False)["mean_abs_shap"]
-            .mean()
-            .sort_values("mean_abs_shap", ascending=False)
-        )
-        frame["stem"] = stem
-        frame["model"] = model
+        frame = pd.DataFrame(shap["mean_abs_shap"])
+        frame["stem"] = record["stem"]
+        frame["model"] = record["model"]
         frame["feature_label"] = frame["feature"].map(pretty_feature)
         frame["family"] = frame["feature"].map(family)
         rows.append(frame)
@@ -214,7 +212,7 @@ def plot_shap_random(lines: List[str], shap_df: pd.DataFrame) -> None:
             x="mean_abs_shap",
             y="feature_label",
             title=top_title,
-            xlabel="Mean |SHAP|",
+            xlabel="Mean |SHAP| (log10 revenue)" if "__regression__" in stem else "Mean |SHAP| (log-odds)",
             ylabel="Feature",
             filename=top_file,
         )
@@ -287,9 +285,10 @@ def _to_long(plot_df, random_col, temporal_col, metric):
 def plot_temporal_sensitivity(lines: List[str], compare: pd.DataFrame) -> None:
     lines.append("## Temporal sensitivity (metrics only)\n")
     lines.append(
-        "Same frozen hyperparameters as the random winners; only the split "
-        "changes. This checks that headline performance is not an artifact of "
-        "mixing eras — it is not a second explanation layer.\n"
+        "Paired refits hold earlier non-grid configurations fixed across random "
+        "and forward temporal holdouts. This is a restricted sensitivity check "
+        "on a retrospectively revenue-filtered cohort, not validation of all "
+        "search winners or operational forecasting.\n"
     )
     if compare.empty:
         lines.append("No comparison table found.\n")
@@ -388,8 +387,8 @@ def main(export_csv: bool = False) -> None:
         "**Story.** Random split is the main protocol (metrics + impurity FI). "
         "SHAP here is computed on that same random protocol so it can sit next "
         "to the importance charts. Temporal split is only a sensitivity check: "
-        "freeze the winning hyperparameters, evaluate on a forward holdout, and "
-        "confirm the headline does not collapse.\n",
+        "hold earlier non-grid configurations fixed and compare paired random and "
+        "forward temporal holdouts on the retrospectively filtered cohort.\n",
     ]
     plot_shap_random(lines, load_shap_random())
     plot_temporal_sensitivity(lines, load_compare_table())
@@ -398,7 +397,7 @@ def main(export_csv: bool = False) -> None:
             "## Notes for thesis\n",
             "- Keep random-split tables as the primary results.",
             "- Use SHAP (random) as complementary attribution beside impurity FI.",
-            "- Use temporal metric deltas as a short robustness paragraph — not a second full results chapter.",
+            "- Describe temporal deltas as a restricted sensitivity check, with retrospective filtering disclosed.",
             "- Do not mix temporal SHAP into the explanation narrative.",
         ]
     )

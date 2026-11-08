@@ -33,6 +33,7 @@ aiohttp
 
 # Utilities
 tqdm
+tabulate
 joblib
 python-dateutil
 openpyxl

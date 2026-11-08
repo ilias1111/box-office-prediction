@@ -11,6 +11,8 @@ code/charts/
 /metadata/*
 /shap/*
 /data/ml_ready_data/*
+/data/ml_ready_data/
+/.venv/
 /data/processed_data/*
 /data/retrieved_data/tmdb/collection_export.csv
 /data/retrieved_data/tmdb/keyword_export.csv

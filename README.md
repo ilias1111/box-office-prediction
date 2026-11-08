@@ -88,9 +88,9 @@ Retrieved TMDb and Wikipedia files, plus the manual World Bank, OECD, Wikidata, 
    .venv/bin/python code/4_machine_learning/ml_logic.py
    ```
 
-7. **Replay a historical winner**
+7. **Replay a saved configuration**
    ```sh
-   # Temporal sensitivity: frozen winners, metrics only
+   # Temporal sensitivity: fixed earlier non-grid configurations, metrics only
    .venv/bin/python code/4_machine_learning/replay_from_metadata.py \
      --run-id 20260207_190503 \
      --split-strategy temporal
@@ -154,7 +154,7 @@ referenced by its chapters, run this from the experiment repository:
 .venv/bin/python code/_export_thesis_tables.py --charts
 ```
 
-This writes the 23 LaTeX result tables and replaces all 44 data-derived figures
+This writes the 23 LaTeX result tables and replaces all 51 data-derived figures
 currently referenced by the thesis: retrieval, preprocessing, feature-engineering,
 model-comparison, confusion-matrix and additional EDA charts. It reuses the
 existing datasets, chart definitions and selected historical experiment results
@@ -181,6 +181,17 @@ impurity FI, plus **temporal metric sensitivity** charts from
 ```sh
 .venv/bin/python code/_eda_6_shap_and_temporal.py
 ```
+
+The supplementary figures use nine earlier `non_grid` configurations, refitted
+under paired random and chronological holdouts. They are representative models,
+not the search winners from the main tables. Their source configurations, fitted
+parameters, data hashes, split boundaries, package versions, and complete aggregate
+SHAP summaries are pinned in `docs/thesis_results/supplementary_results.json`.
+This tracked input lets SHAP figures regenerate without the ignored `shap/` run
+folder. The two XGBoost summaries use 400 held-out films each (seed 42); their
+sample movie IDs are recorded. Binary SHAP is in raw log-odds and regression SHAP
+in log10 adjusted-revenue units. Temporal results remain conditional on the
+retrospective revenue-based cohort filter. The historical main tables are unchanged.
 
 After exporting results, run `./scripts/build-thesis.sh` in the thesis repository
 to refresh the PDF. Building the PDF does not run analysis automatically.

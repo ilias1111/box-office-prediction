@@ -1,0 +1,4816 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-08T18:10:08.400383+00:00",
+  "run_id": "20261108_200835",
+  "protocol": "Paired refits of earlier non_grid configurations; no hyperparameter search. Full/complex/outliers-removed only. Retrospective revenue-based cohort filtering precedes splitting.",
+  "parameter_notes": "Non-finite parameter values are omitted; estimator defaults apply (XGBoost missing=NaN).",
+  "random_state": 42,
+  "test_fraction": 0.2,
+  "temporal_boundary": "Latest approximately 20 percent of rows; common year-month moved wholly into test.",
+  "packages": {
+    "numpy": "2.3.5",
+    "pandas": "3.0.0",
+    "scikit-learn": "1.8.0",
+    "xgboost": "3.1.3",
+    "lightgbm": "4.6.0",
+    "shap": "0.50.0"
+  },
+  "datasets": {
+    "full__binary_classification__no_outliers__complex": {
+      "path": "data/ml_ready_data/full__binary_classification__no_outliers__complex.csv",
+      "sha256": "27666e7765ac8ce98e1882147ced9142f8ad8e0cad542165aac6b59d52aa187d"
+    },
+    "full__regression__no_outliers__complex": {
+      "path": "data/ml_ready_data/full__regression__no_outliers__complex.csv",
+      "sha256": "50e40db3d48fb280791c794f75f7aedd4ee3d3463a24f22a50de1d4bc6efea5b"
+    }
+  },
+  "experiments": [
+    {
+      "stem": "full__binary_classification__no_outliers__complex",
+      "task": "binary_classification",
+      "model": "decision_tree_classifier",
+      "source_file": "metadata/full__binary_classification__no_outliers__complex__decision_tree_classifier__20260207_190503.json",
+      "source_sha256": "13e67cf052773af0e48c2fc3e2262ddc592911365b2e3753fa07ebe79b28c82f",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "decision_tree_classifier",
+        "problem_type": "binary_classification",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "ccp_alpha": 0.0,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "criterion": "gini",
+          "max_depth": 4,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "random_state": 42,
+          "splitter": "best"
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__decision_tree_classifier__random__20261108_200835_random.json",
+        "metadata_sha256": "df10b7034b1120a7609f51238b455a79a180298c58cce076a2f84dffa4af6f63",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1971,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "ROC AUC Score": 0.6895126658505765,
+          "Accuracy": 0.6269901440485216,
+          "Precision": 0.496274217585693,
+          "Recall": 0.6837782340862423,
+          "F1 Score": 0.5751295336787565
+        },
+        "model_parameters": {
+          "ccp_alpha": 0.0,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "criterion": "gini",
+          "max_depth": 4,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "random_state": 42,
+          "splitter": "best"
+        },
+        "scaler": "StandardScaler"
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__decision_tree_classifier__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "8e4fac77ce8497637f17303005fb791df4380bdb88ef48027da899173a0708eb",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "ROC AUC Score": 0.6546006905519931,
+          "Accuracy": 0.6241660489251297,
+          "Precision": 0.5547226386806596,
+          "Recall": 0.6379310344827587,
+          "F1 Score": 0.5934242181234964
+        },
+        "model_parameters": {
+          "ccp_alpha": 0.0,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "criterion": "gini",
+          "max_depth": 4,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "random_state": 42,
+          "splitter": "best"
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__binary_classification__no_outliers__complex",
+      "task": "binary_classification",
+      "model": "lightgbm_classifier",
+      "source_file": "metadata/full__binary_classification__no_outliers__complex__lightgbm_classifier__20260207_190503.json",
+      "source_sha256": "112cec4c541c0527a86586f28b8f4dbd203fdc3ee6d97a2f1dbeb8c8bc3a5834",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "lightgbm_classifier",
+        "problem_type": "binary_classification",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "boosting_type": "gbdt",
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "colsample_bytree": 0.9181815987569262,
+          "importance_type": "split",
+          "learning_rate": 0.01667661511217403,
+          "max_depth": -1,
+          "min_child_samples": 66,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.0,
+          "n_estimators": 495,
+          "n_jobs": -1,
+          "num_leaves": 31,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 0.03586816498627549,
+          "reg_lambda": 0.01217295809836997,
+          "subsample": 0.9486212527455787,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 1,
+          "verbosity": -1
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__lightgbm_classifier__random__20261108_200835_random.json",
+        "metadata_sha256": "c6db4056f6a7076f9a03a1a73e1457332b563754bee53f8b8f7b1142caff2bd1",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1971,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "ROC AUC Score": 0.751164902858948,
+          "Accuracy": 0.690674753601213,
+          "Precision": 0.579476861167002,
+          "Recall": 0.5913757700205339,
+          "F1 Score": 0.5853658536585366
+        },
+        "model_parameters": {
+          "boosting_type": "gbdt",
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "colsample_bytree": 0.9181815987569262,
+          "importance_type": "split",
+          "learning_rate": 0.01667661511217403,
+          "max_depth": -1,
+          "min_child_samples": 66,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.0,
+          "n_estimators": 495,
+          "n_jobs": -1,
+          "num_leaves": 31,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 0.03586816498627549,
+          "reg_lambda": 0.01217295809836997,
+          "subsample": 0.9486212527455787,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 1,
+          "verbosity": -1
+        },
+        "scaler": "StandardScaler"
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__lightgbm_classifier__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "f2d29fd84409f9d6d3e59810fbe8fdb4c4354b78c427d1289856d5fd71278f26",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "ROC AUC Score": 0.7294941930855119,
+          "Accuracy": 0.6730911786508524,
+          "Precision": 0.6104928457869634,
+          "Recall": 0.6620689655172414,
+          "F1 Score": 0.6352357320099256
+        },
+        "model_parameters": {
+          "boosting_type": "gbdt",
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "colsample_bytree": 0.9181815987569262,
+          "importance_type": "split",
+          "learning_rate": 0.01667661511217403,
+          "max_depth": -1,
+          "min_child_samples": 66,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.0,
+          "n_estimators": 495,
+          "n_jobs": -1,
+          "num_leaves": 31,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 0.03586816498627549,
+          "reg_lambda": 0.01217295809836997,
+          "subsample": 0.9486212527455787,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 1,
+          "verbosity": -1
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__binary_classification__no_outliers__complex",
+      "task": "binary_classification",
+      "model": "logistic_regression",
+      "source_file": "metadata/full__binary_classification__no_outliers__complex__logistic_regression__20260207_190503.json",
+      "source_sha256": "d2f2092c1f03a4db947b092f830a843ea40190018864930e862e88cf75b392ae",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "logistic_regression",
+        "problem_type": "binary_classification",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "C": 1.2073834860996047,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "dual": false,
+          "fit_intercept": true,
+          "intercept_scaling": 1,
+          "l1_ratio": 0.0,
+          "max_iter": 1000,
+          "n_jobs": -1,
+          "penalty": "l1",
+          "random_state": 42,
+          "solver": "saga",
+          "tol": 0.0001,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__logistic_regression__random__20261108_200835_random.json",
+        "metadata_sha256": "0281ffea57534420686ec0cec40f7881a90f3b59330d220970a797d1037fa712",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1971,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "ROC AUC Score": 0.754548550781867,
+          "Accuracy": 0.6982562547384382,
+          "Precision": 0.5825602968460112,
+          "Recall": 0.6447638603696099,
+          "F1 Score": 0.6120857699805068
+        },
+        "model_parameters": {
+          "C": 1.2073834860996047,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "dual": false,
+          "fit_intercept": true,
+          "intercept_scaling": 1,
+          "l1_ratio": 0.0,
+          "max_iter": 1000,
+          "n_jobs": -1,
+          "penalty": "l1",
+          "random_state": 42,
+          "solver": "saga",
+          "tol": 0.0001,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler"
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__logistic_regression__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "9845ab78eca537058b4e40874c16f99edf2e1d87ef0e5e7d4a14459281558f08",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "ROC AUC Score": 0.7301555984036591,
+          "Accuracy": 0.6530763528539659,
+          "Precision": 0.5742705570291777,
+          "Recall": 0.746551724137931,
+          "F1 Score": 0.6491754122938531
+        },
+        "model_parameters": {
+          "C": 1.2073834860996047,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "dual": false,
+          "fit_intercept": true,
+          "intercept_scaling": 1,
+          "l1_ratio": 0.0,
+          "max_iter": 1000,
+          "n_jobs": -1,
+          "penalty": "l1",
+          "random_state": 42,
+          "solver": "saga",
+          "tol": 0.0001,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__binary_classification__no_outliers__complex",
+      "task": "binary_classification",
+      "model": "random_forest_classifier",
+      "source_file": "metadata/full__binary_classification__no_outliers__complex__random_forest_classifier__20260207_190503.json",
+      "source_sha256": "831c4fc267ece916ea27d257de8ddc742b0e057d25f625763ff9f702c1dd7e5f",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "random_forest_classifier",
+        "problem_type": "binary_classification",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "bootstrap": true,
+          "ccp_alpha": 0.0,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "criterion": "gini",
+          "max_depth": 20,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "max_samples": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 3,
+          "min_samples_split": 34,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "n_estimators": 578,
+          "n_jobs": -1,
+          "oob_score": false,
+          "random_state": 42,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__random_forest_classifier__random__20261108_200835_random.json",
+        "metadata_sha256": "e1b548d9e7f0b31d5df2550cdb422c5e52e95ebb0ea702482aefec6ba935bf09",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1971,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "ROC AUC Score": 0.733464302637814,
+          "Accuracy": 0.6876421531463229,
+          "Precision": 0.5809935205183585,
+          "Recall": 0.5523613963039015,
+          "F1 Score": 0.5663157894736842
+        },
+        "model_parameters": {
+          "bootstrap": true,
+          "ccp_alpha": 0.0,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "criterion": "gini",
+          "max_depth": 20,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "max_samples": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 3,
+          "min_samples_split": 34,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "n_estimators": 578,
+          "n_jobs": -1,
+          "oob_score": false,
+          "random_state": 42,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler"
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__random_forest_classifier__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "c4c528ad6df07a05bf129f700f17321fb16d12e70651975cad4c1a9ae77c9dba",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "ROC AUC Score": 0.7004663468005918,
+          "Accuracy": 0.6575240919199407,
+          "Precision": 0.5980066445182725,
+          "Recall": 0.6206896551724138,
+          "F1 Score": 0.6091370558375635
+        },
+        "model_parameters": {
+          "bootstrap": true,
+          "ccp_alpha": 0.0,
+          "class_weight": {
+            "0": 0.7926682692307693,
+            "1": 1.3542094455852156
+          },
+          "criterion": "gini",
+          "max_depth": 20,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "max_samples": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 3,
+          "min_samples_split": 34,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "n_estimators": 578,
+          "n_jobs": -1,
+          "oob_score": false,
+          "random_state": 42,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__binary_classification__no_outliers__complex",
+      "task": "binary_classification",
+      "model": "xgboost_classifier",
+      "source_file": "metadata/full__binary_classification__no_outliers__complex__xgboost_classifier__20260207_190503.json",
+      "source_sha256": "5c90b184ac4258a3b45e67df856c6e34ea908bc111021c73cbaa9a21580ab565",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "xgboost_classifier",
+        "problem_type": "binary_classification",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "objective": "binary:logistic",
+          "base_score": null,
+          "booster": null,
+          "callbacks": null,
+          "colsample_bylevel": null,
+          "colsample_bynode": null,
+          "colsample_bytree": 0.9313811040057837,
+          "device": null,
+          "early_stopping_rounds": null,
+          "enable_categorical": false,
+          "eval_metric": null,
+          "feature_types": null,
+          "feature_weights": null,
+          "gamma": null,
+          "grow_policy": null,
+          "importance_type": null,
+          "interaction_constraints": null,
+          "learning_rate": 0.006570432809105998,
+          "max_bin": null,
+          "max_cat_threshold": null,
+          "max_cat_to_onehot": null,
+          "max_delta_step": null,
+          "max_depth": 8,
+          "max_leaves": null,
+          "min_child_weight": 3.5159342425645614,
+          "monotone_constraints": null,
+          "multi_strategy": null,
+          "n_estimators": 1251,
+          "n_jobs": -1,
+          "num_parallel_tree": null,
+          "random_state": 42,
+          "reg_alpha": 2.8340904295147746,
+          "reg_lambda": 0.3113095956122124,
+          "sampling_method": null,
+          "scale_pos_weight": 1.6946830712325633,
+          "subsample": 0.7190675050858071,
+          "tree_method": "hist",
+          "validate_parameters": null,
+          "verbosity": 0
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__xgboost_classifier__random__20261108_200835_random.json",
+        "metadata_sha256": "d187c64f79aba345c7543883756db63876eebad4bb532861ae32331360b37e25",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1971,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "ROC AUC Score": 0.7534379442426156,
+          "Accuracy": 0.7050796057619408,
+          "Precision": 0.6033755274261603,
+          "Recall": 0.5872689938398358,
+          "F1 Score": 0.595213319458897
+        },
+        "model_parameters": {
+          "objective": "binary:logistic",
+          "base_score": null,
+          "booster": null,
+          "callbacks": null,
+          "colsample_bylevel": null,
+          "colsample_bynode": null,
+          "colsample_bytree": 0.9313811040057837,
+          "device": null,
+          "early_stopping_rounds": null,
+          "enable_categorical": false,
+          "eval_metric": null,
+          "feature_types": null,
+          "feature_weights": null,
+          "gamma": null,
+          "grow_policy": null,
+          "importance_type": null,
+          "interaction_constraints": null,
+          "learning_rate": 0.006570432809105998,
+          "max_bin": null,
+          "max_cat_threshold": null,
+          "max_cat_to_onehot": null,
+          "max_delta_step": null,
+          "max_depth": 8,
+          "max_leaves": null,
+          "min_child_weight": 3.5159342425645614,
+          "monotone_constraints": null,
+          "multi_strategy": null,
+          "n_estimators": 1251,
+          "n_jobs": -1,
+          "num_parallel_tree": null,
+          "random_state": 42,
+          "reg_alpha": 2.8340904295147746,
+          "reg_lambda": 0.3113095956122124,
+          "sampling_method": null,
+          "scale_pos_weight": 1.6946830712325633,
+          "subsample": 0.7190675050858071,
+          "tree_method": "hist",
+          "validate_parameters": null,
+          "verbosity": 0
+        },
+        "scaler": "StandardScaler",
+        "shap": {
+          "n_rows": 400,
+          "random_state": 42,
+          "output_units": "raw binary log-odds",
+          "summary_sha256": "a48dba8e4243c41cf0d1f4d5d6b8e16855ee7e60aed679cbd05918f189f88a64",
+          "mean_abs_shap": [
+            {
+              "feature": "numerical__budget_usd_adj",
+              "mean_abs_shap": 0.3955597
+            },
+            {
+              "feature": "binary__is_released__GB",
+              "mean_abs_shap": 0.34660423
+            },
+            {
+              "feature": "binary__is_released__JP",
+              "mean_abs_shap": 0.26035133
+            },
+            {
+              "feature": "binary__is_released__FR",
+              "mean_abs_shap": 0.240767
+            },
+            {
+              "feature": "numerical__keyword_kpis__no_movies",
+              "mean_abs_shap": 0.10936069
+            },
+            {
+              "feature": "numerical__actor_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.10776277
+            },
+            {
+              "feature": "numerical__actor_kpis__no_movies",
+              "mean_abs_shap": 0.096613266
+            },
+            {
+              "feature": "binary__is_genre__Comedy",
+              "mean_abs_shap": 0.09198881
+            },
+            {
+              "feature": "numerical__runtime",
+              "mean_abs_shap": 0.08576746
+            },
+            {
+              "feature": "numerical__production_company_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.08266251
+            },
+            {
+              "feature": "numerical__days_to_labour_day",
+              "mean_abs_shap": 0.073462546
+            },
+            {
+              "feature": "numerical__keyword_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.0633754
+            },
+            {
+              "feature": "numerical__genre_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.06298834
+            },
+            {
+              "feature": "binary__is_genre__Drama",
+              "mean_abs_shap": 0.062354825
+            },
+            {
+              "feature": "numerical__year",
+              "mean_abs_shap": 0.061820384
+            },
+            {
+              "feature": "numerical__keyword_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.060986638
+            },
+            {
+              "feature": "categorical__ageCert_PG13",
+              "mean_abs_shap": 0.056342736
+            },
+            {
+              "feature": "binary__is_prod_country__US",
+              "mean_abs_shap": 0.054983225
+            },
+            {
+              "feature": "numerical__days_to_xmas",
+              "mean_abs_shap": 0.054086953
+            },
+            {
+              "feature": "numerical__gdp_growth_oecd",
+              "mean_abs_shap": 0.05160197
+            },
+            {
+              "feature": "numerical__genre_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.050148636
+            },
+            {
+              "feature": "numerical__director_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.04913941
+            },
+            {
+              "feature": "numerical__genre_kpis__no_movies",
+              "mean_abs_shap": 0.048329353
+            },
+            {
+              "feature": "numerical__actor_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.04777162
+            },
+            {
+              "feature": "numerical__genre_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.047687713
+            },
+            {
+              "feature": "numerical__actor_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.047107596
+            },
+            {
+              "feature": "numerical__production_company_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.046401307
+            },
+            {
+              "feature": "numerical__composite_consumer_confidence_oecd",
+              "mean_abs_shap": 0.046113342
+            },
+            {
+              "feature": "numerical__production_company_kpis__no_movies",
+              "mean_abs_shap": 0.040799312
+            },
+            {
+              "feature": "binary__is_released__CN",
+              "mean_abs_shap": 0.03919074
+            },
+            {
+              "feature": "numerical__composer_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.03540482
+            },
+            {
+              "feature": "numerical__keyword_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.03453149
+            },
+            {
+              "feature": "numerical__production_company_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.033688106
+            },
+            {
+              "feature": "numerical__empl_rate_oecd",
+              "mean_abs_shap": 0.032496132
+            },
+            {
+              "feature": "binary__is_genre__Romance",
+              "mean_abs_shap": 0.032387663
+            },
+            {
+              "feature": "binary__is_genre__History",
+              "mean_abs_shap": 0.032234725
+            },
+            {
+              "feature": "numerical__economic_situation_oecd",
+              "mean_abs_shap": 0.029763378
+            },
+            {
+              "feature": "numerical__director_kpis__no_movies",
+              "mean_abs_shap": 0.028007934
+            },
+            {
+              "feature": "numerical__composer_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.027963033
+            },
+            {
+              "feature": "numerical__producer_kpis__no_movies",
+              "mean_abs_shap": 0.027829172
+            },
+            {
+              "feature": "numerical__month_sin",
+              "mean_abs_shap": 0.025333174
+            },
+            {
+              "feature": "numerical__composer_kpis__no_movies",
+              "mean_abs_shap": 0.025225228
+            },
+            {
+              "feature": "numerical__movies_released_within_15_days",
+              "mean_abs_shap": 0.024695199
+            },
+            {
+              "feature": "numerical__consumer_prices_oecd",
+              "mean_abs_shap": 0.024458062
+            },
+            {
+              "feature": "binary__is_prod_country__FR",
+              "mean_abs_shap": 0.024450285
+            },
+            {
+              "feature": "numerical__producer_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.02357837
+            },
+            {
+              "feature": "categorical__ageCert_R",
+              "mean_abs_shap": 0.021514345
+            },
+            {
+              "feature": "binary__is_genre__Science Fiction",
+              "mean_abs_shap": 0.01974795
+            },
+            {
+              "feature": "numerical__producer_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.019704401
+            },
+            {
+              "feature": "numerical__producer_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.019224795
+            },
+            {
+              "feature": "categorical__production_size_large_productions",
+              "mean_abs_shap": 0.017406547
+            },
+            {
+              "feature": "numerical__composer_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.017132767
+            },
+            {
+              "feature": "numerical__month_cos",
+              "mean_abs_shap": 0.016654747
+            },
+            {
+              "feature": "binary__is_keyword__sequel",
+              "mean_abs_shap": 0.016126601
+            },
+            {
+              "feature": "binary__is_on_holiday_window",
+              "mean_abs_shap": 0.015367632
+            },
+            {
+              "feature": "numerical__collection_kpis__no_movies",
+              "mean_abs_shap": 0.013881582
+            },
+            {
+              "feature": "binary__is_prod_country__GB",
+              "mean_abs_shap": 0.013709268
+            },
+            {
+              "feature": "numerical__director_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.010564845
+            },
+            {
+              "feature": "numerical__director_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.010487136
+            },
+            {
+              "feature": "binary__is_genre__Horror",
+              "mean_abs_shap": 0.009757695
+            },
+            {
+              "feature": "binary__is_prod_company__20th_century_fox",
+              "mean_abs_shap": 0.0090264855
+            },
+            {
+              "feature": "categorical__ageCert_PG",
+              "mean_abs_shap": 0.008879409
+            },
+            {
+              "feature": "numerical__writer_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.008627672
+            },
+            {
+              "feature": "numerical__collection_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.008127616
+            },
+            {
+              "feature": "categorical__production_size_small_productions",
+              "mean_abs_shap": 0.007200184
+            },
+            {
+              "feature": "numerical__collection_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.0070416834
+            },
+            {
+              "feature": "categorical__ageCert_U",
+              "mean_abs_shap": 0.0069846427
+            },
+            {
+              "feature": "categorical__ageCert_infrequent_sklearn",
+              "mean_abs_shap": 0.006902971
+            },
+            {
+              "feature": "numerical__writer_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.006846025
+            },
+            {
+              "feature": "binary__is_genre__Thriller",
+              "mean_abs_shap": 0.006547658
+            },
+            {
+              "feature": "binary__is_prod_country__DE",
+              "mean_abs_shap": 0.006277301
+            },
+            {
+              "feature": "numerical__month",
+              "mean_abs_shap": 0.0060931174
+            },
+            {
+              "feature": "binary__is_keyword__parent_child_relationship",
+              "mean_abs_shap": 0.0059625395
+            },
+            {
+              "feature": "binary__is_keyword__based_on_novel_or_book",
+              "mean_abs_shap": 0.00582367
+            },
+            {
+              "feature": "binary__is_keyword__husband_wife_relationship",
+              "mean_abs_shap": 0.005316955
+            },
+            {
+              "feature": "categorical__original_language_en",
+              "mean_abs_shap": 0.005307404
+            },
+            {
+              "feature": "binary__is_prod_company__universal_pictures",
+              "mean_abs_shap": 0.0052754786
+            },
+            {
+              "feature": "binary__is_genre__Crime",
+              "mean_abs_shap": 0.0052139773
+            },
+            {
+              "feature": "numerical__writer_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.004932768
+            },
+            {
+              "feature": "binary__is_spoken_language__en",
+              "mean_abs_shap": 0.0046784882
+            },
+            {
+              "feature": "binary__is_genre__Action",
+              "mean_abs_shap": 0.004442726
+            },
+            {
+              "feature": "binary__is_genre__Fantasy",
+              "mean_abs_shap": 0.004288542
+            },
+            {
+              "feature": "binary__is_genre__Family",
+              "mean_abs_shap": 0.004281349
+            },
+            {
+              "feature": "binary__is_keyword__slasher",
+              "mean_abs_shap": 0.0033479824
+            },
+            {
+              "feature": "binary__is_spoken_language__es",
+              "mean_abs_shap": 0.0029959902
+            },
+            {
+              "feature": "numerical__collection_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.0029884116
+            },
+            {
+              "feature": "binary__is_prod_company__working_title_films",
+              "mean_abs_shap": 0.0027788552
+            },
+            {
+              "feature": "binary__is_prod_country__IN",
+              "mean_abs_shap": 0.0027250051
+            },
+            {
+              "feature": "binary__is_genre__War",
+              "mean_abs_shap": 0.0026085156
+            },
+            {
+              "feature": "binary__is_genre__Western",
+              "mean_abs_shap": 0.002600517
+            },
+            {
+              "feature": "numerical__quarter",
+              "mean_abs_shap": 0.002448584
+            },
+            {
+              "feature": "binary__is_prod_company__warner_bros_pictures",
+              "mean_abs_shap": 0.0024298588
+            },
+            {
+              "feature": "binary__is_keyword__high_school",
+              "mean_abs_shap": 0.002326723
+            },
+            {
+              "feature": "categorical__production_size_medium_productions",
+              "mean_abs_shap": 0.0023010552
+            },
+            {
+              "feature": "binary__is_prod_company__columbia_pictures",
+              "mean_abs_shap": 0.0018834189
+            },
+            {
+              "feature": "binary__is_prod_country__CA",
+              "mean_abs_shap": 0.0018625435
+            },
+            {
+              "feature": "binary__is_spoken_language__fr",
+              "mean_abs_shap": 0.0017166925
+            },
+            {
+              "feature": "binary__is_spoken_language__de",
+              "mean_abs_shap": 0.0016666662
+            },
+            {
+              "feature": "binary__is_keyword__duringcreditsstinger",
+              "mean_abs_shap": 0.0015551567
+            },
+            {
+              "feature": "binary__is_keyword__neo_noir",
+              "mean_abs_shap": 0.0014461338
+            },
+            {
+              "feature": "binary__is_keyword__loss_of_loved_one",
+              "mean_abs_shap": 0.0013325255
+            },
+            {
+              "feature": "binary__is_prod_company__new_line_cinema",
+              "mean_abs_shap": 0.0013216537
+            },
+            {
+              "feature": "binary__is_spoken_language__ru",
+              "mean_abs_shap": 0.0012756339
+            },
+            {
+              "feature": "numerical__writer_kpis__no_movies",
+              "mean_abs_shap": 0.0011730309
+            },
+            {
+              "feature": "binary__is_prod_company__paramount_pictures",
+              "mean_abs_shap": 0.0010640761
+            },
+            {
+              "feature": "binary__is_keyword__woman_director",
+              "mean_abs_shap": 0.0010378378
+            },
+            {
+              "feature": "binary__is_keyword__family",
+              "mean_abs_shap": 0.0009945336
+            },
+            {
+              "feature": "binary__is_prod_country__RU",
+              "mean_abs_shap": 0.0009244063
+            },
+            {
+              "feature": "binary__is_prod_company__metro_goldwyn_mayer",
+              "mean_abs_shap": 0.00085187686
+            },
+            {
+              "feature": "binary__is_genre__Adventure",
+              "mean_abs_shap": 0.0008005672
+            },
+            {
+              "feature": "binary__is_prod_company__tristar_pictures",
+              "mean_abs_shap": 0.0007143622
+            },
+            {
+              "feature": "categorical__original_language_infrequent_sklearn",
+              "mean_abs_shap": 0.00070155563
+            },
+            {
+              "feature": "binary__is_prod_company__golan_globus_productions",
+              "mean_abs_shap": 0.00068689673
+            },
+            {
+              "feature": "binary__is_keyword__revenge",
+              "mean_abs_shap": 0.00067351706
+            },
+            {
+              "feature": "binary__is_keyword__new_york_city",
+              "mean_abs_shap": 0.00056877313
+            },
+            {
+              "feature": "binary__is_genre__Mystery",
+              "mean_abs_shap": 0.000564414
+            },
+            {
+              "feature": "binary__is_keyword__detective",
+              "mean_abs_shap": 0.000560486
+            },
+            {
+              "feature": "binary__is_prod_company__studiocanal",
+              "mean_abs_shap": 0.0005547174
+            },
+            {
+              "feature": "binary__is_keyword__murder",
+              "mean_abs_shap": 0.0005520776
+            },
+            {
+              "feature": "binary__is_keyword__based_on_true_story",
+              "mean_abs_shap": 0.00054817734
+            },
+            {
+              "feature": "binary__is_keyword__biography",
+              "mean_abs_shap": 0.0005333749
+            },
+            {
+              "feature": "binary__is_keyword__sports",
+              "mean_abs_shap": 0.0005257134
+            },
+            {
+              "feature": "binary__is_keyword__friendship",
+              "mean_abs_shap": 0.00050473324
+            },
+            {
+              "feature": "binary__is_prod_company__touchstone_pictures",
+              "mean_abs_shap": 0.0005005526
+            },
+            {
+              "feature": "binary__is_keyword__martial_arts",
+              "mean_abs_shap": 0.00047543884
+            },
+            {
+              "feature": "binary__is_genre__Music",
+              "mean_abs_shap": 0.0004541909
+            },
+            {
+              "feature": "binary__is_prod_country__CN",
+              "mean_abs_shap": 0.00045031073
+            },
+            {
+              "feature": "binary__is_spoken_language__hi",
+              "mean_abs_shap": 0.00041535828
+            },
+            {
+              "feature": "binary__is_prod_country__IT",
+              "mean_abs_shap": 0.00035938967
+            },
+            {
+              "feature": "binary__is_keyword__remake",
+              "mean_abs_shap": 0.00035833145
+            },
+            {
+              "feature": "binary__is_spoken_language__it",
+              "mean_abs_shap": 0.00033797923
+            },
+            {
+              "feature": "binary__is_prod_country__AU",
+              "mean_abs_shap": 0.0003303214
+            },
+            {
+              "feature": "binary__is_keyword__gangster",
+              "mean_abs_shap": 0.00032571127
+            },
+            {
+              "feature": "binary__is_prod_company__lionsgate",
+              "mean_abs_shap": 0.00031552635
+            },
+            {
+              "feature": "binary__is_keyword__police",
+              "mean_abs_shap": 0.00030743767
+            },
+            {
+              "feature": "binary__is_keyword__christmas",
+              "mean_abs_shap": 0.00027700272
+            },
+            {
+              "feature": "binary__is_spoken_language__zh",
+              "mean_abs_shap": 0.0002609769
+            },
+            {
+              "feature": "binary__is_keyword__love",
+              "mean_abs_shap": 0.0002044416
+            },
+            {
+              "feature": "binary__is_keyword__small_town",
+              "mean_abs_shap": 0.00020001836
+            },
+            {
+              "feature": "binary__is_prod_company__united_artists",
+              "mean_abs_shap": 0.00019645058
+            },
+            {
+              "feature": "binary__is_prod_company__tf1_films_production",
+              "mean_abs_shap": 0.00017477537
+            },
+            {
+              "feature": "binary__is_keyword__los_angeles_california",
+              "mean_abs_shap": 0.00016316952
+            },
+            {
+              "feature": "binary__is_prod_company__village_roadshow_pictures",
+              "mean_abs_shap": 0.0001534122
+            },
+            {
+              "feature": "binary__is_prod_company__canal_",
+              "mean_abs_shap": 0.00014689894
+            },
+            {
+              "feature": "binary__is_prod_company__orion_pictures",
+              "mean_abs_shap": 0.00014284566
+            },
+            {
+              "feature": "binary__is_keyword__kidnapping",
+              "mean_abs_shap": 0.00013653949
+            },
+            {
+              "feature": "binary__is_prod_country__KR",
+              "mean_abs_shap": 0.00013162034
+            },
+            {
+              "feature": "binary__is_keyword__1970s",
+              "mean_abs_shap": 0.0001181883
+            },
+            {
+              "feature": "binary__is_keyword__paris_france",
+              "mean_abs_shap": 9.587757e-05
+            },
+            {
+              "feature": "binary__is_prod_company__film4_productions",
+              "mean_abs_shap": 9.076331e-05
+            },
+            {
+              "feature": "binary__is_prod_country__JP",
+              "mean_abs_shap": 8.822691e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__ko",
+              "mean_abs_shap": 7.703064e-05
+            },
+            {
+              "feature": "binary__is_keyword__serial_killer",
+              "mean_abs_shap": 7.3908785e-05
+            },
+            {
+              "feature": "binary__is_prod_country__HK",
+              "mean_abs_shap": 7.027054e-05
+            },
+            {
+              "feature": "binary__is_keyword__drugs",
+              "mean_abs_shap": 5.8445086e-05
+            },
+            {
+              "feature": "binary__is_prod_company__miramax",
+              "mean_abs_shap": 5.785062e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__pt",
+              "mean_abs_shap": 5.223883e-05
+            },
+            {
+              "feature": "binary__is_prod_company__focus_features",
+              "mean_abs_shap": 4.995929e-05
+            },
+            {
+              "feature": "binary__is_prod_company__bbc_film",
+              "mean_abs_shap": 4.5441942e-05
+            },
+            {
+              "feature": "binary__is_keyword__infidelity",
+              "mean_abs_shap": 4.4846605e-05
+            },
+            {
+              "feature": "binary__is_keyword__suicide",
+              "mean_abs_shap": 4.0811065e-05
+            },
+            {
+              "feature": "binary__is_prod_company__france_2_cinema",
+              "mean_abs_shap": 3.6569174e-05
+            },
+            {
+              "feature": "binary__is_keyword__sibling_relationship",
+              "mean_abs_shap": 3.595079e-05
+            },
+            {
+              "feature": "binary__is_prod_company__polygram_filmed_entertainment",
+              "mean_abs_shap": 3.2046522e-05
+            },
+            {
+              "feature": "binary__is_keyword__gay_theme",
+              "mean_abs_shap": 3.1459705e-05
+            },
+            {
+              "feature": "binary__is_prod_company__summit_entertainment",
+              "mean_abs_shap": 3.0359211e-05
+            },
+            {
+              "feature": "binary__is_keyword__lgbt",
+              "mean_abs_shap": 2.9205094e-05
+            },
+            {
+              "feature": "binary__is_prod_company__relativity_media",
+              "mean_abs_shap": 2.6194153e-05
+            },
+            {
+              "feature": "binary__is_keyword__london_england",
+              "mean_abs_shap": 2.4900599e-05
+            },
+            {
+              "feature": "binary__is_genre__Documentary",
+              "mean_abs_shap": 2.4103814e-05
+            },
+            {
+              "feature": "binary__is_keyword__musical",
+              "mean_abs_shap": 2.301455e-05
+            },
+            {
+              "feature": "binary__is_keyword__prison",
+              "mean_abs_shap": 2.1844444e-05
+            },
+            {
+              "feature": "binary__is_prod_company__regency_enterprises",
+              "mean_abs_shap": 2.151609e-05
+            },
+            {
+              "feature": "binary__is_keyword__coming_of_age",
+              "mean_abs_shap": 2.0525826e-05
+            },
+            {
+              "feature": "binary__is_prod_company__la_sept_cinema",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__CH",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__AR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__AT",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__orange_sky_golden_harvest",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__BE",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__BR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__dimension_films",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__CL",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__tr",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__shochiku",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__CO",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__CZ",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__constantin_film",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__DK",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__EG",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__svenska_filminstitutet",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__tl",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__FI",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__th",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__eurimages",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__he",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__the_cannon_group",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__hu",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__id",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__the_asylum",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__ja",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__telefilm_canada",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__nl",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__no",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__pl",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__svt",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__ro",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__dreamworks_pictures",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__sv",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__ES",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__cj_entertainment",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__cnc",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__fa",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__SU",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__TR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__TW",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__canal_espana",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__YU",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__rai_cinema",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__br",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__rai",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__bbc",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__atresmedia",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__arte_france_cinema",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__arte",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__ard",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_genre__TV Movie",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__pathe",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__SE",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__ceska_televize",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__RO",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__cine_",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__GR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__shaw_brothers",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__HU",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__ID",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__IE",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__IL",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__sf_studios",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__PT",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__rtbf",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__MX",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__NL",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__NO",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__PH",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__PL",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__fi",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__europacorp",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__erotic_movie",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__politics",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__prostitute",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__rape",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__voltage_pictures",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__fox_searchlight_pictures",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__romance",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_genre__Animation",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__mosfilm",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__tve",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__tv3",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__nordisk_film_denmark",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__tornasol_films",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__toho",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__terrorism",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__vampire",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__films_a2",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__wdr",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__wild_bunch",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__toei_company",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__millennium_media",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__jadran_film",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__italian_international_film",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__lenfilm",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__japan",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__death",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__dark_comedy",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__m6_films",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__gorky_film_studios",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__medusa_film",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__mic",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__globo_filmes",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__zentropa_entertainments",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__gaumont",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__france_3_cinema",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__zdf",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__world_war_ii",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__zombie",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__a_nightmare_on_elm_street_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__bloodfist_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__star_wars_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__texas_chainsaw_massacre_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__the_amityville_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__the_fast_and_the_furious_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__the_pink_panther_original_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__the_terminator_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__tremors_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__x_men_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__yolki_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__ar",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__cn",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__cs",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__da",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__film_i_vaest",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__el",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__star_trek_the_original_series_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__saw_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__rocky_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__harry_potter_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__bring_it_on_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__child_s_play_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__ernest_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__friday_the_13th_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__gojira_zhaohe_shiriizu",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__halloween_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__hellraiser_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__resident_evil_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__orf",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__khiladi",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__kvartet_i_kollektsiya_",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__leprechaun_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__madea_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__mission_impossible_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__james_bond_collection",
+              "mean_abs_shap": 0.0
+            }
+          ],
+          "sample_movie_ids": [
+            268060,
+            2020,
+            47956,
+            5333,
+            11775,
+            12531,
+            11221,
+            210479,
+            9972,
+            10185,
+            47870,
+            12586,
+            24124,
+            16351,
+            9827,
+            19619,
+            268896,
+            77879,
+            45096,
+            14578,
+            65086,
+            6957,
+            14577,
+            18558,
+            22617,
+            5001,
+            28932,
+            339405,
+            477510,
+            38615,
+            38560,
+            20653,
+            10426,
+            18975,
+            11683,
+            33714,
+            9799,
+            33974,
+            9476,
+            58985,
+            38665,
+            8053,
+            10676,
+            29064,
+            522212,
+            7984,
+            241771,
+            44264,
+            10209,
+            19666,
+            203,
+            1586,
+            210577,
+            10145,
+            171759,
+            8435,
+            17126,
+            9027,
+            10954,
+            10403,
+            37410,
+            11415,
+            52855,
+            32834,
+            262500,
+            310,
+            2043,
+            41110,
+            27214,
+            96696,
+            30128,
+            14742,
+            353569,
+            321697,
+            9689,
+            2636,
+            13732,
+            2133,
+            334531,
+            21711,
+            71881,
+            3021,
+            13199,
+            16871,
+            1587,
+            11316,
+            31701,
+            10528,
+            16441,
+            249164,
+            31357,
+            491283,
+            22309,
+            39780,
+            13788,
+            3587,
+            26810,
+            262504,
+            868,
+            24936,
+            62213,
+            11236,
+            27786,
+            1407,
+            66195,
+            10140,
+            23470,
+            9281,
+            9942,
+            3131,
+            4916,
+            116613,
+            2137,
+            19698,
+            11470,
+            9481,
+            16784,
+            21989,
+            159014,
+            577328,
+            454293,
+            18476,
+            11416,
+            201,
+            1873,
+            1919,
+            17139,
+            9442,
+            141,
+            157544,
+            80035,
+            3525,
+            41109,
+            23451,
+            1381,
+            42212,
+            310133,
+            24049,
+            1911,
+            26515,
+            32823,
+            228194,
+            7551,
+            14047,
+            333484,
+            378,
+            2252,
+            9428,
+            13536,
+            9043,
+            13245,
+            15797,
+            26725,
+            19840,
+            24276,
+            10641,
+            8989,
+            7288,
+            12476,
+            59118,
+            11253,
+            393,
+            4141,
+            226486,
+            27380,
+            15122,
+            616,
+            44248,
+            378200,
+            17780,
+            79649,
+            9709,
+            10008,
+            10640,
+            10285,
+            10195,
+            522924,
+            222649,
+            68735,
+            369557,
+            21915,
+            47907,
+            51497,
+            56780,
+            10533,
+            12106,
+            16769,
+            13258,
+            73937,
+            515195,
+            2383,
+            41368,
+            9091,
+            7552,
+            10493,
+            24873,
+            10261,
+            123678,
+            14138,
+            21148,
+            38617,
+            27793,
+            9792,
+            10362,
+            2185,
+            341007,
+            73249,
+            218779,
+            43740,
+            10398,
+            12647,
+            9802,
+            15774,
+            10876,
+            406042,
+            15189,
+            8011,
+            521777,
+            4689,
+            12637,
+            48171,
+            12157,
+            42136,
+            16074,
+            75048,
+            89602,
+            10862,
+            19336,
+            11371,
+            10061,
+            108553,
+            251367,
+            79593,
+            10608,
+            286217,
+            11323,
+            39514,
+            402298,
+            109443,
+            8870,
+            11065,
+            30718,
+            49471,
+            48572,
+            27845,
+            26386,
+            19259,
+            40983,
+            23916,
+            2045,
+            558,
+            33851,
+            9439,
+            11075,
+            295886,
+            13823,
+            25968,
+            26269,
+            31674,
+            16771,
+            12435,
+            166426,
+            50318,
+            307081,
+            51485,
+            284279,
+            303281,
+            16992,
+            12187,
+            44009,
+            14157,
+            16154,
+            8978,
+            102207,
+            14555,
+            10660,
+            29917,
+            14202,
+            37019,
+            23570,
+            49530,
+            493675,
+            32617,
+            329996,
+            84197,
+            324786,
+            33542,
+            9471,
+            36527,
+            13852,
+            396371,
+            449176,
+            2149,
+            11381,
+            37414,
+            11457,
+            256924,
+            36810,
+            6114,
+            664,
+            134597,
+            271969,
+            11850,
+            13342,
+            13141,
+            25269,
+            11283,
+            294,
+            188161,
+            20537,
+            19345,
+            70586,
+            11077,
+            9532,
+            549,
+            33799,
+            492,
+            68718,
+            169813,
+            10136,
+            71853,
+            54407,
+            22160,
+            103370,
+            89300,
+            59961,
+            116635,
+            9703,
+            43931,
+            19065,
+            1538,
+            121856,
+            37003,
+            21246,
+            151368,
+            51321,
+            2039,
+            48216,
+            6022,
+            311,
+            195590,
+            2122,
+            30449,
+            188761,
+            304410,
+            865,
+            20006,
+            12596,
+            29077,
+            15013,
+            29076,
+            11551,
+            1422,
+            22213,
+            4011,
+            137,
+            20009,
+            35696,
+            42160,
+            11852,
+            10712,
+            26618,
+            49730,
+            19176,
+            77670,
+            2539,
+            55149,
+            13166,
+            38778,
+            82744,
+            268860,
+            2268,
+            118289,
+            66,
+            63281,
+            318846,
+            13937,
+            15581,
+            18282,
+            11310,
+            1549,
+            29427,
+            10147,
+            10540,
+            21259,
+            13785,
+            207932,
+            77449,
+            257088,
+            10342,
+            201749,
+            13637,
+            11516,
+            12103,
+            9583,
+            225574,
+            1642,
+            44749,
+            16982,
+            20533
+          ],
+          "explainer": "TreeExplainer, tree_path_dependent, raw model output",
+          "aggregation": "Mean absolute attribution over the sampled held-out rows"
+        }
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__binary_classification__no_outliers__complex__xgboost_classifier__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "dbbd4d0ed6c59317a826bc6534f59f1dd96d6c5a19c789afc9b68b4cd2c84fc0",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "ROC AUC Score": 0.7300748845343259,
+          "Accuracy": 0.6738324684951816,
+          "Precision": 0.6178451178451179,
+          "Recall": 0.6327586206896552,
+          "F1 Score": 0.6252129471890971
+        },
+        "model_parameters": {
+          "objective": "binary:logistic",
+          "base_score": null,
+          "booster": null,
+          "callbacks": null,
+          "colsample_bylevel": null,
+          "colsample_bynode": null,
+          "colsample_bytree": 0.9313811040057837,
+          "device": null,
+          "early_stopping_rounds": null,
+          "enable_categorical": false,
+          "eval_metric": null,
+          "feature_types": null,
+          "feature_weights": null,
+          "gamma": null,
+          "grow_policy": null,
+          "importance_type": null,
+          "interaction_constraints": null,
+          "learning_rate": 0.006570432809105998,
+          "max_bin": null,
+          "max_cat_threshold": null,
+          "max_cat_to_onehot": null,
+          "max_delta_step": null,
+          "max_depth": 8,
+          "max_leaves": null,
+          "min_child_weight": 3.5159342425645614,
+          "monotone_constraints": null,
+          "multi_strategy": null,
+          "n_estimators": 1251,
+          "n_jobs": -1,
+          "num_parallel_tree": null,
+          "random_state": 42,
+          "reg_alpha": 2.8340904295147746,
+          "reg_lambda": 0.3113095956122124,
+          "sampling_method": null,
+          "scale_pos_weight": 1.6946830712325633,
+          "subsample": 0.7190675050858071,
+          "tree_method": "hist",
+          "validate_parameters": null,
+          "verbosity": 0
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__regression__no_outliers__complex",
+      "task": "regression",
+      "model": "decision_tree_regressor",
+      "source_file": "metadata/full__regression__no_outliers__complex__decision_tree_regressor__20260207_190503.json",
+      "source_sha256": "4ce2937c93559f226793253e7ae2dba150e6a299e8d7c0abe2381210cdbbcd5a",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "decision_tree_regressor",
+        "problem_type": "regression",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "ccp_alpha": 0.0,
+          "criterion": "squared_error",
+          "max_depth": 8,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 19,
+          "min_samples_split": 24,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "random_state": 42,
+          "splitter": "best"
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__decision_tree_regressor__random__20261108_200835_random.json",
+        "metadata_sha256": "8c695aa9d1e662f20b619bd467c0f352bd748ebe4ced74bef6fe76544eaeedf0",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1970,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "MSE": 1.038047022255044e+16,
+          "MAPE": 1.1711921921009254,
+          "MAE": 48920730.35440613,
+          "RMSE": 101884592.66518387,
+          "RMSLE": 1.019535102862393,
+          "MSLE": 1.03945182596863,
+          "R2": 0.6305981639794473,
+          "Threshold Probability Accuracy": 0.16376042456406367,
+          "Threshold Probability Accuracy (log10)": 0.30401819560272936,
+          "Threshold MAPE": 1.26825569730945,
+          "Threshold MAPE (25%)": 1.4448952632823786
+        },
+        "model_parameters": {
+          "ccp_alpha": 0.0,
+          "criterion": "squared_error",
+          "max_depth": 8,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 19,
+          "min_samples_split": 24,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "random_state": 42,
+          "splitter": "best"
+        },
+        "scaler": "StandardScaler"
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__decision_tree_regressor__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "6bd8fb4ccd41f1a085dcdd0c8e3a1c33036890dad7811f7b75654d2f5e1ed01f",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "MSE": 2.006299680304798e+16,
+          "MAPE": 1.3338917520579736,
+          "MAE": 60569539.44450841,
+          "RMSE": 141643908.45725763,
+          "RMSLE": 1.063996538155297,
+          "MSLE": 1.1320886332064564,
+          "R2": 0.6329806577294819,
+          "Threshold Probability Accuracy": 0.14455151964418086,
+          "Threshold Probability Accuracy (log10)": 0.28317272053372866,
+          "Threshold MAPE": 1.4379985014502146,
+          "Threshold MAPE (25%)": 1.6013065154369468
+        },
+        "model_parameters": {
+          "ccp_alpha": 0.0,
+          "criterion": "squared_error",
+          "max_depth": 8,
+          "max_features": null,
+          "max_leaf_nodes": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 19,
+          "min_samples_split": 24,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "random_state": 42,
+          "splitter": "best"
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__regression__no_outliers__complex",
+      "task": "regression",
+      "model": "lightgbm_regressor",
+      "source_file": "metadata/full__regression__no_outliers__complex__lightgbm_regressor__20260207_190503.json",
+      "source_sha256": "746db092ddbda3758efa95350eb419573b42127e82930d9c5511473717262dfc",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "lightgbm_regressor",
+        "problem_type": "regression",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "boosting_type": "gbdt",
+          "class_weight": null,
+          "colsample_bytree": 0.7726479814832277,
+          "importance_type": "split",
+          "learning_rate": 0.17448944343157927,
+          "max_depth": -1,
+          "min_child_samples": 74,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.07976488848891061,
+          "n_estimators": 710,
+          "n_jobs": -1,
+          "num_leaves": 163,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 2.1938654178115056,
+          "reg_lambda": 0.019192001101561888,
+          "subsample": 0.7559555531199562,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 1,
+          "verbosity": -1
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__lightgbm_regressor__random__20261108_200835_random.json",
+        "metadata_sha256": "7ff6c9045262c47d8e011cce8ae3d2f84125d592cb3830650c46e7308c78eebb",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1970,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "MSE": 9181656851692204.0,
+          "MAPE": 1.0096651104510874,
+          "MAE": 44882939.77968464,
+          "RMSE": 95820962.48573275,
+          "RMSLE": 0.9298092000548361,
+          "MSLE": 0.8645451485066142,
+          "R2": 0.6732594163838894,
+          "Threshold Probability Accuracy": 0.16906747536012132,
+          "Threshold Probability Accuracy (log10)": 0.3244882486732373,
+          "Threshold MAPE": 1.0926151701869893,
+          "Threshold MAPE (25%)": 1.2394661327534036
+        },
+        "model_parameters": {
+          "boosting_type": "gbdt",
+          "class_weight": null,
+          "colsample_bytree": 0.7726479814832277,
+          "importance_type": "split",
+          "learning_rate": 0.17448944343157927,
+          "max_depth": -1,
+          "min_child_samples": 74,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.07976488848891061,
+          "n_estimators": 710,
+          "n_jobs": -1,
+          "num_leaves": 163,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 2.1938654178115056,
+          "reg_lambda": 0.019192001101561888,
+          "subsample": 0.7559555531199562,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 1,
+          "verbosity": -1
+        },
+        "scaler": "StandardScaler"
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__lightgbm_regressor__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "30e36bae1585a7563eac37ba9411e8ec61b37f947b2f73dd775c22b401fade32",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "MSE": 1.5655391783981764e+16,
+          "MAPE": 1.119649758866865,
+          "MAE": 52816723.81459037,
+          "RMSE": 125121508.07907394,
+          "RMSLE": 0.9693218372327156,
+          "MSLE": 0.9395848241362073,
+          "R2": 0.7136105013648135,
+          "Threshold Probability Accuracy": 0.17346182357301704,
+          "Threshold Probability Accuracy (log10)": 0.323943661971831,
+          "Threshold MAPE": 1.218039067248564,
+          "Threshold MAPE (25%)": 1.3964893447192737
+        },
+        "model_parameters": {
+          "boosting_type": "gbdt",
+          "class_weight": null,
+          "colsample_bytree": 0.7726479814832277,
+          "importance_type": "split",
+          "learning_rate": 0.17448944343157927,
+          "max_depth": -1,
+          "min_child_samples": 74,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.07976488848891061,
+          "n_estimators": 710,
+          "n_jobs": -1,
+          "num_leaves": 163,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 2.1938654178115056,
+          "reg_lambda": 0.019192001101561888,
+          "subsample": 0.7559555531199562,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 1,
+          "verbosity": -1
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__regression__no_outliers__complex",
+      "task": "regression",
+      "model": "random_forest_regressor",
+      "source_file": "metadata/full__regression__no_outliers__complex__random_forest_regressor__20260207_190503.json",
+      "source_sha256": "5ba85a44d2bda30a80ef7f46212d60caa7fd37cf8bb6e411a1c0e3128d339049",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "random_forest_regressor",
+        "problem_type": "regression",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "bootstrap": true,
+          "ccp_alpha": 0.0,
+          "criterion": "squared_error",
+          "max_depth": 22,
+          "max_features": 1.0,
+          "max_leaf_nodes": null,
+          "max_samples": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 1,
+          "min_samples_split": 10,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "n_estimators": 216,
+          "n_jobs": -1,
+          "oob_score": false,
+          "random_state": 42,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__random_forest_regressor__random__20261108_200835_random.json",
+        "metadata_sha256": "91905775bfb1245a9bf8238a119f85e256d3f1d3850c566f5fc1ac29ba2d4b7e",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1970,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "MSE": 8415414700224065.0,
+          "MAPE": 0.9932997635321724,
+          "MAE": 44679356.5656382,
+          "RMSE": 91735569.43859926,
+          "RMSLE": 0.9291245634987197,
+          "MSLE": 0.8632724544966865,
+          "R2": 0.7005270884180301,
+          "Threshold Probability Accuracy": 0.1561789234268385,
+          "Threshold Probability Accuracy (log10)": 0.3161485974222896,
+          "Threshold MAPE": 1.07212745266176,
+          "Threshold MAPE (25%)": 1.2069029972997716
+        },
+        "model_parameters": {
+          "bootstrap": true,
+          "ccp_alpha": 0.0,
+          "criterion": "squared_error",
+          "max_depth": 22,
+          "max_features": 1.0,
+          "max_leaf_nodes": null,
+          "max_samples": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 1,
+          "min_samples_split": 10,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "n_estimators": 216,
+          "n_jobs": -1,
+          "oob_score": false,
+          "random_state": 42,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler"
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__random_forest_regressor__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "23db6db2eb38b589069f53f3d946ebebbf981d2631cc19d02cefe50a9ec2471f",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "MSE": 1.7946177851413448e+16,
+          "MAPE": 1.089744358031176,
+          "MAE": 56870325.30669517,
+          "RMSE": 133963345.17849816,
+          "RMSLE": 0.9756892257076689,
+          "MSLE": 0.9519694651620304,
+          "R2": 0.6717043592263912,
+          "Threshold Probability Accuracy": 0.15270570793180133,
+          "Threshold Probability Accuracy (log10)": 0.301704966641957,
+          "Threshold MAPE": 1.1685001586420813,
+          "Threshold MAPE (25%)": 1.3153811492289162
+        },
+        "model_parameters": {
+          "bootstrap": true,
+          "ccp_alpha": 0.0,
+          "criterion": "squared_error",
+          "max_depth": 22,
+          "max_features": 1.0,
+          "max_leaf_nodes": null,
+          "max_samples": null,
+          "min_impurity_decrease": 0.0,
+          "min_samples_leaf": 1,
+          "min_samples_split": 10,
+          "min_weight_fraction_leaf": 0.0,
+          "monotonic_cst": null,
+          "n_estimators": 216,
+          "n_jobs": -1,
+          "oob_score": false,
+          "random_state": 42,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "scaler": "StandardScaler"
+      }
+    },
+    {
+      "stem": "full__regression__no_outliers__complex",
+      "task": "regression",
+      "model": "xgboost_regressor",
+      "source_file": "metadata/full__regression__no_outliers__complex__xgboost_regressor__20260207_190503.json",
+      "source_sha256": "c6c9f2f081cbfd451581c0da9e82c14d16269093cb2334cab2ad8ecbfef6c96a",
+      "source_configuration": {
+        "run_id": "20260207_190503",
+        "model_type": "xgboost_regressor",
+        "problem_type": "regression",
+        "dataset_name": "full",
+        "has_outliers_removed": true,
+        "feature_engineering": "complex",
+        "grid_type": "non_grid",
+        "model_parameters": {
+          "objective": "reg:squarederror",
+          "base_score": null,
+          "booster": null,
+          "callbacks": null,
+          "colsample_bylevel": null,
+          "colsample_bynode": null,
+          "colsample_bytree": 0.9273538331393107,
+          "device": null,
+          "early_stopping_rounds": null,
+          "enable_categorical": false,
+          "eval_metric": null,
+          "feature_types": null,
+          "feature_weights": null,
+          "gamma": 0.00011685157523232485,
+          "grow_policy": null,
+          "importance_type": null,
+          "interaction_constraints": null,
+          "learning_rate": 0.10837805344306185,
+          "max_bin": null,
+          "max_cat_threshold": null,
+          "max_cat_to_onehot": null,
+          "max_delta_step": null,
+          "max_depth": 6,
+          "max_leaves": null,
+          "min_child_weight": 0.6629351861488221,
+          "monotone_constraints": null,
+          "multi_strategy": null,
+          "n_estimators": 293,
+          "n_jobs": -1,
+          "num_parallel_tree": null,
+          "random_state": 42,
+          "reg_alpha": 2.641449645424224,
+          "reg_lambda": 0.6525765108342366,
+          "sampling_method": null,
+          "scale_pos_weight": null,
+          "subsample": 0.8422521487261975,
+          "tree_method": "hist",
+          "validate_parameters": null,
+          "verbosity": 0
+        },
+        "scaler": "StandardScaler",
+        "variance_threshold": 0
+      },
+      "random": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__xgboost_regressor__random__20261108_200835_random.json",
+        "metadata_sha256": "5cda75fcd2288367be0b68fe03c42dde2b2f73d8cb353ebb00b6ea6adbdeee48",
+        "split_info": {
+          "split_strategy": "random",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2019,
+          "test_year_min": 1970,
+          "test_year_max": 2019,
+          "train_rows": 5276,
+          "test_rows": 1319
+        },
+        "metrics": {
+          "MSE": 8833999850507397.0,
+          "MAPE": 0.987666854480027,
+          "MAE": 44020871.38851854,
+          "RMSE": 93989360.30481002,
+          "RMSLE": 0.9125710751601765,
+          "MSLE": 0.8327859672190006,
+          "R2": 0.6856312195671477,
+          "Threshold Probability Accuracy": 0.17589082638362397,
+          "Threshold Probability Accuracy (log10)": 0.34723275208491283,
+          "Threshold MAPE": 1.0760784569903117,
+          "Threshold MAPE (25%)": 1.2290529019500955
+        },
+        "model_parameters": {
+          "objective": "reg:squarederror",
+          "base_score": null,
+          "booster": null,
+          "callbacks": null,
+          "colsample_bylevel": null,
+          "colsample_bynode": null,
+          "colsample_bytree": 0.9273538331393107,
+          "device": null,
+          "early_stopping_rounds": null,
+          "enable_categorical": false,
+          "eval_metric": null,
+          "feature_types": null,
+          "feature_weights": null,
+          "gamma": 0.00011685157523232485,
+          "grow_policy": null,
+          "importance_type": null,
+          "interaction_constraints": null,
+          "learning_rate": 0.10837805344306185,
+          "max_bin": null,
+          "max_cat_threshold": null,
+          "max_cat_to_onehot": null,
+          "max_delta_step": null,
+          "max_depth": 6,
+          "max_leaves": null,
+          "min_child_weight": 0.6629351861488221,
+          "monotone_constraints": null,
+          "multi_strategy": null,
+          "n_estimators": 293,
+          "n_jobs": -1,
+          "num_parallel_tree": null,
+          "random_state": 42,
+          "reg_alpha": 2.641449645424224,
+          "reg_lambda": 0.6525765108342366,
+          "sampling_method": null,
+          "scale_pos_weight": null,
+          "subsample": 0.8422521487261975,
+          "tree_method": "hist",
+          "validate_parameters": null,
+          "verbosity": 0
+        },
+        "scaler": "StandardScaler",
+        "shap": {
+          "n_rows": 400,
+          "random_state": 42,
+          "output_units": "log10 adjusted revenue",
+          "summary_sha256": "c90ef64fd64192b12c3679a51800a1aefb9e7a0606ae3aa3a32295d13a7defd2",
+          "mean_abs_shap": [
+            {
+              "feature": "numerical__budget_usd_adj",
+              "mean_abs_shap": 0.36446035
+            },
+            {
+              "feature": "binary__is_released__GB",
+              "mean_abs_shap": 0.07382188
+            },
+            {
+              "feature": "binary__is_released__FR",
+              "mean_abs_shap": 0.0724789
+            },
+            {
+              "feature": "binary__is_released__JP",
+              "mean_abs_shap": 0.051381283
+            },
+            {
+              "feature": "numerical__runtime",
+              "mean_abs_shap": 0.028573954
+            },
+            {
+              "feature": "numerical__keyword_kpis__no_movies",
+              "mean_abs_shap": 0.02416877
+            },
+            {
+              "feature": "numerical__keyword_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.023163557
+            },
+            {
+              "feature": "binary__is_genre__Comedy",
+              "mean_abs_shap": 0.023107557
+            },
+            {
+              "feature": "numerical__actor_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.022398846
+            },
+            {
+              "feature": "numerical__actor_kpis__no_movies",
+              "mean_abs_shap": 0.020120775
+            },
+            {
+              "feature": "binary__is_prod_country__US",
+              "mean_abs_shap": 0.019559318
+            },
+            {
+              "feature": "numerical__production_company_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.018834263
+            },
+            {
+              "feature": "numerical__genre_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.018235153
+            },
+            {
+              "feature": "numerical__genre_kpis__no_movies",
+              "mean_abs_shap": 0.018012177
+            },
+            {
+              "feature": "numerical__director_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.017605558
+            },
+            {
+              "feature": "numerical__production_company_kpis__no_movies",
+              "mean_abs_shap": 0.017403357
+            },
+            {
+              "feature": "numerical__production_company_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.016925579
+            },
+            {
+              "feature": "numerical__year",
+              "mean_abs_shap": 0.016917277
+            },
+            {
+              "feature": "binary__is_genre__Drama",
+              "mean_abs_shap": 0.015715342
+            },
+            {
+              "feature": "numerical__days_to_labour_day",
+              "mean_abs_shap": 0.015575876
+            },
+            {
+              "feature": "numerical__actor_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.015376675
+            },
+            {
+              "feature": "numerical__actor_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.015355695
+            },
+            {
+              "feature": "numerical__genre_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.013909068
+            },
+            {
+              "feature": "numerical__keyword_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.01370803
+            },
+            {
+              "feature": "numerical__keyword_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.013585819
+            },
+            {
+              "feature": "numerical__genre_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.013532416
+            },
+            {
+              "feature": "numerical__production_company_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.013353383
+            },
+            {
+              "feature": "numerical__economic_situation_oecd",
+              "mean_abs_shap": 0.01285843
+            },
+            {
+              "feature": "numerical__composite_consumer_confidence_oecd",
+              "mean_abs_shap": 0.012642843
+            },
+            {
+              "feature": "numerical__empl_rate_oecd",
+              "mean_abs_shap": 0.011976586
+            },
+            {
+              "feature": "numerical__composer_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.011742431
+            },
+            {
+              "feature": "numerical__days_to_xmas",
+              "mean_abs_shap": 0.01124337
+            },
+            {
+              "feature": "categorical__ageCert_PG13",
+              "mean_abs_shap": 0.011239144
+            },
+            {
+              "feature": "binary__is_prod_country__GB",
+              "mean_abs_shap": 0.010435063
+            },
+            {
+              "feature": "numerical__composer_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.009899919
+            },
+            {
+              "feature": "numerical__director_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.009831797
+            },
+            {
+              "feature": "numerical__producer_kpis__no_movies",
+              "mean_abs_shap": 0.009581263
+            },
+            {
+              "feature": "binary__is_genre__Romance",
+              "mean_abs_shap": 0.0094317105
+            },
+            {
+              "feature": "categorical__original_language_en",
+              "mean_abs_shap": 0.008684856
+            },
+            {
+              "feature": "numerical__month_sin",
+              "mean_abs_shap": 0.008022956
+            },
+            {
+              "feature": "numerical__movies_released_within_15_days",
+              "mean_abs_shap": 0.007969973
+            },
+            {
+              "feature": "categorical__ageCert_U",
+              "mean_abs_shap": 0.007885952
+            },
+            {
+              "feature": "numerical__producer_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.007652002
+            },
+            {
+              "feature": "categorical__ageCert_R",
+              "mean_abs_shap": 0.0075519057
+            },
+            {
+              "feature": "numerical__consumer_prices_oecd",
+              "mean_abs_shap": 0.0071058725
+            },
+            {
+              "feature": "numerical__composer_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.0070619476
+            },
+            {
+              "feature": "numerical__gdp_growth_oecd",
+              "mean_abs_shap": 0.006650308
+            },
+            {
+              "feature": "categorical__ageCert_PG",
+              "mean_abs_shap": 0.006518723
+            },
+            {
+              "feature": "numerical__director_kpis__no_movies",
+              "mean_abs_shap": 0.006379734
+            },
+            {
+              "feature": "binary__is_released__CN",
+              "mean_abs_shap": 0.00604534
+            },
+            {
+              "feature": "numerical__producer_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.0060370015
+            },
+            {
+              "feature": "numerical__composer_kpis__no_movies",
+              "mean_abs_shap": 0.005445562
+            },
+            {
+              "feature": "numerical__producer_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.005198889
+            },
+            {
+              "feature": "numerical__director_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.0049960394
+            },
+            {
+              "feature": "binary__is_on_holiday_window",
+              "mean_abs_shap": 0.00431412
+            },
+            {
+              "feature": "binary__is_genre__History",
+              "mean_abs_shap": 0.0043072416
+            },
+            {
+              "feature": "binary__is_prod_country__DE",
+              "mean_abs_shap": 0.0042651067
+            },
+            {
+              "feature": "binary__is_genre__Science Fiction",
+              "mean_abs_shap": 0.004063764
+            },
+            {
+              "feature": "numerical__collection_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.003983306
+            },
+            {
+              "feature": "binary__is_prod_company__universal_pictures",
+              "mean_abs_shap": 0.0034797126
+            },
+            {
+              "feature": "binary__is_genre__Crime",
+              "mean_abs_shap": 0.003186627
+            },
+            {
+              "feature": "numerical__month_cos",
+              "mean_abs_shap": 0.0030780795
+            },
+            {
+              "feature": "binary__is_keyword__based_on_novel_or_book",
+              "mean_abs_shap": 0.003025153
+            },
+            {
+              "feature": "categorical__ageCert_infrequent_sklearn",
+              "mean_abs_shap": 0.0027977102
+            },
+            {
+              "feature": "binary__is_genre__Horror",
+              "mean_abs_shap": 0.0027669976
+            },
+            {
+              "feature": "binary__is_genre__Thriller",
+              "mean_abs_shap": 0.0027514568
+            },
+            {
+              "feature": "binary__is_spoken_language__ru",
+              "mean_abs_shap": 0.0026044466
+            },
+            {
+              "feature": "binary__is_prod_country__FR",
+              "mean_abs_shap": 0.002508559
+            },
+            {
+              "feature": "binary__is_genre__Action",
+              "mean_abs_shap": 0.0024806024
+            },
+            {
+              "feature": "binary__is_genre__Adventure",
+              "mean_abs_shap": 0.0023216614
+            },
+            {
+              "feature": "binary__is_prod_country__CA",
+              "mean_abs_shap": 0.0021612372
+            },
+            {
+              "feature": "numerical__collection_kpis__no_movies",
+              "mean_abs_shap": 0.0019380026
+            },
+            {
+              "feature": "binary__is_keyword__sequel",
+              "mean_abs_shap": 0.0019091108
+            },
+            {
+              "feature": "numerical__month",
+              "mean_abs_shap": 0.0019055519
+            },
+            {
+              "feature": "binary__is_keyword__parent_child_relationship",
+              "mean_abs_shap": 0.00161169
+            },
+            {
+              "feature": "binary__is_keyword__friendship",
+              "mean_abs_shap": 0.0015302525
+            },
+            {
+              "feature": "binary__is_prod_country__IN",
+              "mean_abs_shap": 0.0013840576
+            },
+            {
+              "feature": "numerical__writer_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.0012918316
+            },
+            {
+              "feature": "binary__is_prod_country__IT",
+              "mean_abs_shap": 0.0011846799
+            },
+            {
+              "feature": "binary__is_genre__Family",
+              "mean_abs_shap": 0.0011135348
+            },
+            {
+              "feature": "binary__is_genre__War",
+              "mean_abs_shap": 0.0010963507
+            },
+            {
+              "feature": "binary__is_prod_company__working_title_films",
+              "mean_abs_shap": 0.0010848462
+            },
+            {
+              "feature": "binary__is_genre__Western",
+              "mean_abs_shap": 0.0010495974
+            },
+            {
+              "feature": "binary__is_keyword__family",
+              "mean_abs_shap": 0.001047481
+            },
+            {
+              "feature": "binary__is_keyword__london_england",
+              "mean_abs_shap": 0.0009645351
+            },
+            {
+              "feature": "binary__is_prod_company__warner_bros_pictures",
+              "mean_abs_shap": 0.00096064835
+            },
+            {
+              "feature": "binary__is_prod_company__20th_century_fox",
+              "mean_abs_shap": 0.0009416804
+            },
+            {
+              "feature": "numerical__quarter",
+              "mean_abs_shap": 0.00088634616
+            },
+            {
+              "feature": "categorical__production_size_small_productions",
+              "mean_abs_shap": 0.00077401876
+            },
+            {
+              "feature": "binary__is_keyword__murder",
+              "mean_abs_shap": 0.00073284213
+            },
+            {
+              "feature": "binary__is_genre__Fantasy",
+              "mean_abs_shap": 0.000681328
+            },
+            {
+              "feature": "numerical__writer_kpis__25th_percentile_revenue_usd",
+              "mean_abs_shap": 0.000665993
+            },
+            {
+              "feature": "categorical__production_size_medium_productions",
+              "mean_abs_shap": 0.0006157419
+            },
+            {
+              "feature": "binary__is_keyword__duringcreditsstinger",
+              "mean_abs_shap": 0.0006134868
+            },
+            {
+              "feature": "binary__is_spoken_language__en",
+              "mean_abs_shap": 0.0005863487
+            },
+            {
+              "feature": "binary__is_keyword__new_york_city",
+              "mean_abs_shap": 0.00056072307
+            },
+            {
+              "feature": "binary__is_prod_company__new_line_cinema",
+              "mean_abs_shap": 0.000534841
+            },
+            {
+              "feature": "binary__is_prod_company__metro_goldwyn_mayer",
+              "mean_abs_shap": 0.00049554446
+            },
+            {
+              "feature": "binary__is_prod_country__AU",
+              "mean_abs_shap": 0.0004887123
+            },
+            {
+              "feature": "binary__is_spoken_language__es",
+              "mean_abs_shap": 0.0003919081
+            },
+            {
+              "feature": "numerical__collection_kpis__avg_revenue_usd",
+              "mean_abs_shap": 0.0003762285
+            },
+            {
+              "feature": "binary__is_genre__Mystery",
+              "mean_abs_shap": 0.00034360864
+            },
+            {
+              "feature": "binary__is_prod_company__lionsgate",
+              "mean_abs_shap": 0.00033479545
+            },
+            {
+              "feature": "binary__is_spoken_language__fr",
+              "mean_abs_shap": 0.00033461896
+            },
+            {
+              "feature": "binary__is_keyword__detective",
+              "mean_abs_shap": 0.0003240541
+            },
+            {
+              "feature": "numerical__writer_kpis__no_movies",
+              "mean_abs_shap": 0.00030463946
+            },
+            {
+              "feature": "binary__is_prod_country__CH",
+              "mean_abs_shap": 0.00029746655
+            },
+            {
+              "feature": "binary__is_keyword__los_angeles_california",
+              "mean_abs_shap": 0.0002676575
+            },
+            {
+              "feature": "binary__is_prod_country__RU",
+              "mean_abs_shap": 0.0002665971
+            },
+            {
+              "feature": "binary__is_genre__Music",
+              "mean_abs_shap": 0.0002662646
+            },
+            {
+              "feature": "numerical__writer_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 0.00026616818
+            },
+            {
+              "feature": "binary__is_keyword__loss_of_loved_one",
+              "mean_abs_shap": 0.0002652778
+            },
+            {
+              "feature": "binary__is_keyword__sports",
+              "mean_abs_shap": 0.00026198837
+            },
+            {
+              "feature": "binary__is_spoken_language__de",
+              "mean_abs_shap": 0.0002482531
+            },
+            {
+              "feature": "binary__is_keyword__christmas",
+              "mean_abs_shap": 0.00024386056
+            },
+            {
+              "feature": "binary__is_keyword__gangster",
+              "mean_abs_shap": 0.00023665157
+            },
+            {
+              "feature": "binary__is_spoken_language__hi",
+              "mean_abs_shap": 0.00023182634
+            },
+            {
+              "feature": "binary__is_keyword__drugs",
+              "mean_abs_shap": 0.000230353
+            },
+            {
+              "feature": "binary__is_keyword__revenge",
+              "mean_abs_shap": 0.0002185028
+            },
+            {
+              "feature": "binary__is_prod_company__regency_enterprises",
+              "mean_abs_shap": 0.0002143527
+            },
+            {
+              "feature": "binary__is_keyword__remake",
+              "mean_abs_shap": 0.0002136816
+            },
+            {
+              "feature": "binary__is_spoken_language__pl",
+              "mean_abs_shap": 0.00019489594
+            },
+            {
+              "feature": "binary__is_keyword__musical",
+              "mean_abs_shap": 0.00018882738
+            },
+            {
+              "feature": "binary__is_keyword__biography",
+              "mean_abs_shap": 0.00018465001
+            },
+            {
+              "feature": "binary__is_keyword__martial_arts",
+              "mean_abs_shap": 0.0001818557
+            },
+            {
+              "feature": "binary__is_prod_country__ES",
+              "mean_abs_shap": 0.00017809986
+            },
+            {
+              "feature": "binary__is_spoken_language__nl",
+              "mean_abs_shap": 0.00015115703
+            },
+            {
+              "feature": "binary__is_keyword__woman_director",
+              "mean_abs_shap": 0.00012979675
+            },
+            {
+              "feature": "categorical__original_language_infrequent_sklearn",
+              "mean_abs_shap": 0.00012690795
+            },
+            {
+              "feature": "binary__is_prod_company__columbia_pictures",
+              "mean_abs_shap": 0.000118693424
+            },
+            {
+              "feature": "binary__is_keyword__love",
+              "mean_abs_shap": 0.00010549956
+            },
+            {
+              "feature": "binary__is_prod_company__paramount_pictures",
+              "mean_abs_shap": 0.0001044916
+            },
+            {
+              "feature": "binary__is_prod_country__NL",
+              "mean_abs_shap": 0.00010302996
+            },
+            {
+              "feature": "binary__is_prod_company__studiocanal",
+              "mean_abs_shap": 9.6635595e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__ko",
+              "mean_abs_shap": 9.1991315e-05
+            },
+            {
+              "feature": "binary__is_prod_company__france_2_cinema",
+              "mean_abs_shap": 8.7545544e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__ja",
+              "mean_abs_shap": 7.827225e-05
+            },
+            {
+              "feature": "binary__is_keyword__dark_comedy",
+              "mean_abs_shap": 6.862644e-05
+            },
+            {
+              "feature": "binary__is_prod_company__france_3_cinema",
+              "mean_abs_shap": 6.846383e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__it",
+              "mean_abs_shap": 6.842592e-05
+            },
+            {
+              "feature": "categorical__production_size_large_productions",
+              "mean_abs_shap": 6.4150234e-05
+            },
+            {
+              "feature": "binary__is_keyword__based_on_true_story",
+              "mean_abs_shap": 6.188027e-05
+            },
+            {
+              "feature": "binary__is_keyword__sibling_relationship",
+              "mean_abs_shap": 5.566133e-05
+            },
+            {
+              "feature": "binary__is_keyword__rape",
+              "mean_abs_shap": 4.5629487e-05
+            },
+            {
+              "feature": "binary__is_keyword__paris_france",
+              "mean_abs_shap": 3.717613e-05
+            },
+            {
+              "feature": "binary__is_prod_company__canal_",
+              "mean_abs_shap": 3.6672383e-05
+            },
+            {
+              "feature": "binary__is_prod_company__ceska_televize",
+              "mean_abs_shap": 3.431332e-05
+            },
+            {
+              "feature": "binary__is_keyword__gay_theme",
+              "mean_abs_shap": 3.201337e-05
+            },
+            {
+              "feature": "binary__is_prod_country__JP",
+              "mean_abs_shap": 3.0841748e-05
+            },
+            {
+              "feature": "binary__is_keyword__1970s",
+              "mean_abs_shap": 2.9937168e-05
+            },
+            {
+              "feature": "binary__is_collection__bloodfist_collection",
+              "mean_abs_shap": 2.8623237e-05
+            },
+            {
+              "feature": "binary__is_collection__kvartet_i_kollektsiya_",
+              "mean_abs_shap": 2.7530486e-05
+            },
+            {
+              "feature": "binary__is_prod_country__TW",
+              "mean_abs_shap": 2.5594516e-05
+            },
+            {
+              "feature": "binary__is_keyword__coming_of_age",
+              "mean_abs_shap": 2.396486e-05
+            },
+            {
+              "feature": "binary__is_prod_company__millennium_media",
+              "mean_abs_shap": 2.3888513e-05
+            },
+            {
+              "feature": "binary__is_keyword__kidnapping",
+              "mean_abs_shap": 2.3356322e-05
+            },
+            {
+              "feature": "binary__is_keyword__police",
+              "mean_abs_shap": 2.313262e-05
+            },
+            {
+              "feature": "binary__is_prod_company__constantin_film",
+              "mean_abs_shap": 2.1672822e-05
+            },
+            {
+              "feature": "binary__is_prod_company__cnc",
+              "mean_abs_shap": 2.1310541e-05
+            },
+            {
+              "feature": "binary__is_prod_country__IE",
+              "mean_abs_shap": 2.0636448e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__pt",
+              "mean_abs_shap": 2.012469e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__zh",
+              "mean_abs_shap": 1.7394483e-05
+            },
+            {
+              "feature": "binary__is_prod_company__tristar_pictures",
+              "mean_abs_shap": 1.6893846e-05
+            },
+            {
+              "feature": "binary__is_prod_company__dimension_films",
+              "mean_abs_shap": 1.6160868e-05
+            },
+            {
+              "feature": "binary__is_keyword__erotic_movie",
+              "mean_abs_shap": 1.5931668e-05
+            },
+            {
+              "feature": "binary__is_spoken_language__th",
+              "mean_abs_shap": 1.3737129e-05
+            },
+            {
+              "feature": "binary__is_prod_company__summit_entertainment",
+              "mean_abs_shap": 1.3692296e-05
+            },
+            {
+              "feature": "binary__is_keyword__suicide",
+              "mean_abs_shap": 1.3453735e-05
+            },
+            {
+              "feature": "binary__is_prod_company__gaumont",
+              "mean_abs_shap": 1.2951317e-05
+            },
+            {
+              "feature": "numerical__collection_kpis__75th_percentile_revenue_usd",
+              "mean_abs_shap": 1.2444839e-05
+            },
+            {
+              "feature": "binary__is_prod_company__miramax",
+              "mean_abs_shap": 1.2023669e-05
+            },
+            {
+              "feature": "binary__is_prod_company__fox_searchlight_pictures",
+              "mean_abs_shap": 1.2000026e-05
+            },
+            {
+              "feature": "binary__is_prod_country__BE",
+              "mean_abs_shap": 1.1795896e-05
+            },
+            {
+              "feature": "binary__is_keyword__prison",
+              "mean_abs_shap": 1.1269807e-05
+            },
+            {
+              "feature": "binary__is_keyword__death",
+              "mean_abs_shap": 1.063037e-05
+            },
+            {
+              "feature": "binary__is_keyword__serial_killer",
+              "mean_abs_shap": 9.2583905e-06
+            },
+            {
+              "feature": "binary__is_prod_country__HK",
+              "mean_abs_shap": 8.465634e-06
+            },
+            {
+              "feature": "binary__is_keyword__husband_wife_relationship",
+              "mean_abs_shap": 8.15298e-06
+            },
+            {
+              "feature": "binary__is_keyword__small_town",
+              "mean_abs_shap": 7.788162e-06
+            },
+            {
+              "feature": "binary__is_prod_country__BR",
+              "mean_abs_shap": 7.689389e-06
+            },
+            {
+              "feature": "binary__is_keyword__infidelity",
+              "mean_abs_shap": 7.4558416e-06
+            },
+            {
+              "feature": "binary__is_prod_country__HU",
+              "mean_abs_shap": 7.1684767e-06
+            },
+            {
+              "feature": "binary__is_prod_company__la_sept_cinema",
+              "mean_abs_shap": 6.4102287e-06
+            },
+            {
+              "feature": "binary__is_spoken_language__no",
+              "mean_abs_shap": 6.1294345e-06
+            },
+            {
+              "feature": "binary__is_prod_company__polygram_filmed_entertainment",
+              "mean_abs_shap": 6.1228884e-06
+            },
+            {
+              "feature": "binary__is_keyword__high_school",
+              "mean_abs_shap": 5.668223e-06
+            },
+            {
+              "feature": "binary__is_spoken_language__da",
+              "mean_abs_shap": 4.6921077e-06
+            },
+            {
+              "feature": "binary__is_keyword__lgbt",
+              "mean_abs_shap": 4.214834e-06
+            },
+            {
+              "feature": "binary__is_collection__the_fast_and_the_furious_collection",
+              "mean_abs_shap": 3.1591364e-06
+            },
+            {
+              "feature": "binary__is_prod_company__bbc_film",
+              "mean_abs_shap": 2.5424026e-06
+            },
+            {
+              "feature": "binary__is_prod_company__toei_company",
+              "mean_abs_shap": 2.5112213e-06
+            },
+            {
+              "feature": "binary__is_prod_company__touchstone_pictures",
+              "mean_abs_shap": 1.8951006e-06
+            },
+            {
+              "feature": "binary__is_prod_company__the_cannon_group",
+              "mean_abs_shap": 1.700058e-06
+            },
+            {
+              "feature": "binary__is_collection__texas_chainsaw_massacre_collection",
+              "mean_abs_shap": 1.3683587e-06
+            },
+            {
+              "feature": "binary__is_prod_country__NO",
+              "mean_abs_shap": 1.183739e-06
+            },
+            {
+              "feature": "binary__is_prod_country__CN",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__hu",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__id",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__arte_france_cinema",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__CO",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__CZ",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__CL",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__tr",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__lenfilm",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__AT",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__AR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__mosfilm",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__mic",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__tl",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__DK",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__sv",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__atresmedia",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__ro",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__m6_films",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__medusa_film",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__arte",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__IL",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__EG",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__RO",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__dreamworks_pictures",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__eurimages",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__europacorp",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__film4_productions",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__film_i_vaest",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__films_a2",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__focus_features",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_genre__Animation",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_genre__Documentary",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__YU",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__TR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__SU",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__SE",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__globo_filmes",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__PT",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__jadran_film",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__PL",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__PH",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__golan_globus_productions",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__MX",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__KR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__gorky_film_studios",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__incaa",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__italian_international_film",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__he",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__ID",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__GR",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_genre__TV Movie",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__ard",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_country__FI",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__nordisk_film_denmark",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__zentropa_entertainments",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__orange_sky_golden_harvest",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__romance",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__svenska_filminstitutet",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__politics",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__prostitute",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__shochiku",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__shaw_brothers",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__sf_studios",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__bbc",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__neo_noir",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__rtbf",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__slasher",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__relativity_media",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__terrorism",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__vampire",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__rai_cinema",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__svt",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__telefilm_canada",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__zombie",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__united_artists",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__zdf",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__cj_entertainment",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__wild_bunch",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__wdr",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__voltage_pictures",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__village_roadshow_pictures",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__canal_espana",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__tf1_films_production",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__tve",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__tv3",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__japan",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__br",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__toho",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__the_asylum",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_keyword__world_war_ii",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__a_nightmare_on_elm_street_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__fi",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__cine_",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__the_pink_panther_original_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__the_terminator_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__tremors_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__walking_tall_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__x_men_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__yolki_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__cn",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__star_wars_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__cs",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__pathe",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__el",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__orion_pictures",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__orf",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__fa",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__the_amityville_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__star_trek_the_original_series_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_prod_company__rai",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__hellraiser_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__child_s_play_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__ernest_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__friday_the_13th_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__gojira_zhaohe_shiriizu",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__halloween_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__harry_potter_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__james_bond_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__saw_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__khiladi",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__leprechaun_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__madea_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__mission_impossible_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__resident_evil_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_collection__rocky_collection",
+              "mean_abs_shap": 0.0
+            },
+            {
+              "feature": "binary__is_spoken_language__ar",
+              "mean_abs_shap": 0.0
+            }
+          ],
+          "sample_movie_ids": [
+            89008,
+            340666,
+            11935,
+            394741,
+            10923,
+            60599,
+            24739,
+            2778,
+            766,
+            46063,
+            71945,
+            156711,
+            177677,
+            70074,
+            190469,
+            85446,
+            177,
+            12652,
+            9403,
+            41776,
+            276843,
+            312221,
+            1439,
+            57165,
+            18203,
+            9714,
+            9626,
+            42087,
+            188640,
+            31357,
+            7978,
+            10628,
+            6795,
+            4254,
+            114150,
+            3580,
+            2926,
+            18885,
+            11184,
+            28893,
+            52451,
+            114726,
+            57889,
+            38293,
+            22947,
+            9625,
+            2001,
+            46618,
+            652,
+            11174,
+            13776,
+            137113,
+            8982,
+            13732,
+            341006,
+            22805,
+            24929,
+            9304,
+            59967,
+            16323,
+            15462,
+            29251,
+            10929,
+            9471,
+            322,
+            40720,
+            25269,
+            42453,
+            57120,
+            12705,
+            3122,
+            13572,
+            70876,
+            384680,
+            352342,
+            19381,
+            1088,
+            292,
+            6623,
+            11969,
+            10719,
+            22617,
+            9312,
+            9913,
+            51485,
+            30943,
+            63006,
+            141052,
+            1620,
+            42158,
+            43959,
+            9504,
+            17898,
+            1957,
+            9827,
+            6280,
+            11974,
+            31515,
+            33408,
+            227735,
+            10306,
+            26560,
+            20358,
+            68,
+            10411,
+            30709,
+            58492,
+            8836,
+            47818,
+            64310,
+            9022,
+            44497,
+            16551,
+            10934,
+            3784,
+            10169,
+            4234,
+            14123,
+            8699,
+            10391,
+            12569,
+            9447,
+            57330,
+            16858,
+            76649,
+            81298,
+            19336,
+            63898,
+            77223,
+            9455,
+            504562,
+            38018,
+            8814,
+            403357,
+            12921,
+            26428,
+            4515,
+            82631,
+            227975,
+            409502,
+            41913,
+            21724,
+            66,
+            15436,
+            2038,
+            31597,
+            42214,
+            15413,
+            23172,
+            24348,
+            24150,
+            60276,
+            12236,
+            129670,
+            11152,
+            8012,
+            1547,
+            199160,
+            25520,
+            152760,
+            17897,
+            7451,
+            10549,
+            9691,
+            2119,
+            44912,
+            11007,
+            10061,
+            147441,
+            34379,
+            9619,
+            114394,
+            382509,
+            32027,
+            91767,
+            1645,
+            10592,
+            34574,
+            51191,
+            11557,
+            82695,
+            5876,
+            27645,
+            364116,
+            10563,
+            9495,
+            7095,
+            2771,
+            262543,
+            20063,
+            9101,
+            21641,
+            254302,
+            568,
+            2212,
+            20307,
+            10683,
+            9388,
+            9686,
+            11194,
+            3604,
+            48289,
+            71524,
+            18892,
+            293863,
+            9545,
+            47821,
+            9061,
+            1632,
+            20504,
+            11431,
+            24603,
+            69722,
+            95,
+            78177,
+            2616,
+            14684,
+            100,
+            276907,
+            12484,
+            9029,
+            314385,
+            861,
+            1450,
+            76716,
+            279096,
+            36643,
+            405177,
+            11153,
+            47816,
+            14729,
+            8536,
+            21765,
+            32338,
+            2196,
+            922,
+            29077,
+            21494,
+            14113,
+            396373,
+            169881,
+            10905,
+            200713,
+            68718,
+            1950,
+            926,
+            2612,
+            1997,
+            84336,
+            7305,
+            22711,
+            418437,
+            13141,
+            7874,
+            79785,
+            10261,
+            232572,
+            340613,
+            61012,
+            13950,
+            19827,
+            439015,
+            34444,
+            18,
+            9440,
+            167951,
+            9350,
+            58151,
+            14284,
+            76395,
+            66092,
+            76163,
+            81342,
+            4233,
+            26522,
+            9591,
+            35694,
+            33344,
+            11495,
+            11359,
+            116741,
+            55955,
+            10950,
+            24679,
+            9896,
+            15676,
+            14423,
+            20701,
+            8831,
+            49051,
+            4951,
+            10858,
+            47881,
+            86597,
+            132344,
+            78406,
+            39895,
+            21024,
+            160588,
+            32122,
+            22784,
+            60579,
+            24827,
+            11503,
+            288158,
+            132363,
+            12690,
+            50348,
+            9445,
+            10576,
+            215875,
+            339964,
+            47812,
+            41963,
+            19380,
+            12763,
+            259316,
+            31246,
+            94047,
+            6022,
+            177987,
+            9306,
+            3432,
+            283235,
+            227,
+            16148,
+            11971,
+            10279,
+            73624,
+            4858,
+            71831,
+            30285,
+            11364,
+            42176,
+            180299,
+            123797,
+            14194,
+            13374,
+            34748,
+            74458,
+            6641,
+            17832,
+            126764,
+            11846,
+            205588,
+            27352,
+            2103,
+            228970,
+            34086,
+            5686,
+            1948,
+            87462,
+            70709,
+            46689,
+            11801,
+            167683,
+            387,
+            5123,
+            37227,
+            131634,
+            37131,
+            11342,
+            1538,
+            158999,
+            95555,
+            10684,
+            13937,
+            37834,
+            120467,
+            9879,
+            157353,
+            37498,
+            12454,
+            10677,
+            130917,
+            280690,
+            13644,
+            13476,
+            8434,
+            9573,
+            10818,
+            4953,
+            17956,
+            2182,
+            27225,
+            18461,
+            199534,
+            1635,
+            64690,
+            178,
+            1359,
+            330459,
+            376866,
+            58232,
+            13703,
+            9410,
+            70842,
+            42492,
+            11062,
+            400928
+          ],
+          "explainer": "TreeExplainer, tree_path_dependent, raw model output",
+          "aggregation": "Mean absolute attribution over the sampled held-out rows"
+        }
+      },
+      "temporal": {
+        "metadata_file": "metadata/full__regression__no_outliers__complex__xgboost_regressor__temporal__20261108_200835_temporal.json",
+        "metadata_sha256": "87a8f8fabee74cf56d8cf887c4dbfff93b88ccead8008d59f1190b98b0439406",
+        "split_info": {
+          "split_strategy": "temporal",
+          "test_size": 0.2,
+          "test_start_year": null,
+          "cv_folds": 3,
+          "cv_gap": 0,
+          "drop_year_feature": false,
+          "train_year_min": 1970,
+          "train_year_max": 2011,
+          "test_year_min": 2011,
+          "test_year_max": 2019,
+          "train_rows": 5246,
+          "test_rows": 1349,
+          "train_period_start": "1970-05",
+          "train_period_end": "2011-08",
+          "test_period_start": "2011-09",
+          "test_period_end": "2019-12"
+        },
+        "metrics": {
+          "MSE": 1.825203799748512e+16,
+          "MAPE": 1.076378514427174,
+          "MAE": 54401947.07992177,
+          "RMSE": 135100103.6175958,
+          "RMSLE": 0.9515171838235382,
+          "MSLE": 0.9053849511114771,
+          "R2": 0.6661091537473705,
+          "Threshold Probability Accuracy": 0.16901408450704225,
+          "Threshold Probability Accuracy (log10)": 0.32468495181616014,
+          "Threshold MAPE": 1.1695158519455482,
+          "Threshold MAPE (25%)": 1.3325632351998766
+        },
+        "model_parameters": {
+          "objective": "reg:squarederror",
+          "base_score": null,
+          "booster": null,
+          "callbacks": null,
+          "colsample_bylevel": null,
+          "colsample_bynode": null,
+          "colsample_bytree": 0.9273538331393107,
+          "device": null,
+          "early_stopping_rounds": null,
+          "enable_categorical": false,
+          "eval_metric": null,
+          "feature_types": null,
+          "feature_weights": null,
+          "gamma": 0.00011685157523232485,
+          "grow_policy": null,
+          "importance_type": null,
+          "interaction_constraints": null,
+          "learning_rate": 0.10837805344306185,
+          "max_bin": null,
+          "max_cat_threshold": null,
+          "max_cat_to_onehot": null,
+          "max_delta_step": null,
+          "max_depth": 6,
+          "max_leaves": null,
+          "min_child_weight": 0.6629351861488221,
+          "monotone_constraints": null,
+          "multi_strategy": null,
+          "n_estimators": 293,
+          "n_jobs": -1,
+          "num_parallel_tree": null,
+          "random_state": 42,
+          "reg_alpha": 2.641449645424224,
+          "reg_lambda": 0.6525765108342366,
+          "sampling_method": null,
+          "scale_pos_weight": null,
+          "subsample": 0.8422521487261975,
+          "tree_method": "hist",
+          "validate_parameters": null,
+          "verbosity": 0
+        },
+        "scaler": "StandardScaler"
+      }
+    }
+  ]
+}

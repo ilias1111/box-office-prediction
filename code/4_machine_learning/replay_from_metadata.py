@@ -82,7 +82,7 @@ def dataset_csv(meta: dict, data_dir: Path) -> Path:
 
 
 def fixed_params(meta: dict) -> dict:
-    """Map frozen winner params + scaler / variance_threshold onto the Pipeline."""
+    """Map saved estimator parameters, scaler and variance threshold onto the Pipeline."""
     fixed: dict = {}
     for key, value in dict(meta.get("model_parameters") or {}).items():
         bare = key.split("model__", 1)[-1]
