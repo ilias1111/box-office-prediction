@@ -6,8 +6,10 @@ os.environ["XGB_VERBOSITY"] = "0"  # Suppress XGBoost warnings
 os.environ["LIGHTGBM_VERBOSITY"] = "-1"  # Suppress LightGBM warnings
 warnings.filterwarnings("ignore")  # Suppress all warnings
 
+import hashlib
 import json
 import logging
+import subprocess
 import numpy as np
 import pandas as pd
 import joblib
@@ -50,7 +52,6 @@ from utils import (
     log10_threshold_probability_accuracy,
 )
 from sklearn.metrics import (
-    make_scorer,
     confusion_matrix,
     classification_report,
     roc_auc_score,
@@ -66,6 +67,32 @@ from sklearn.metrics import (
     mean_absolute_percentage_error,
     r2_score,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+LOG_PREDICTION_CLIP = 12
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def git_state():
+    try:
+        revision = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True
+        ).strip()
+        dirty = bool(
+            subprocess.check_output(
+                ["git", "status", "--porcelain"], cwd=REPO_ROOT, text=True
+            ).strip()
+        )
+        return revision, dirty
+    except (OSError, subprocess.CalledProcessError):
+        return None, None
 
 
 class MOTR:
@@ -404,13 +431,14 @@ class MOTR:
         }
 
         cv = self.cv_splitter
+        cv_best_score = None
         if self.fixed_model_params is not None:
             # Replay path: fit once with frozen hyperparameters from a prior run.
             number_of_combinations = 1
             model.set_params(**self.fixed_model_params)
             model_with_parameters = model.fit(X_train, y_train)
         elif self.grid_type == "random_search":
-            model_with_parameters, number_of_combinations = perform_random_search(
+            model_with_parameters, number_of_combinations, cv_best_score = perform_random_search(
                 model,
                 model_name,
                 X_train,
@@ -424,7 +452,7 @@ class MOTR:
             )
         elif self.grid_type != "non_grid":
             number_of_combinations = len(ParameterGrid(param_grid))
-            model_with_parameters = GridSearchCV(
+            search = GridSearchCV(
                 model,
                 param_grid,
                 cv=cv,
@@ -434,8 +462,9 @@ class MOTR:
                 pre_dispatch="2*n_jobs",
                 error_score="raise",
             )
-            model_with_parameters.fit(X_train, y_train)
-            model_with_parameters = model_with_parameters.best_estimator_
+            search.fit(X_train, y_train)
+            cv_best_score = float(search.best_score_)
+            model_with_parameters = search.best_estimator_
         else:
             number_of_combinations = 1
             model_params = {
@@ -478,6 +507,7 @@ class MOTR:
             number_of_combinations,
             predicted_vs_actual,
             shap_summary=shap_summary,
+            cv_best_score=cv_best_score,
         )
         return metrics
 
@@ -508,22 +538,21 @@ class MOTR:
             return grid["default"]
         return grid
 
+    def scoring_name(self):
+        if self.task_type == "binary_classification":
+            return "roc_auc"
+        if self.task_type == "multi_class_classification":
+            return "f1_weighted"
+        if self.task_type == "regression":
+            # y is log10(revenue) before search, so sklearn R² is log-space R².
+            return "r2_log10"
+        raise ValueError("Unsupported task type for scoring")
+
     def select_scoring(self):
-        if self.task_type in ["binary_classification"]:
-            return "f1_weighted"
-        elif self.task_type == "multi_class_classification":
-            return "f1_weighted"
-        elif self.task_type == "regression":
-            # return 'neg_mean_squared_error'
-            # return 'neg_mean_absolute_percentage_error'
-            # return make_scorer(threshold_mape, greater_is_better=False)
-            return make_scorer(
-                log10_threshold_probability_accuracy,
-                greater_is_better=True,
-                threshold=0.17609125905,
-            )
-        else:
-            raise ValueError("Unsupported task type for scoring")
+        name = self.scoring_name()
+        if name == "r2_log10":
+            return "r2"
+        return name
 
     def evaluate_model(self, model, X_test, y_test, label_encoder, X_test_id, X):
         logging.info("Evaluating model")
@@ -578,13 +607,11 @@ class MOTR:
         elif is_regressor(model):
             pred_raw = pred
 
-            pred = np.power(10, np.where(abs(pred_raw) >= 12, 12, abs(pred_raw)))
-            # pred = abs(pred_raw)
-
-            # Pre-calculate log values for metrics that need them
-            # Using log10(pred) ensures we respect the clipping/abs logic applied above
+            # The model predicts log10(revenue). A negative log is a small
+            # revenue; clipping the magnitude must not flip that sign.
+            pred_log = np.clip(pred_raw, -LOG_PREDICTION_CLIP, LOG_PREDICTION_CLIP)
+            pred = np.power(10.0, pred_log)
             y_test_log = np.log10(y_test)
-            pred_log = np.log10(pred)
 
             # Define thresholds as constants or variables for readability
             # 0.176... corresponds to a factor of 1.5 order of magnitude
@@ -601,6 +628,7 @@ class MOTR:
                 "RMSLE": root_mean_squared_log_error(y_test, pred),
                 "MSLE": mean_squared_log_error(y_test, pred),
                 "R2": r2_score(y_test, pred),
+                "R2 (log10)": r2_score(y_test_log, pred_log),
                 "Threshold Probability Accuracy": threshold_probability_accuracy(
                     y_test, pred, threshold=0.2
                 ),
@@ -700,6 +728,7 @@ class MOTR:
         number_of_combinations,
         predicted_vs_actual_describe,
         shap_summary=None,
+        cv_best_score=None,
     ):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         model_filename = f"{self.filename}.pkl"
@@ -722,6 +751,12 @@ class MOTR:
             "has_outliers_removed": True if self.outliers == "no_outliers" else False,
             "feature_engineering": self.feature_engineering,
             "grid_type": self.grid_type,
+            "search_scoring": self.scoring_name(),
+            "cv_best_score": cv_best_score,
+            "dataset_sha256": getattr(self, "dataset_sha256", None),
+            "feature_columns": getattr(self, "feature_columns", None),
+            "git_revision": getattr(self, "git_revision", None),
+            "git_dirty": getattr(self, "git_dirty", None),
             "split_info": self.split_info,
             "duration": duration.total_seconds(),
             "number_of_combinations": number_of_combinations,
@@ -829,6 +864,9 @@ class MOTR:
 
         train_ymin, train_ymax = year_range(X_train_full)
         test_ymin, test_ymax = year_range(X_test_full)
+        self.feature_columns = [str(column) for column in X_train.columns]
+        self.dataset_sha256 = sha256_file(self.file_path)
+        self.git_revision, self.git_dirty = git_state()
         self.split_info.update(
             {
                 "train_rows": int(len(X_train)),
@@ -894,6 +932,8 @@ if __name__ == "__main__":
     CV_FOLDS = int(os.getenv("MOTR_CV_FOLDS", "3"))
     CV_GAP = int(os.getenv("MOTR_CV_GAP", "0"))
     RANDOM_SEARCH_ITER = int(os.getenv("MOTR_RANDOM_SEARCH_ITER", "30"))
+    SEARCH_N_JOBS = int(os.getenv("MOTR_SEARCH_N_JOBS", "1"))
+    MODEL_N_JOBS = int(os.getenv("MOTR_MODEL_N_JOBS", "4"))
     ONLY_FILE = os.getenv("MOTR_ONLY_FILE")
     MODEL_FILTER = [
         m.strip() for m in os.getenv("MOTR_MODELS", "").split(",") if m.strip()
@@ -932,7 +972,8 @@ if __name__ == "__main__":
     counter = 1
     print(
         f"Running {RUN_ID} with {cases} cases "
-        f"(split_strategy={SPLIT_STRATEGY}, cv_folds={CV_FOLDS}, shap={COMPUTE_SHAP})"
+        f"(split_strategy={SPLIT_STRATEGY}, cv_folds={CV_FOLDS}, shap={COMPUTE_SHAP}, "
+        f"search_n_jobs={SEARCH_N_JOBS}, model_n_jobs={MODEL_N_JOBS})"
     )
     for data_file, task_type, target_column_name in zip(
         DATA_FILES_LIST, TASK_TYPE_LIST, TARGET_COLUMN_NAME_LIST
@@ -949,8 +990,8 @@ if __name__ == "__main__":
             positive_class="Success",
             cv_folds=CV_FOLDS,
             random_search_iter=RANDOM_SEARCH_ITER,
-            search_n_jobs=-1,
-            model_n_jobs=-1,
+            search_n_jobs=SEARCH_N_JOBS,
+            model_n_jobs=MODEL_N_JOBS,
             enable_pipeline_cache=FAST_MODE,
             onehot_sparse=FAST_MODE,
             compute_feature_importance=not FAST_MODE,
@@ -964,6 +1005,8 @@ if __name__ == "__main__":
             drop_year_feature=DROP_YEAR_FEATURE,
             model_filter=MODEL_FILTER,
         )
-        results = trainer.run(parallel=not FAST_MODE)
+        # One model at a time. Search stays on one job so the matrix is not
+        # forked, and the model uses the performance cores.
+        results = trainer.run(parallel=False)
         print(f"Results for {data_file}")
         print(results)

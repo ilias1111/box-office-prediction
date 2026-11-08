@@ -362,4 +362,4 @@ def perform_random_search(
         n_jobs=n_jobs,
     )
     random_search.fit(X, y)
-    return random_search.best_estimator_, n_iter
+    return random_search.best_estimator_, n_iter, float(random_search.best_score_)

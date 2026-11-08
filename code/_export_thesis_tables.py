@@ -18,6 +18,14 @@ MODELS = {"dummy": "Dummy", "logistic_regression": "Logistic Regression",
           "xgboost": "XGBoost", "lightgbm": "LightGBM"}
 
 
+def selection_score(record, metric):
+    """Crown regression on log-space R² once a run has recorded it."""
+    metrics = record["metrics"]
+    if metric == "R2" and "R2 (log10)" in metrics:
+        return metrics["R2 (log10)"]
+    return metrics[metric]
+
+
 def model_name(value):
     for prefix, label in MODELS.items():
         if value.startswith(prefix):
@@ -93,7 +101,7 @@ def main():
                              and d["dataset_name"] == dataset
                              and d["has_outliers_removed"] == removed
                              and d["feature_engineering"] == features]
-                    winner = max(group, key=lambda d: d["metrics"][metric])
+                    winner = max(group, key=lambda d: selection_score(d, metric))
                     base = [display, "Yes" if removed else "No", features.title(),
                             model_name(winner["model_type"])]
                     keys = ["MAPE", "Threshold Probability Accuracy (log10)", "R2"] if task == "regression" else ["F1 Score", "Accuracy"]
@@ -102,7 +110,14 @@ def main():
                                       "has_outliers_removed", "feature_engineering", "model_type",
                                       "run_id", "source_file", "source_sha256")})
         if task == "regression":
-            caption = r"Best historical regression models (highest held-out $R^2$ per setting; MAPE is a ratio; unfiltered results provisional)"
+            ranks_log_r2 = any(
+                d["problem_type"] == "regression" and "R2 (log10)" in d["metrics"]
+                for d in records
+            )
+            if ranks_log_r2:
+                caption = r"Best regression models (highest held-out log10 $R^2$ per setting; dollar $R^2$ and MAPE shown; MAPE is a ratio)"
+            else:
+                caption = r"Best historical regression models (highest held-out $R^2$ per setting; MAPE is a ratio; unfiltered results provisional)"
             headings = ["Dataset", "Outliers removed", "Features", "Model", "MAPE", r"TP Acc.\ (log)", r"$R^2$"]
         else:
             metric_label = "Success F1" if task == "binary_classification" else "weighted F1"
@@ -118,12 +133,16 @@ def main():
         for dataset, display in SEGMENTS.items():
             for removed in (False, True):
                 for features in ("complex", "none"):
-                    values = [d["metrics"][metric] for d in records if d["problem_type"] == task
+                    values = [selection_score(d, metric) for d in records if d["problem_type"] == task
                               and d["dataset_name"] == dataset and d["has_outliers_removed"] == removed
                               and d["feature_engineering"] == features]
                     rows.append([display, "Yes" if removed else "No", features.title(), f"{operation(values):.3f}"])
         title = {"r2_reg": r"Maximum regression $R^2$", "mape_reg": "Minimum regression MAPE (ratio)",
                  "f1_bin": "Maximum binary Success F1", "f1_multi": "Maximum multi-class weighted F1"}[suffix]
+        if suffix == "r2_reg" and any(
+            d["problem_type"] == "regression" and "R2 (log10)" in d["metrics"] for d in records
+        ):
+            title = r"Maximum regression log10 $R^2$"
         write_table(f"table_dataset_comp_{suffix}.tex", title + "; unfiltered results provisional",
                     f"tab:dataset_comp_{suffix}", ["Dataset", "Outliers removed", "Features", metric], rows)
 
@@ -135,10 +154,10 @@ def main():
                 group = [d for d in records if d["problem_type"] == "regression"
                          and d["dataset_name"] == dataset and d["has_outliers_removed"] == removed
                          and d["feature_engineering"] == features]
-                winners = [max([d for d in group if d["model_type"] == model], key=lambda d: d["metrics"]["R2"])
+                winners = [max([d for d in group if d["model_type"] == model], key=lambda d: selection_score(d, "R2"))
                            for model in sorted({d["model_type"] for d in group})]
                 rows = []
-                for d in sorted(winners, key=lambda d: d["metrics"]["R2"], reverse=True):
+                for d in sorted(winners, key=lambda d: selection_score(d, "R2"), reverse=True):
                     pva = d.get("predicted_vs_actual")
                     while isinstance(pva, str):
                         pva = json.loads(pva)
@@ -156,7 +175,10 @@ def main():
                                  f'{m["Threshold Probability Accuracy (log10)"]:.3%}'.replace("%", r"\%"),
                                  bias, statistic("absolute_error", "max")])
                 tag = "no_outliers" if removed else "with_outliers"
-                caption = f"Historical regression results: {display}, {tag.replace('_', ' ')}, {features} features. Highest-$R^2$ run per model; --- denotes unavailable residual statistics."
+                rank_label = r"Highest log10-$R^2$ run per model; dollar $R^2$ shown" if any(
+                    "R2 (log10)" in d["metrics"] for d in group
+                ) else r"Highest-$R^2$ run per model"
+                caption = f"Historical regression results: {display}, {tag.replace('_', ' ')}, {features} features. {rank_label}; --- denotes unavailable residual statistics."
                 if not removed:
                     caption += " Results are provisional."
                 write_table(f"table_reg_results_{dataset}_{tag}_{features}.tex", caption,

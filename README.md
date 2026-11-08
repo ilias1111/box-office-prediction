@@ -78,6 +78,8 @@ Retrieved TMDb and Wikipedia files, plus the manual World Bank, OECD, Wikidata, 
    | `MOTR_MODELS` | unset | Comma-separated model filter |
    | `MOTR_TEST_START_YEAR` | unset | Optional temporal test-year cutoff |
    | `MOTR_FAST` | `1` | Fast mode (cache / sparse / skip model pickles) |
+   | `MOTR_SEARCH_N_JOBS` | `1` | Parallel trials inside one model search |
+   | `MOTR_MODEL_N_JOBS` | `4` | Threads used by one model |
 
    Example: random split with SHAP (main explanation protocol):
 
@@ -140,9 +142,13 @@ Historical unfiltered results are provisional: an audit found the revenue-derive
 `is_outlier` flag among model inputs. The loader now excludes `is_outlier` and
 `is_within_scope` from predictors while retaining audit flags in dataset CSVs.
 This code correction does not repair existing models or metrics; affected
-experiments require re-evaluation. Reporting selection uses highest held-out R2
-for regression and reported F1 for classification; regression hyperparameter
-search continues to optimize log-scale threshold accuracy.
+experiments require re-evaluation. Hyperparameter search optimizes log-space
+R² for regression (the model is trained on `log10(revenue)`), ROC AUC for
+binary classification, and weighted F1 for multi-class classification. Dollar
+R², MAE, and the within-1.5× rate are still reported. The held-out regression
+back-transform clips log predictions without flipping their sign. New runs
+record the search score, its cross-validation value, the dataset SHA-256, the
+feature columns, and the git revision.
 
 ## Thesis exports (optional)
 
