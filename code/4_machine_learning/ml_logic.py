@@ -194,6 +194,9 @@ class MOTR:
 
         X = X.drop(self.target_column_name, axis=1)
         X = X.drop(self.id_column_name, axis=1)
+        # Cleaning uses observed revenue: these flags are audit evidence, never
+        # pre-release predictors. Retain them in CSVs only for dataset review.
+        X = X.drop(columns=["is_outlier", "is_within_scope"], errors="ignore")
         if self.task_type == "binary_classification":
             y = np.where(y == self.positive_class, 1, 0)
 

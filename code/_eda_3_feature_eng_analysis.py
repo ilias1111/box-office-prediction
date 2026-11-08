@@ -608,7 +608,7 @@ def plot_feature_width_none_vs_complex(
         )
         fig.add_annotation(
             x="complex",
-            y=complex_cols * 1.08,
+            y=complex_cols * 1.16,
             text=f"<b>+{complex_cols - none_cols} columns</b>",
             showarrow=False,
             font=dict(size=18, color="#000000"),

@@ -1545,6 +1545,9 @@ def generate_best_regression_models_table(
     # Process each configuration group
     for name, group in regression_df.groupby(groupby_columns):
         dataset_name, outliers_removed, feature_eng = name
+        # Keep one internally consistent run per model, including runs without
+        # saved per-film residual summaries. Missing statistics are not zeros.
+        group = group.sort_values("R2", ascending=False).drop_duplicates("model_type")
         
         table_data = []
         for _, row in group.iterrows():
@@ -1554,28 +1557,26 @@ def generate_best_regression_models_table(
                 if isinstance(pva, str):
                     pva = json.loads(pva)
             except (json.JSONDecodeError, TypeError):
-                 print(f"Warning: Could not parse predicted_vs_actual for {row['run_id']}")
-                 continue
+                 pva = {}
 
             if not pva:
-                 print(f"Warning: predicted_vs_actual is empty/null for {row['run_id']}")
-                 continue
+                 pva = {}
 
             # Extract detailed stats
             # Metrics: R2, MAE (mean), MDAE (median), MAPE, Bias (mean residual), Max Error, RMSE
             # Use (dict.get(key) or {}) pattern to handle case where key exists but value is None
-            mae = (pva.get("absolute_error") or {}).get("mean", 0)
-            mdae = (pva.get("absolute_error") or {}).get("50%", 0)
-            mape = (pva.get("absolute_percentage_error") or {}).get("mean", 0)
+            mae = row.get("MAE", np.nan)
+            mdae = (pva.get("absolute_error") or {}).get("50%", np.nan)
+            mape = row.get("MAPE", np.nan)
             
             # Calculate Bias (Mean Residual) from existing fields if residuals not present
             if "residuals" in pva and pva["residuals"]:
                  bias = (pva.get("residuals") or {}).get("mean", 0)
             else:
-                 bias = (pva.get("actual") or {}).get("mean", 0) - (pva.get("predicted") or {}).get("mean", 0)
+                 bias = (pva.get("actual") or {}).get("mean", np.nan) - (pva.get("predicted") or {}).get("mean", np.nan)
 
-            max_error = (pva.get("absolute_error") or {}).get("max", 0)
-            rmse = (pva.get("squared_error") or {}).get("mean", 0) ** 0.5
+            max_error = (pva.get("absolute_error") or {}).get("max", np.nan)
+            rmse = row.get("RMSE", np.nan)
             r2 = row.get("R2", 0)
             tp_acc_log10 = row.get("Threshold Probability Accuracy (log10)", 0)
 
@@ -1616,6 +1617,7 @@ def generate_best_regression_models_table(
         df_display["Threshold Prob. Acc. (log10)"] = df_display["Threshold Prob. Acc. (log10)"].apply(lambda x: f"{x:.3%}".replace("%", "\\%"))
         df_display["Bias ($)"] = df_display["Bias ($)"].apply(lambda x: f"{x:,.0f}")
         df_display["Max Error ($)"] = df_display["Max Error ($)"].apply(lambda x: f"{x:,.0f}")
+        df_display = df_display.replace("nan", "---")
         df_display["R2"] = df_display["R2"].apply(lambda x: f"{x:.3f}")
 
         # Construct filename

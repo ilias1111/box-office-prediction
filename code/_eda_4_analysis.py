@@ -176,14 +176,16 @@ problem_types = ["regression", "binary_classification", "multi_class_classificat
 groupby_columns = ["dataset_name", "has_outliers_removed", "feature_engineering"]
 
 metrics = {
-    "regression": {"metric": "Threshold Probability Accuracy (log10)", "operation": "max"},
+    # Reporting selection follows the thesis table caption. Training search still
+    # optimizes log-scale threshold accuracy; these are distinct decisions.
+    "regression": {"metric": "R2", "operation": "max"},
     "binary_classification": {"metric": "F1 Score", "operation": "max"},
     "multi_class_classification": {"metric": "F1 Score", "operation": "max"},
 }
 
 display_columns = {
     "regression": [
-        "model_type", "scaler", "MAPE", "Threshold Probability Accuracy", "R2", "duration", "run_id"
+        "model_type", "scaler", "MAPE", "Threshold Probability Accuracy (log10)", "R2", "duration", "run_id"
     ],
     "binary_classification": [
         "model_type", "scaler", "F1 Score", "Accuracy", "Precision", "Recall", "duration", "run_id"
