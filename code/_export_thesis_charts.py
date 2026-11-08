@@ -74,7 +74,8 @@ def render_legacy_data_charts(experiments, snapshot):
             frame = pd.read_csv(experiments / f"data/retrieved_data/tmdb/{file}.csv", usecols=[column])
             support.plot_and_export_categorical_distribution(
                 frame, column, nickname, threshold, display_chart=False,
-                output_dir=None, filename_prefix="step_1")
+                output_dir=None, filename_prefix="step_1",
+                count_label="Number of Cast Credits" if nickname == "actor" else "Number of Movies")
         movie = pd.read_csv(experiments / "data/processed_data/movie.csv", low_memory=False)
         for column in ("year", "quarter", "month", "release_category", "runtime", "ageCert"):
             support.plot_and_export_categorical_distribution(

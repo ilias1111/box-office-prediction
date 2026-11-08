@@ -523,6 +523,7 @@ def plot_and_export_categorical_distribution(
     format_as_int: bool = False,
     print_stats: bool = False,
     filename_prefix: Optional[str] = None,
+    count_label: str = "Number of Movies",
 ) -> pd.DataFrame:
 
     if nickname_agg_column is not None:
@@ -581,9 +582,9 @@ def plot_and_export_categorical_distribution(
 
     fig = apply_common_style(
         fig,
-        title=f"Number of Movies by {agg_column}",
+        title=f"{count_label} by {agg_column}",
         xaxis_title=f"{agg_column}",
-        yaxis_title="Number of Movies",
+        yaxis_title=count_label,
         y_values=grouped_counts["total"],
     )
 
@@ -624,24 +625,31 @@ def plot_confusion_matrix(
     subtitle: Optional[str] = None,
 ) -> None:
     """Create and save a styled confusion matrix visualization."""
-    # Convert list format to dictionary format if needed
+    # Records are serialized by DataFrame.to_dict(orient="records"); rows
+    # and column insertion order both follow the model's encoded class order.
+    # Preserve that order rather than sorting only the prediction columns.
     if isinstance(conf_matrix_data, list):
-        labels = sorted(list(set([k for d in conf_matrix_data for k in d.keys()])))
-        matrix = np.zeros((len(labels), len(labels)))
-        for i, true_dict in enumerate(conf_matrix_data):
-            for pred_label, count in true_dict.items():
-                j = labels.index(pred_label)
-                matrix[i][j] = count
+        if not conf_matrix_data:
+            raise ValueError("Confusion matrix must contain at least one row")
+        labels = list(conf_matrix_data[0])
+        if len(conf_matrix_data) != len(labels) or any(
+            set(row) != set(labels) for row in conf_matrix_data
+        ):
+            raise ValueError("Record matrices must be square with consistent class keys")
+        matrix = np.asarray([
+            [row[label] for label in labels] for row in conf_matrix_data
+        ], dtype=float)
     else:
-        labels = sorted(list(set(
-            list(conf_matrix_data.keys()) + 
-            [k for d in conf_matrix_data.values() for k in d.keys()]
-        )))
-        matrix = np.zeros((len(labels), len(labels)))
-        for i, true_label in enumerate(labels):
-            for j, pred_label in enumerate(labels):
-                matrix[i][j] = conf_matrix_data[true_label].get(pred_label, 0)
-    
+        labels = list(conf_matrix_data)
+        if not labels or any(set(row) != set(labels) for row in conf_matrix_data.values()):
+            raise ValueError("Labeled matrices must have matching row and column classes")
+        matrix = np.asarray([
+            [conf_matrix_data[true_label][pred_label] for pred_label in labels]
+            for true_label in labels
+        ], dtype=float)
+    if not np.isfinite(matrix).all() or (matrix < 0).any() or matrix.sum() <= 0:
+        raise ValueError("Confusion matrix counts must be finite, nonnegative, and nonzero")
+
     # Calculate percentages
     matrix_sum = matrix.sum()
     matrix_pct = (matrix / matrix_sum) * 100
@@ -732,6 +740,7 @@ def plot_confusion_matrix(
     )
     
     fig.update_yaxes(
+        autorange="reversed",  # Matching classes form the top-left diagonal.
         tickfont=dict(size=DEFAULT_CHART_CONFIG["axis_font_size"]),
         showgrid=True,
         gridcolor=DEFAULT_CHART_CONFIG["grid_color"],
