@@ -49,3 +49,8 @@ code/4_machine_learning/experiment_data.csv
 code/4_machine_learning/neural_networks.py
 code/system_info.py
 docs/reads.txt
+
+# Generated thesis reports and local audit notes. Keep the results snapshot tracked.
+/docs/additional_results_eda.md
+/docs/thesis_readiness.md
+/docs/thesis_results/selected_models.json
