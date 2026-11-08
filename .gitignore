@@ -9,6 +9,7 @@ code/charts/
 /bop/*
 /models/*
 /metadata/*
+/shap/*
 /data/ml_ready_data/*
 /data/processed_data/*
 /data/retrieved_data/tmdb/collection_export.csv
@@ -52,6 +53,7 @@ docs/reads.txt
 
 # Generated thesis reports and local audit notes. Keep the results snapshot tracked.
 /docs/additional_results_eda.md
+/docs/shap_temporal_eda.md
 /docs/thesis_readiness.md
 /docs/thesis_results/selected_models.json
 /docs/results_reading.md

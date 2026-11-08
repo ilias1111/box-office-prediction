@@ -68,7 +68,42 @@ Retrieved TMDb and Wikipedia files, plus the manual World Bank, OECD, Wikidata, 
    ```
    python code/4_machine_learning/ml_logic.py
    ```
-   Folds, search iterations, and the fast-mode switch are set in the `__main__` block of that file.
+   Optional environment switches (defaults preserve the historical random-split protocol):
+
+   | Variable | Default | Purpose |
+   | --- | --- | --- |
+   | `MOTR_SPLIT_STRATEGY` | `random` | `random` or `temporal` outer holdout / inner CV |
+   | `MOTR_COMPUTE_SHAP` | `0` | Save mean-\|SHAP\| under `shap/` when `1` |
+   | `MOTR_ONLY_FILE` | unset | Train a single ML-ready CSV |
+   | `MOTR_MODELS` | unset | Comma-separated model filter |
+   | `MOTR_TEST_START_YEAR` | unset | Optional temporal test-year cutoff |
+   | `MOTR_FAST` | `1` | Fast mode (cache / sparse / skip model pickles) |
+
+   Example: random split with SHAP (main explanation protocol):
+
+   ```sh
+   MOTR_SPLIT_STRATEGY=random MOTR_COMPUTE_SHAP=1 \
+   MOTR_ONLY_FILE=full__binary_classification__no_outliers__complex.csv \
+   MOTR_MODELS=xgboost_classifier \
+   .venv/bin/python code/4_machine_learning/ml_logic.py
+   ```
+
+7. **Replay a historical winner**
+   ```sh
+   # Temporal sensitivity: frozen winners, metrics only
+   .venv/bin/python code/4_machine_learning/replay_from_metadata.py \
+     --run-id 20260207_190503 \
+     --split-strategy temporal
+
+   # Random protocol + SHAP (next to impurity FI). Refused with temporal.
+   .venv/bin/python code/4_machine_learning/replay_from_metadata.py \
+     --metadata metadata/full__binary_classification__no_outliers__complex__xgboost_classifier__20260207_190503.json \
+     --split-strategy random \
+     --compute-shap
+   ```
+   Pass `--metadata` for one file (repeatable) or `--run-id` for all
+   `metadata/*__{run_id}.json`. Reuses frozen estimator + scaler from JSON;
+   writes new run metadata, optional `shap/` artifacts, and a slim CSV summary.
 
 ## Data
 
@@ -84,6 +119,7 @@ Retrieved TMDb and Wikipedia files, plus the manual World Bank, OECD, Wikidata, 
 | `data/processed_data/` | Output of preprocessing |
 | `data/ml_ready_data/` | Modeling CSVs |
 | `logs/`, `metadata/` | Training logs and per-model results |
+| `shap/` | Optional mean-\|SHAP\| CSVs / samples from explain runs |
 
 ## Models
 
@@ -136,6 +172,15 @@ result snapshot; they are not silently selected as the newest results.
 The six optional EDA-summary CSVs are skipped by default and were removed from
 `docs/thesis_results/eda/`. If needed for review, they can be requested with
 `code/_export_thesis_charts.py --export-csv`. They are never chart inputs.
+
+`code/_eda_6_shap_and_temporal.py` (also wired into `_export_thesis_charts.py`)
+follows the thesis story: SHAP charts for the **random** protocol next to
+impurity FI, plus **temporal metric sensitivity** charts from
+`docs/thesis_results/temporal_vs_random_compare.csv` (no temporal SHAP):
+
+```sh
+.venv/bin/python code/_eda_6_shap_and_temporal.py
+```
 
 After exporting results, run `./scripts/build-thesis.sh` in the thesis repository
 to refresh the PDF. Building the PDF does not run analysis automatically.

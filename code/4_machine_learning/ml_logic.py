@@ -18,7 +18,7 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from joblib import Parallel, delayed
 from datetime import datetime
 from sklearn.base import is_classifier, is_regressor, clone
-from sklearn.model_selection import train_test_split, GridSearchCV, ParameterGrid
+from sklearn.model_selection import GridSearchCV, ParameterGrid
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     StandardScaler,
@@ -37,6 +37,13 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.dummy import DummyRegressor, DummyClassifier
 
 from random_search import perform_random_search
+from shap_explain import compute_shap_summary
+from splits import (
+    make_temporal_cv,
+    random_outer_split,
+    temporal_outer_split,
+    year_range,
+)
 from utils import (
     threshold_mape,
     threshold_probability_accuracy,
@@ -81,8 +88,17 @@ class MOTR:
         onehot_sparse=False,
         compute_feature_importance=True,
         compute_predicted_vs_actual=False,
+        compute_shap=False,
+        shap_max_samples=500,
         save_model=True,
         save_metadata=True,
+        split_strategy="random",
+        test_size=0.2,
+        test_start_year=None,
+        cv_gap=0,
+        drop_year_feature=False,
+        fixed_model_params=None,
+        model_filter=None,
     ):
         self.file_path = file_path
         self.dataset_name = os.path.basename(file_path).split(".")[0].split("__")[0]
@@ -104,11 +120,43 @@ class MOTR:
         self.onehot_sparse = onehot_sparse
         self.compute_feature_importance = compute_feature_importance
         self.compute_predicted_vs_actual = compute_predicted_vs_actual
+        self.compute_shap = compute_shap
+        self.shap_max_samples = shap_max_samples
         self.save_model = save_model
         self.save_metadata = save_metadata
+        self.last_shap_summary = None
+        self.fixed_model_params = fixed_model_params
+        if split_strategy not in ("random", "temporal"):
+            raise ValueError(
+                f"split_strategy must be 'random' or 'temporal', got {split_strategy!r}"
+            )
+        self.split_strategy = split_strategy
+        self.test_size = test_size
+        self.test_start_year = test_start_year
+        self.cv_gap = cv_gap
+        self.drop_year_feature = drop_year_feature
+        self.cv_splitter = cv_folds
+        self.split_info = {
+            "split_strategy": split_strategy,
+            "test_size": test_size,
+            "test_start_year": test_start_year,
+            "cv_folds": cv_folds,
+            "cv_gap": cv_gap,
+            "drop_year_feature": drop_year_feature,
+            "train_year_min": None,
+            "train_year_max": None,
+            "test_year_min": None,
+            "test_year_max": None,
+            "replayed_from": None,
+        }
 
         self._all_param_grids = self._load_all_param_grids()
         self.models = self.init_models(task_type, n_jobs=model_n_jobs)
+        if model_filter:
+            wanted = set(model_filter)
+            self.models = {k: v for k, v in self.models.items() if k in wanted}
+            if not self.models:
+                raise ValueError(f"model_filter matched no models: {sorted(wanted)}")
         self.run_id = run_id
         self.setup_logging()
 
@@ -292,7 +340,11 @@ class MOTR:
     ):
         logging.info(f"Training model: {model_name}")
 
-        self.filename = f"{self.dataset_name}__{self.task_type}__{self.outliers}__{self.feature_engineering}__{model_name}__{self.run_id}"
+        split_tag = self.split_strategy
+        self.filename = (
+            f"{self.dataset_name}__{self.task_type}__{self.outliers}__"
+            f"{self.feature_engineering}__{model_name}__{split_tag}__{self.run_id}"
+        )
         start_time = datetime.now()
         preprocessor = self.create_preprocessor(
             numerical_features, categorical_features, binary_features
@@ -351,13 +403,19 @@ class MOTR:
             ],
         }
 
-        if self.grid_type == "random_search":
+        cv = self.cv_splitter
+        if self.fixed_model_params is not None:
+            # Replay path: fit once with frozen hyperparameters from a prior run.
+            number_of_combinations = 1
+            model.set_params(**self.fixed_model_params)
+            model_with_parameters = model.fit(X_train, y_train)
+        elif self.grid_type == "random_search":
             model_with_parameters, number_of_combinations = perform_random_search(
                 model,
                 model_name,
                 X_train,
                 y_train,
-                cv=self.cv_folds,
+                cv=cv,
                 n_iter=self.random_search_iter,
                 scoring=self.select_scoring(),
                 random_state=42,
@@ -369,7 +427,7 @@ class MOTR:
             model_with_parameters = GridSearchCV(
                 model,
                 param_grid,
-                cv=self.cv_folds,
+                cv=cv,
                 scoring=self.select_scoring(),
                 n_jobs=self.search_n_jobs if search_n_jobs is None else search_n_jobs,
                 verbose=0,
@@ -399,6 +457,16 @@ class MOTR:
             if self.compute_feature_importance
             else pd.DataFrame()
         )
+        shap_summary = None
+        if self.compute_shap:
+            shap_summary = compute_shap_summary(
+                model_with_parameters,
+                X_test,
+                model_name,
+                output_dir=Path("shap") / self.filename,
+                max_samples=self.shap_max_samples,
+            )
+        self.last_shap_summary = shap_summary
         self.save_model_and_metadata(
             model_with_parameters,
             metrics,
@@ -409,6 +477,7 @@ class MOTR:
             duration,
             number_of_combinations,
             predicted_vs_actual,
+            shap_summary=shap_summary,
         )
         return metrics
 
@@ -630,6 +699,7 @@ class MOTR:
         duration,
         number_of_combinations,
         predicted_vs_actual_describe,
+        shap_summary=None,
     ):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         model_filename = f"{self.filename}.pkl"
@@ -652,6 +722,7 @@ class MOTR:
             "has_outliers_removed": True if self.outliers == "no_outliers" else False,
             "feature_engineering": self.feature_engineering,
             "grid_type": self.grid_type,
+            "split_info": self.split_info,
             "duration": duration.total_seconds(),
             "number_of_combinations": number_of_combinations,
             "metrics": metrics,
@@ -670,6 +741,15 @@ class MOTR:
             .named_steps["variance_threshold"]
             .threshold,
             "feature_importance": feature_importance.to_dict(orient="records"),
+            "shap": {
+                "dir": shap_summary.get("dir"),
+                "summary_csv": shap_summary.get("summary_csv"),
+                "values_npz": shap_summary.get("values_npz"),
+                "n_rows": shap_summary.get("n_rows"),
+                "top_features": shap_summary.get("top_features"),
+            }
+            if shap_summary
+            else None,
             "predicted_vs_actual": predicted_vs_actual_describe.to_json(
                 orient="columns"
             )
@@ -694,18 +774,71 @@ class MOTR:
             label_encoder,
         ) = self.load_data()
 
-        stratify = y if self.task_type in ("binary_classification", "multi_class_classification") else None
-        try:
-            X_train_full, X_test_full, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42, stratify=stratify
+        if self.split_strategy == "temporal":
+            X_train_full, X_test_full, y_train, y_test, train_time_key = temporal_outer_split(
+                X,
+                y,
+                test_size=self.test_size,
+                test_start_year=self.test_start_year,
             )
-        except ValueError:
-            X_train_full, X_test_full, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42
+            X_test_id = X_test_full[self.id_column_name]
+            X_train = X_train_full.drop(self.id_column_name, axis=1).reset_index(drop=True)
+            X_test = X_test_full.drop(self.id_column_name, axis=1).reset_index(drop=True)
+            # Drop id from the sorted time key frame used only for fold checks.
+            train_time_key = train_time_key.reset_index(drop=True)
+            self.cv_splitter = make_temporal_cv(
+                X_train,
+                n_splits=self.cv_folds,
+                gap=self.cv_gap,
+                time_key=train_time_key,
             )
-        X_test_id = X_test_full[self.id_column_name]
-        X_train = X_train_full.drop(self.id_column_name, axis=1)
-        X_test = X_test_full.drop(self.id_column_name, axis=1)
+            logging.info(
+                "Temporal split: train=%s rows [%s-%s], test=%s rows [%s-%s], cv_folds=%s",
+                len(X_train),
+                *year_range(X_train),
+                len(X_test),
+                *year_range(X_test),
+                self.cv_folds,
+            )
+            print(
+                f"Temporal split: train={len(X_train)} "
+                f"[{year_range(X_train)[0]}-{year_range(X_train)[1]}], "
+                f"test={len(X_test)} "
+                f"[{year_range(X_test)[0]}-{year_range(X_test)[1]}], "
+                f"cv_folds={self.cv_folds}"
+            )
+        else:
+            stratify = (
+                y
+                if self.task_type
+                in ("binary_classification", "multi_class_classification")
+                else None
+            )
+            X_train_full, X_test_full, y_train, y_test = random_outer_split(
+                X, y, test_size=self.test_size, random_state=42, stratify=stratify
+            )
+            X_test_id = X_test_full[self.id_column_name]
+            X_train = X_train_full.drop(self.id_column_name, axis=1)
+            X_test = X_test_full.drop(self.id_column_name, axis=1)
+            self.cv_splitter = self.cv_folds
+
+        if self.drop_year_feature and "year" in X_train.columns:
+            X_train = X_train.drop(columns=["year"])
+            X_test = X_test.drop(columns=["year"])
+            numerical_features = [c for c in numerical_features if c != "year"]
+
+        train_ymin, train_ymax = year_range(X_train_full)
+        test_ymin, test_ymax = year_range(X_test_full)
+        self.split_info.update(
+            {
+                "train_rows": int(len(X_train)),
+                "test_rows": int(len(X_test)),
+                "train_year_min": train_ymin,
+                "train_year_max": train_ymax,
+                "test_year_min": test_ymin,
+                "test_year_max": test_ymax,
+            }
+        )
 
         class_weight_dict = None
         if self.task_type != "regression":
@@ -749,11 +882,26 @@ class MOTR:
 
 
 if __name__ == "__main__":
-    GRID_TYPE = "random_search"
+    GRID_TYPE = os.getenv("MOTR_GRID_TYPE", "random_search")
     ID_COLUMN_NAME = "movie_id"
-    FAST_MODE = 1#os.getenv("MOTR_FAST", "0") == "1"
+    FAST_MODE = os.getenv("MOTR_FAST", "1") == "1"
+    # Default remains random for backward compatibility with thesis runs.
+    SPLIT_STRATEGY = os.getenv("MOTR_SPLIT_STRATEGY", "random")
+    DROP_YEAR_FEATURE = os.getenv("MOTR_DROP_YEAR", "0") == "1"
+    COMPUTE_SHAP = os.getenv("MOTR_COMPUTE_SHAP", "0") == "1"
+    TEST_START_YEAR = os.getenv("MOTR_TEST_START_YEAR")
+    TEST_START_YEAR = int(TEST_START_YEAR) if TEST_START_YEAR else None
+    CV_FOLDS = int(os.getenv("MOTR_CV_FOLDS", "3"))
+    CV_GAP = int(os.getenv("MOTR_CV_GAP", "0"))
+    RANDOM_SEARCH_ITER = int(os.getenv("MOTR_RANDOM_SEARCH_ITER", "30"))
+    ONLY_FILE = os.getenv("MOTR_ONLY_FILE")
+    MODEL_FILTER = [
+        m.strip() for m in os.getenv("MOTR_MODELS", "").split(",") if m.strip()
+    ] or None
 
-    DATA_FILES_LIST = os.listdir("./data/ml_ready_data")
+    DATA_FILES_LIST = sorted(os.listdir("./data/ml_ready_data"))
+    if ONLY_FILE:
+        DATA_FILES_LIST = [ONLY_FILE]
     # DATA_FILES_LIST = [i for i in DATA_FILES_LIST if i.split("__")[1] == "binary_classification"]
     # DATA_FILES_LIST = [
     #     "full__binary_classification__no_outliers__complex.csv",
@@ -782,7 +930,10 @@ if __name__ == "__main__":
         ]
     )
     counter = 1
-    print(f"Running {RUN_ID} with {cases} cases")
+    print(
+        f"Running {RUN_ID} with {cases} cases "
+        f"(split_strategy={SPLIT_STRATEGY}, cv_folds={CV_FOLDS}, shap={COMPUTE_SHAP})"
+    )
     for data_file, task_type, target_column_name in zip(
         DATA_FILES_LIST, TASK_TYPE_LIST, TARGET_COLUMN_NAME_LIST
     ):
@@ -796,16 +947,22 @@ if __name__ == "__main__":
             task_type=task_type,
             grid_type=GRID_TYPE,
             positive_class="Success",
-            cv_folds=3,
-            random_search_iter=30,
+            cv_folds=CV_FOLDS,
+            random_search_iter=RANDOM_SEARCH_ITER,
             search_n_jobs=-1,
             model_n_jobs=-1,
             enable_pipeline_cache=FAST_MODE,
             onehot_sparse=FAST_MODE,
             compute_feature_importance=not FAST_MODE,
             compute_predicted_vs_actual=True,
+            compute_shap=COMPUTE_SHAP,
             save_model=not FAST_MODE,
             save_metadata=True,
+            split_strategy=SPLIT_STRATEGY,
+            test_start_year=TEST_START_YEAR,
+            cv_gap=CV_GAP,
+            drop_year_feature=DROP_YEAR_FEATURE,
+            model_filter=MODEL_FILTER,
         )
         results = trainer.run(parallel=not FAST_MODE)
         print(f"Results for {data_file}")
