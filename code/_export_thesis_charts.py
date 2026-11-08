@@ -144,23 +144,38 @@ def main():
     THESIS_ROOT = args.thesis_dir.resolve()
     (THESIS_ROOT / "latex/images").mkdir(parents=True, exist_ok=True)
     sys.path.insert(0, str(args.experiments / "code"))
-    spec = importlib.util.spec_from_file_location("additional_eda", args.experiments / "code/_eda_5_additional_results.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    module.META = args.experiments / "metadata"
-    module.ML = args.experiments / "data/ml_ready_data"
-    module.PROC = args.experiments / "data/processed_data"
-    module.OUT_CHARTS = ROOT / "thesis_assets/charts"
-    module.OUT_TABLES = ROOT / "docs/thesis_results/eda"
-    module.OUT_DOCS = ROOT / "docs"
-    module.TEX_IMG = THESIS_ROOT / "latex/images"
-    module.save_chart = collect_chart
+
+    def load_eda_module(module_name: str, relative_path: str):
+        spec = importlib.util.spec_from_file_location(
+            module_name, args.experiments / relative_path
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.META = args.experiments / "metadata"
+        if hasattr(module, "ML"):
+            module.ML = args.experiments / "data/ml_ready_data"
+        if hasattr(module, "PROC"):
+            module.PROC = args.experiments / "data/processed_data"
+        if hasattr(module, "SHAP_ROOT"):
+            module.SHAP_ROOT = args.experiments / "shap"
+        module.OUT_CHARTS = ROOT / "thesis_assets/charts"
+        module.OUT_TABLES = ROOT / "docs/thesis_results/eda"
+        module.OUT_DOCS = ROOT / "docs"
+        module.TEX_IMG = THESIS_ROOT / "latex/images"
+        module.save_chart = collect_chart
+        return module
+
+    eda_modules = [
+        load_eda_module("additional_eda", "code/_eda_5_additional_results.py"),
+        load_eda_module("shap_temporal_eda", "code/_eda_6_shap_and_temporal.py"),
+    ]
     required = required_charts(THESIS_ROOT) if args.all else set()
     FIGURES.clear()
     # Render into staging first. Missing inputs or export failures must
     # fail before any existing thesis PNG is replaced.
     with tempfile.TemporaryDirectory(prefix="bop-thesis-charts-") as temporary:
-        module.main(export_csv=args.export_csv)
+        for module in eda_modules:
+            module.main(export_csv=args.export_csv)
         if args.all:
             render_legacy_data_charts(args.experiments, ROOT / "docs/thesis_results/results_metadata.json")
             missing = required - FIGURES.keys()
