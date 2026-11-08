@@ -143,7 +143,7 @@ if not parameters_df.empty:
         records = group[valid_keys].to_dict(orient="records")
         
         # Clean up NaNs from the records for cleaner JSON?
-        # The user said "Only the relevant parameters", implying if a param is NaN (not used), maybe hide it?
+        # Omit parameters that do not apply to this model.
         # But for now, let's just stick to the allowed list.
         # simple cleaning:
         cleaned_records = []
