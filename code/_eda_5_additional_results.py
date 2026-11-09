@@ -741,7 +741,7 @@ def main(export_csv: bool = False) -> None:
     lines = [
         "# Additional Results EDA\n",
         "Generated from existing artifacts with the shared Plotly thesis aesthetic (no retrain).\n",
-        "Scores and importance rankings are from runs 20261109_032410 and 20261109_082408. The revenue-derived outlier flag is excluded from model inputs.\n",
+        "Scores and importance rankings are from runs 20261109_032410 and 20261109_082408.\n",
     ]
 
     plot_class_distributions(lines)

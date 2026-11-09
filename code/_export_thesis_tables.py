@@ -68,7 +68,7 @@ def archive(directory):
         raise ValueError(f"Expected 272 experiments in the selected runs, found {len(records)}")
     SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
     SNAPSHOT.write_text(json.dumps({
-        "status": "Night run 20261109_032410 (XGBoost and LightGBM, 50 draws) and morning run 20261109_082408 (remaining models, 8 draws). is_outlier is excluded from model inputs.",
+        "status": "Night run 20261109_032410 (XGBoost and LightGBM, 50 draws) and morning run 20261109_082408 (remaining models, 8 draws).",
         "run_ids": list(RUNS),
         "reporting_selection": {
             "regression": "max held-out log10 R2",
@@ -120,7 +120,7 @@ def main():
             if ranks_log_r2:
                 caption = r"Best regression models (highest held-out log10 $R^2$ per setting; dollar $R^2$ and MAPE shown; MAPE is a ratio)"
             else:
-                caption = r"Best historical regression models (highest held-out $R^2$ per setting; MAPE is a ratio; unfiltered results provisional)"
+                caption = r"Best regression models (highest held-out $R^2$ per setting; MAPE is a ratio)"
             headings = ["Dataset", "Outliers removed", "Features", "Model", "MAPE", r"TP Acc.\ (log)", r"$R^2$"]
         else:
             metric_label = "Success F1" if task == "binary_classification" else "weighted F1"

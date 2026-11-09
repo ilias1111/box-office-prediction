@@ -1,5 +1,5 @@
 {
-  "status": "Night run 20261109_032410 (XGBoost and LightGBM, 50 draws) and morning run 20261109_082408 (remaining models, 8 draws). is_outlier is excluded from model inputs.",
+  "status": "Night run 20261109_032410 (XGBoost and LightGBM, 50 draws) and morning run 20261109_082408 (remaining models, 8 draws).",
   "run_ids": [
     "20261109_032410",
     "20261109_082408"
