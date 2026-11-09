@@ -96,13 +96,19 @@ def render_legacy_data_charts(experiments, snapshot):
         records = json.loads(snapshot.read_text())["experiments"]
         metrics = pd.DataFrame([{**r, **r["metrics"]} for r in records])
         for task, metric, baseline in [
-            ("regression", "R2", "dummy_regressor"),
+            ("regression", "R2 (log10)", "dummy_regressor"),
             ("binary_classification", "F1 Score", "dummy_classifier"),
             ("multi_class_classification", "F1 Score", "dummy_classifier")]:
+            before = set(FIGURES)
             support.plot_one_metric_of_different_models_per_dataset_with_plotly(
                 metrics, problem_type=task, metric=metric, metric_agg="max",
                 benchmark_model=baseline, display_chart=False, output_dir=None,
                 print_stats=False, filename_prefix="step_4")
+            # Keep the thesis filenames stable. The regression chart now shows log-space R².
+            if metric == "R2 (log10)":
+                for name in list(FIGURES):
+                    if name not in before and "metric_r2_(log10)" in name:
+                        FIGURES[name.replace("metric_r2_(log10)", "metric_r2")] = FIGURES.pop(name)
         # The two included matrix captions explicitly name Full/Complex/LightGBM.
         # Select the best matching run and retain that very record's matrix.
         for task, classes in [("binary_classification", 2), ("multi_class_classification", 4)]:
@@ -117,7 +123,7 @@ def render_legacy_data_charts(experiments, snapshot):
             filename = f"step_4_matrix_classes_{classes}_dataset_full_model_lightgbm_classifier_fe_complex_outliers_false.png"
             support.plot_confusion_matrix(
                 matrix, display_chart=False, output_dir=None, filename=filename,
-                title=f"Confusion Matrix for Full\nLightGBM | Complex | Outliers retained\nProvisional historical results")
+                title="Confusion Matrix for Full\nLightGBM | Complex | Outliers retained")
 
 
 def required_charts(thesis):

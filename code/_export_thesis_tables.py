@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "docs/thesis_results/results_metadata.json"
 TABLES = ROOT.parent / "box-office-prediction-thesis/latex/tables"
-RUNS = ("20260207_215143", "20260213_084518")
+RUNS = ("20261109_032410", "20261109_082408")
 SEGMENTS = {"full": "Full", "large_productions": "Large",
             "medium_productions": "Medium", "small_productions": "Small"}
 MODELS = {"dummy": "Dummy", "logistic_regression": "Logistic Regression",
@@ -64,13 +64,16 @@ def archive(directory):
             record = {key: data.get(key) for key in keys}
             record.update(source_file=path.name, source_sha256=hashlib.sha256(raw).hexdigest())
             records.append(record)
-    if len(records) != 320:
-        raise ValueError(f"Expected 320 experiments in the selected runs, found {len(records)}")
+    if len(records) != 272:
+        raise ValueError(f"Expected 272 experiments in the selected runs, found {len(records)}")
     SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
     SNAPSHOT.write_text(json.dumps({
-        "status": "Historical artifacts; unfiltered results include a revenue-derived flag and are provisional.",
-        "run_ids": RUNS,
-        "reporting_selection": {"regression": "max held-out R2", "classification": "max reported held-out F1"},
+        "status": "Night run 20261109_032410 (XGBoost and LightGBM, 50 draws) and morning run 20261109_082408 (remaining models, 8 draws). is_outlier is excluded from model inputs.",
+        "run_ids": list(RUNS),
+        "reporting_selection": {
+            "regression": "max held-out log10 R2",
+            "classification": "max reported held-out F1",
+        },
         "experiments": records,
     }, indent=2) + "\n")
 
@@ -121,7 +124,7 @@ def main():
             headings = ["Dataset", "Outliers removed", "Features", "Model", "MAPE", r"TP Acc.\ (log)", r"$R^2$"]
         else:
             metric_label = "Success F1" if task == "binary_classification" else "weighted F1"
-            caption = f"Best {'binary' if task == 'binary_classification' else 'multi-class'} classification models ({metric_label}; unfiltered results provisional)"
+            caption = f"Best {'binary' if task == 'binary_classification' else 'multi-class'} classification models ({metric_label})"
             headings = ["Dataset", "Outliers removed", "Features", "Model", "F1", "Accuracy"]
         write_table(f"table_best_{suffix}.tex", caption, f"tab:best_{suffix}", headings, rows, resize=True)
 
@@ -143,7 +146,7 @@ def main():
             d["problem_type"] == "regression" and "R2 (log10)" in d["metrics"] for d in records
         ):
             title = r"Maximum regression log10 $R^2$"
-        write_table(f"table_dataset_comp_{suffix}.tex", title + "; unfiltered results provisional",
+        write_table(f"table_dataset_comp_{suffix}.tex", title,
                     f"tab:dataset_comp_{suffix}", ["Dataset", "Outliers removed", "Features", metric], rows)
 
     # Keep each detailed model row internally consistent: choose its highest-R2
@@ -178,9 +181,7 @@ def main():
                 rank_label = r"Highest log10-$R^2$ run per model; dollar $R^2$ shown" if any(
                     "R2 (log10)" in d["metrics"] for d in group
                 ) else r"Highest-$R^2$ run per model"
-                caption = f"Historical regression results: {display}, {tag.replace('_', ' ')}, {features} features. {rank_label}; --- denotes unavailable residual statistics."
-                if not removed:
-                    caption += " Results are provisional."
+                caption = f"Regression results: {display}, {tag.replace('_', ' ')}, {features} features. {rank_label}; --- denotes unavailable residual statistics."
                 write_table(f"table_reg_results_{dataset}_{tag}_{features}.tex", caption,
                             f"tab:reg_{dataset}_{tag}_{features}",
                             ["Model", r"$R^2$", "MAE", "Median AE", "RMSE", r"MAPE (\%)",

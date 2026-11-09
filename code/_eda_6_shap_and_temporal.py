@@ -285,10 +285,10 @@ def _to_long(plot_df, random_col, temporal_col, metric):
 def plot_temporal_sensitivity(lines: List[str], compare: pd.DataFrame) -> None:
     lines.append("## Temporal sensitivity (metrics only)\n")
     lines.append(
-        "Paired refits hold earlier non-grid configurations fixed across random "
-        "and forward temporal holdouts. This is a restricted sensitivity check "
-        "on a retrospectively revenue-filtered cohort, not validation of all "
-        "search winners or operational forecasting.\n"
+        "Paired refits hold the reported Full, complex, outlier-removed "
+        "configurations fixed and re-score them on a forward temporal holdout. "
+        "This is a restricted sensitivity check on a retrospectively "
+        "revenue-filtered cohort, not operational forecasting.\n"
     )
     if compare.empty:
         lines.append("No comparison table found.\n")
@@ -387,8 +387,9 @@ def main(export_csv: bool = False) -> None:
         "**Story.** Random split is the main protocol (metrics + impurity FI). "
         "SHAP here is computed on that same random protocol so it can sit next "
         "to the importance charts. Temporal split is only a sensitivity check: "
-        "hold earlier non-grid configurations fixed and compare paired random and "
-        "forward temporal holdouts on the retrospectively filtered cohort.\n",
+        "hold the reported Full, complex, outlier-removed configurations fixed and "
+        "compare their random holdout with a forward temporal holdout on the "
+        "retrospectively filtered cohort.\n",
     ]
     plot_shap_random(lines, load_shap_random())
     plot_temporal_sensitivity(lines, load_compare_table())

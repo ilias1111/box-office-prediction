@@ -418,19 +418,19 @@ def plot_small_outlier_reasons(lines: List[str]) -> None:
 def plot_feature_importances_and_families(lines: List[str]) -> None:
     configs = [
         (
-            "full__binary_classification__with_outliers__complex__xgboost_classifier__20260213_084518.json",
+            "full__binary_classification__with_outliers__complex__xgboost_classifier__random__20261109_032410.json",
             "binary_xgb",
             "Top Features — Full Binary XGBoost (Complex, Outliers Kept)",
             "step_4_feature_importance_full_binary_xgb_complex_with_outliers.png",
         ),
         (
-            "full__regression__no_outliers__complex__xgboost_regressor__20260213_084518.json",
+            "full__regression__no_outliers__complex__xgboost_regressor__random__20261109_032410.json",
             "reg_xgb",
             "Top Features — Full Regression XGBoost (Complex, Outliers Removed)",
             "step_4_feature_importance_full_reg_xgb_complex_no_outliers.png",
         ),
         (
-            "full__multi_class_classification__with_outliers__complex__xgboost_classifier__20260213_084518.json",
+            "full__multi_class_classification__with_outliers__complex__xgboost_classifier__random__20261109_032410.json",
             "multi_xgb",
             "Top Features — Full Multi-class XGBoost (Complex, Outliers Kept)",
             "step_4_feature_importance_full_multi_xgb_complex_with_outliers.png",
@@ -741,7 +741,7 @@ def main(export_csv: bool = False) -> None:
     lines = [
         "# Additional Results EDA\n",
         "Generated from existing artifacts with the shared Plotly thesis aesthetic (no retrain).\n",
-        "Unfiltered model scores and importance rankings are provisional: historical models used a revenue-derived outlier flag. Regenerating these figures does not repair those fitted models.\n",
+        "Scores and importance rankings are from runs 20261109_032410 and 20261109_082408. The revenue-derived outlier flag is excluded from model inputs.\n",
     ]
 
     plot_class_distributions(lines)
